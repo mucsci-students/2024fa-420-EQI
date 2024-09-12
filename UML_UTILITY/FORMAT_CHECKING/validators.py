@@ -1,3 +1,5 @@
+import re
+
 """
 Author : Israel Gonzalez
 Created: September 12, 2024
@@ -9,10 +11,8 @@ The checks include:
 1. The input must be a string.
 2. The input length must be between 2 and 50 characters.
 3. The input can only contain alphabetic characters (no spaces or special characters).
-4. The input must be all lowercase letters.
 """
 
-import re
 
 VALID_NAME_PATTERN = re.compile(r"^[a-zA-Z]+$")
 
@@ -26,12 +26,8 @@ def check_format(name):
     if not (2 <= len(name) <= 50):  
         return "Invalid length. Must be between 2 and 50 characters."
     
-    # Check if the input matches the regex pattern
+    # Check if the input matches the regex pattern (no spaces or special characters).
     if not VALID_NAME_PATTERN.match(name):
         return "Invalid format. Only alphabet characters are allowed."
-    
-    # Check if the string contains any spaces
-    if ' ' in name:
-        return "Invalid format. Spaces are not allowed."
     
     return "Valid input"
