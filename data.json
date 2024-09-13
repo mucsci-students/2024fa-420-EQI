@@ -1,0 +1,45 @@
+[
+    [
+        {
+            "attr_list": [
+                {
+                    "attr_name": "heart"
+                }
+            ],
+            "class_name": "Person"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "tail"
+                }
+            ],
+            "class_name": "Cat"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "money"
+                }
+            ],
+            "class_name": "Bank"
+        }
+    ],
+    [
+        {
+            "source": "Cat",
+            "dest": "Person",
+            "relation": "pet"
+        },
+        {
+            "source": "Person",
+            "dest": "Cat",
+            "relation": "owner"
+        },
+        {
+            "source": "Person",
+            "dest": "Bank",
+            "relation": "deptor"
+        }
+    ]
+]

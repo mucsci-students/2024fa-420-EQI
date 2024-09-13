@@ -19,10 +19,13 @@ data_list = SAVE_LOAD.load_data_from_json("data.json")
 # Create a class so that we can display it or sort it alphabetically easily
 class_list: list[str] = []
 # If there is no data in json file
+# Provides an empty list if "classes" key is missing
 if data_list is None:
     data_list = [[], []]
-# Provides an empty list if "classes" key is missing
+# Get list of classes and its attributes
 class_and_attr_list = data_list[0]
+# Get list of relationships
+relationship_list = data_list[1]
 # Add class name to class_list
 for dictionary in class_and_attr_list:
     class_list.append(dictionary["class_name"])
@@ -72,6 +75,8 @@ def rename_class(class_name: str, new_name: str):
         return
     # If it is able to rename, get the object from the list
     class_object = get_chosen_class(class_name)
+    # Update source/dest name:
+    update_name_in_relationship(class_name, new_name)
     # Change to new name
     class_object["class_name"] = new_name
     class_list.remove(class_name)
@@ -132,6 +137,14 @@ def is_able_to_rename(class_name: str, new_name: str) -> bool:
     if not is_new_name_exist:
         return False
     return True
+
+
+# Change Source Class / Dest Class Name #
+def update_name_in_relationship(class_name: str, new_name: str):
+    for each_dictionary in relationship_list:
+        for key, value in each_dictionary.items():
+            if value == class_name:
+                each_dictionary[key] = new_name
 
 
 ################################################################################
