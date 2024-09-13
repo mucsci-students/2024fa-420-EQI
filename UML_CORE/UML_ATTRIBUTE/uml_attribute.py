@@ -38,27 +38,72 @@ def add_attr(class_name:str, attr_name:str):
     is_attr_exist = check_attr_name(attr_list, attr_name, False)
     if not is_attr_exist:
         return
+    attr_name = attr_name.lower()
     # Create JSON object for attribute
     json_attr = get_attr_json_format(attr_name)
     # Add JSON attribute object to global object that holds classes
     for cls in class_and_attr_list:
         if (cls["class_name"] == class_name):
             cls["attr_list"].append(json_attr)
-    print(f"Attribute '{attr_name}' was successfully added!")
-    
-    
-    
-    
-    
-    
+    # Print successful message 
+    print(f"Attribute '{attr_name}' was successfully added to class '{class_name}'!")
+     
 
-# Function to delete an attribute from a class
+# Function to delete an attribute from a class #
 def delete_attr(class_name:str, attr_name:str):
-    pass
+    # Check if class name exists, 
+    # if not, called function will print error, current function stops
+    is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
+    if not is_class_exist:
+        return
+    # Put class name in lowercase
+    class_name = class_name.lower()
+    # Get attribute list for specific class
+    attr_list = get_attr_list(class_name)
+    # Check if attribute already exists
+    # if not, called function will print error, current function ends
+    is_attr_exist = check_attr_name(attr_list, attr_name, True)
+    if not is_attr_exist:
+        return
+    attr_name = attr_name.lower()
+    attr_object = get_attr_object(attr_list, attr_name)  
+    for cls in class_and_attr_list:
+        if (cls["class_name"] == class_name):
+            cls["attr_list"].remove(attr_object)
+    # Print successful message 
+    print(f"Attribute '{attr_name}' was successfully deleted from class '{class_name}'!")
+    
 
 # Function to rename an attribute in a class
 def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
-    pass
+    # Check if class name exists, 
+    # if not, called function will print error, current function stops
+    is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
+    if not is_class_exist:
+        return
+    # Put class name in lowercase
+    class_name = class_name.lower()
+    # Get attribute list for specific class
+    attr_list = get_attr_list(class_name)
+    # Check if attribute already exists
+    # if not, called function will print error, current function ends
+    is_old_attr_exist = check_attr_name(attr_list, old_attr_name, True)
+    if not is_old_attr_exist:
+        return
+    is_new_attr_exist = check_attr_name(attr_list, new_attr_name, False)
+    if not is_new_attr_exist:
+        return
+    old_attr_name = old_attr_name.lower()
+    new_attr_name = new_attr_name.lower()
+    for cls in class_and_attr_list:
+        if (cls["class_name"] == class_name):
+            for attribute in cls["attr_list"]:
+                if attribute["attr_name"] == old_attr_name:
+                    attribute["attr_name"] = new_attr_name
+    print(f"Attribute '{old_attr_name}' was renamed to '{new_attr_name}' in class '{class_name}'!")
+
+
+
 
 ################################################################
 # CHECK ATTRIBUTE FUNCTIONS #
@@ -104,6 +149,11 @@ def get_attr_json_format(attr_name: str) -> dict[str, str]:
     return {
         "attr_name": attr_name
     }
+
+def get_attr_object(attr_list:str, attr_name) -> dict[str, str]:
+    for attribute in attr_list:
+        if (attribute["attr_name"] == attr_name):
+            return attribute
 
 ################################################################
 
