@@ -9,7 +9,7 @@
 ################################################################
 # IMPORTED MODULES #
 
-import UML_CLASS.uml_class as UML_CLASS
+import UML_CORE.UML_CLASS.uml_class as UML_CLASS
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
@@ -34,7 +34,7 @@ def add_attr(class_name:str, attr_name:str):
     attr_list = get_attr_list(class_name)
     # Check if attribute already exists
     # if it does, called function will print error, current function ends
-    is_attr_exist = check_attr_name(attr_list, attr_name, False)
+    is_attr_exist = check_attr_name(attr_list, attr_name,class_name,False)
     if not is_attr_exist:
         return
     attr_name = attr_name.lower()
@@ -61,11 +61,14 @@ def delete_attr(class_name:str, attr_name:str):
     attr_list = get_attr_list(class_name)
     # Check if attribute already exists
     # if not, called function will print error, current function ends
-    is_attr_exist = check_attr_name(attr_list, attr_name, True)
+    is_attr_exist = check_attr_name(attr_list, attr_name,class_name, True)
     if not is_attr_exist:
         return
+    # Attribute name lowercase
     attr_name = attr_name.lower()
+    # Get attribute object that exists in class object
     attr_object = get_attr_object(attr_list, attr_name)  
+    # Find and delete attribute object
     for cls in class_and_attr_list:
         if (cls["class_name"] == class_name):
             cls["attr_list"].remove(attr_object)
@@ -84,21 +87,26 @@ def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     class_name = class_name.lower()
     # Get attribute list for specific class
     attr_list = get_attr_list(class_name)
-    # Check if attribute already exists
+    # Check if old attribute name already exists
     # if not, called function will print error, current function ends
-    is_old_attr_exist = check_attr_name(attr_list, old_attr_name, True)
+    is_old_attr_exist = check_attr_name(attr_list, old_attr_name,class_name, True)
     if not is_old_attr_exist:
         return
-    is_new_attr_exist = check_attr_name(attr_list, new_attr_name, False)
+    # Check if new attribute name already exists
+    # if it does, called function will print error, current function ends
+    is_new_attr_exist = check_attr_name(attr_list, new_attr_name,class_name, False)
     if not is_new_attr_exist:
         return
+    # Lowercase both attributes
     old_attr_name = old_attr_name.lower()
     new_attr_name = new_attr_name.lower()
+    # Find old attribute and change name to new attribute
     for cls in class_and_attr_list:
         if (cls["class_name"] == class_name):
             for attribute in cls["attr_list"]:
                 if attribute["attr_name"] == old_attr_name:
                     attribute["attr_name"] = new_attr_name
+    # Print successful message
     print(f"Attribute '{old_attr_name}' was renamed to '{new_attr_name}' in class '{class_name}'!")
 
 
@@ -114,19 +122,23 @@ def validate_attr_name(attr_list:str, attr_name: str):
             return True
     return False
 
-def check_attr_name(attr_list:str, attr_name:str, should_exist:bool) -> bool:
+# Check if attribute name exists or doesnt exist depending on should_exist param 
+# when given list of attributes, attribute name and class name
+def check_attr_name(attr_list:str, attr_name:str,class_name:str, should_exist:bool) -> bool:
+    # Check format of attr_name, stop function and print error if not correct
     is_format_correct = check_format(attr_name)
     if is_format_correct != "Valid input":
         print(is_format_correct)
         return 
+    # Check if attribute exists
     is_attr_exist = validate_attr_name(attr_list, attr_name)
     # If the name should exist but not exist
     if should_exist and not is_attr_exist:
-        print(f"Attribute '{attr_name}' not found!")
+        print(f"Attribute '{attr_name}' not found in class '{class_name}'!")
         return False
     # If the name should not exist but still exist
     elif not should_exist and is_attr_exist:
-        print(f"Attribute '{attr_name}' already existed!")
+        print(f"Attribute '{attr_name}' already existed in class '{class_name}'!")
         return False
     # True in any other cases
     return True
@@ -137,18 +149,21 @@ def check_attr_name(attr_list:str, attr_name:str, should_exist:bool) -> bool:
 
 # Assuming we already know class_name exists, 
 # and class_name is in correct format
+# Get the attribute list for specific class
 def get_attr_list(class_name:str) -> list:
     for cls in class_and_attr_list:
         if (cls["class_name"] == class_name):
             return cls["attr_list"]
         
-# Get JSON Format #
-#  #
+# Get JSON Format of Attribute #
 def get_attr_json_format(attr_name: str) -> dict[str, str]:
     return {
         "attr_name": attr_name
     }
 
+# Get the attribute object from a list of attributes,
+# Assuming we know the attribute exists
+# ONLY CALL IF YOU ALREADY CHECKED IF ATTRIBUTE EXISTS #
 def get_attr_object(attr_list:str, attr_name) -> dict[str, str]:
     for attribute in attr_list:
         if (attribute["attr_name"] == attr_name):
