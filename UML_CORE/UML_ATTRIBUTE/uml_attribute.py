@@ -2,14 +2,13 @@
 #   Author : Emily Riley
 #   Created: September 12, 2024
 #
-#   A shell to handle atttributes
+#   A shell to handle atttribute functions
 ################################################################
 
 
 ################################################################
 # IMPORTED MODULES #
 
-import UML_UTILITY.SAVE_LOAD.save_load as SAVE_LOAD
 import UML_CLASS.uml_class as UML_CLASS
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
@@ -127,7 +126,7 @@ def check_attr_name(attr_list:str, attr_name:str, should_exist:bool) -> bool:
         return False
     # If the name should not exist but still exist
     elif not should_exist and is_attr_exist:
-        print(f"Attribute '{attr_name}' has already existed!")
+        print(f"Attribute '{attr_name}' already existed!")
         return False
     # True in any other cases
     return True
