@@ -155,7 +155,7 @@ def update_name_in_relationship(class_name: str, new_name: str):
 # NOTE: Don't call this class if you did not check for class name!!!!!!! #
 def get_class_json_format(class_name: str) -> dict[str, list[dict[str, str]]]:
     return {
-        "attr_list": [{"attr_name": ""}],  # Placeholder for attribute names
+        "attr_list": [],  # Placeholder for attribute names
         "class_name": class_name,
     }
 

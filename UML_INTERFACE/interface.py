@@ -8,6 +8,7 @@
 from enum import Enum
 
 import UML_CORE.UML_CLASS.uml_class as UML_MANAGER
+import UML_CORE.UML_ATTRIBUTE.uml_attribute as UML_ATTRIBUTE
 import UML_UTILITY.SAVE_LOAD.save_load as SAVE_LOAD
 
 
@@ -90,7 +91,7 @@ def working_loop():
         second_param = (
             user_input_component[2] if len(user_input_component) > 2 else None
         )
-        # third_param = user_input_component[3] if len(user_input_component) > 3 else None
+        third_param = user_input_component[3] if len(user_input_component) > 3 else None
         # fourth_param = (
         #     user_input_component[4] if len(user_input_component) > 4 else None
         # )
@@ -113,8 +114,14 @@ def working_loop():
         #######################################################
 
         # Add attribute
-
+        elif command == UMLClassInterfaceOption.ADD_ATTR.value and first_param and second_param:
+            UML_ATTRIBUTE.add_attr(first_param, second_param)
         # Delete attribute
+        elif command == UMLClassInterfaceOption.DELETE_ATTR.value and first_param and second_param:
+            UML_ATTRIBUTE.delete_attr(first_param, second_param)
+        # Rename attribute
+        elif command == UMLClassInterfaceOption.RENAME_ATTR.value and first_param and second_param and third_param:
+            UML_ATTRIBUTE.rename_attr(first_param, second_param, third_param)
 
         #######################################################
 
