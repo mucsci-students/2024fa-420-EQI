@@ -6,6 +6,18 @@ import unittest
 # Import the module you're testing
 import UML_CORE.UML_RELATIONSHIP.uml_relationship as UMLRelationship
 
+
+"""
+Author : Israel Gonzalez
+Created: September 13, 2024
+Version: 1.0
+
+Description: 
+This test suite is designed to verify the functionality of the `uml_relationship.py` module,
+which manages relationships between UML classes.
+
+"""
+
 ################################################################
 # ADD ROOT PATH #
 # Adjusting the path to allow imports from the project root
