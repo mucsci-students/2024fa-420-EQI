@@ -1,5 +1,6 @@
 import UML_UTILITY.SAVE_LOAD.save_load as SAVE_LOAD
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
+import UML_CORE.UML_CLASS.uml_class as UMLClass
 
 """
 Author : Israel Gonzalez
@@ -15,7 +16,7 @@ for correctness and existence.
 ################################################################################
 
 # LOADING DATA FROM JSON FILE TO GLOBAL DICTIONARY #
-data_list = SAVE_LOAD.load_data_from_json("data.json")
+data_list = UMLClass.data_list
 
 # Initialize relationships list with proper error handling
 if data_list and len(data_list) == 2:
