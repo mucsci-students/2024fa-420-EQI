@@ -1,5 +1,3 @@
-import re
-
 """
 Author : Israel Gonzalez
 Created: September 12, 2024
@@ -10,11 +8,17 @@ This function, check_format, validates whether a given string follows a specific
 The checks include:
 1. The input must be a string.
 2. The input length must be between 2 and 50 characters.
-3. The input can only contain alphabetic characters (no spaces or special characters).
+3. The input must be in lowercase alphabetic characters (no spaces or special characters).
 """
 
+################################################################
+# IMPORTED MODULES #
 
-VALID_NAME_PATTERN = re.compile(r"^[a-zA-Z]+$")
+import re
+
+################################################################
+
+VALID_NAME_PATTERN = re.compile(r"^[a-z]+$")
 
 def check_format(name):
 
@@ -28,6 +32,6 @@ def check_format(name):
     
     # Check if the input matches the regex pattern (no spaces or special characters).
     if not VALID_NAME_PATTERN.match(name):
-        return "Invalid format. Only alphabet characters are allowed."
+        return "Invalid format. Only lowercase alphabet characters are allowed."
     
     return "Valid input"

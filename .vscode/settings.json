@@ -1,0 +1,15 @@
+{
+    "python.analysis.extraPaths": [
+        "./UML_UTILITY/FORMAT_CHECKING",
+        "./UML_CORE/UML_RELATIONSHIP"
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
+}
