@@ -31,10 +31,21 @@ class_list = [dictionary["class_name"] for dictionary in class_and_attr_list]
 # WORKING WITH RELATIONSHIPS #
 
 def add_relationship(source: str, dest: str, relation: str):
+    # Ensure source and destination are not the same
+    if source == dest:
+        print("Source and destination classes cannot be the same.")
+        return
+    
     # Validate source and destination class names
     if not check_class_name(source, should_exist=True) or not check_class_name(dest, should_exist=True):
         return
-
+    
+     # Validate relationship type format
+    format_check_message = check_format(relation)
+    if format_check_message != "Valid input":
+        print(format_check_message)
+        return
+    
     # Check if the relationship already exists
     if any(rel for rel in relationship_list if rel["source"] == source and rel["dest"] == dest):
         print(f"Relationship between '{source}' and '{dest}' already exists!")
