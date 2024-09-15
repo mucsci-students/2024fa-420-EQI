@@ -1,22 +1,27 @@
-################################################################
-#   Author : Emily Riley
-#   Created: September 13, 2024
-#
-#   A shell to handle atttribute functions
-################################################################
+"""
+Author : Emily Riley
+Created: September 13, 2024
+
+Description:
+    A shell to handle atttribute functions
+
+List of last date modified:
+- September 15, 2024 (By Quang)
+
+"""
 
 
 ################################################################
 # IMPORTED MODULES #
 
 import UML_CORE.UML_CLASS.uml_class as UML_CLASS
+import UML_MANAGER.uml_manager as UML_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
-# LOADING DATA FROM CLASS FILE #
 
-# Get class and attr list from UML_CLASS
-class_and_attr_list = UML_CLASS.class_and_attr_list
+# GET CLASS AND ITS ATTRIBUTES LIST #
+class_and_attr_list = UML_MANAGER.class_and_attr_list
 
 ################################################################
 # ADD, DELETE, RENAME ATTRIBUTE FUNCTIONS #
@@ -94,7 +99,7 @@ def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     # if not, called function will print error, current function ends
     is_old_attr_exist = check_attr_name(attr_list, old_attr_name,class_name, True)
     if not is_old_attr_exist:
-        return
+        return False
     # Check if new attribute name already exists
     # if it does, called function will print error, current function ends
     is_new_attr_exist = check_attr_name(attr_list, new_attr_name,class_name, False)
