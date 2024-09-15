@@ -1,14 +1,22 @@
-################################################################
-#   Author : Quang Bui
-#   Created: September 12, 2024
-#
-#   This file is for the CLI
-################################################################
+"""
+Author : Quang Bui
+Created: September 12, 2024
+
+Description:
+    Command Line User Interface
+
+List of last date modified:
+- September 15, 2024 (By Quang)
+
+"""
 
 from enum import Enum
+from itertools import zip_longest
 
-import UML_CORE.UML_CLASS.uml_class as UML_MANAGER
 import UML_CORE.UML_ATTRIBUTE.uml_attribute as UML_ATTRIBUTE
+import UML_CORE.UML_CLASS.uml_class as UML_CLASS
+import UML_CORE.UML_RELATIONSHIP.uml_relationship as UML_REL
+import UML_MANAGER.uml_manager as UML_MANAGER
 import UML_UTILITY.SAVE_LOAD.save_load as SAVE_LOAD
 
 
@@ -42,9 +50,7 @@ def prompt_main_menu():
     print("Type 'work' start working with class(es)")
     print("Type 'list_class' to see the list of all created class(es)")
     print("Type 'class_detail <class_name>' to see the detail of the chosen class")
-    print(
-        "Type 'class_rel <class_name>' to see the relationships between the chosen class and other class(es)"
-    )
+    print("Type 'class_rel' to see the relationships between class(es)")
     print("Type 'save' to save data")
     print("Type 'sort' to sort the class list in alphabetical order")
     print("Type 'show_menu' to see the menu again")
@@ -81,6 +87,7 @@ def prompt_working_menu():
 def working_loop():
     prompt_working_menu()
     while True:
+        print("\n(work-menu)\n")
         print("\n==> ", end="")
         user_input: str = input()
         # Split the input by space
@@ -92,42 +99,64 @@ def working_loop():
             user_input_component[2] if len(user_input_component) > 2 else None
         )
         third_param = user_input_component[3] if len(user_input_component) > 3 else None
-        # fourth_param = (
-        #     user_input_component[4] if len(user_input_component) > 4 else None
-        # )
         # Start the logic
         #######################################################
         # Add class
         if command == UMLClassInterfaceOption.ADD_CLASS.value and first_param:
-            UML_MANAGER.add_class(first_param)
+            UML_CLASS.add_class(first_param)
         # Delete class
         elif command == UMLClassInterfaceOption.DELETE_CLASS.value and first_param:
-            UML_MANAGER.delete_class(first_param)
+            UML_CLASS.delete_class(first_param)
         # Rename class
         elif (
             command == UMLClassInterfaceOption.RENAME.value
             and first_param
             and second_param
         ):
-            UML_MANAGER.rename_class(first_param, second_param)
+            UML_CLASS.rename_class(first_param, second_param)
 
         #######################################################
 
         # Add attribute
-        elif command == UMLClassInterfaceOption.ADD_ATTR.value and first_param and second_param:
+        elif (
+            command == UMLClassInterfaceOption.ADD_ATTR.value
+            and first_param
+            and second_param
+        ):
             UML_ATTRIBUTE.add_attr(first_param, second_param)
         # Delete attribute
-        elif command == UMLClassInterfaceOption.DELETE_ATTR.value and first_param and second_param:
+        elif (
+            command == UMLClassInterfaceOption.DELETE_ATTR.value
+            and first_param
+            and second_param
+        ):
             UML_ATTRIBUTE.delete_attr(first_param, second_param)
         # Rename attribute
-        elif command == UMLClassInterfaceOption.RENAME_ATTR.value and first_param and second_param and third_param:
+        elif (
+            command == UMLClassInterfaceOption.RENAME_ATTR.value
+            and first_param
+            and second_param
+            and third_param
+        ):
             UML_ATTRIBUTE.rename_attr(first_param, second_param, third_param)
 
         #######################################################
 
         # Add relationship
-
+        elif (
+            command == UMLClassInterfaceOption.ADD_REL.value
+            and first_param
+            and second_param
+            and third_param
+        ):
+            UML_REL.add_relationship(first_param, second_param, third_param)
         # Delete relationship
+        elif (
+            command == UMLClassInterfaceOption.DELETE_REL.value
+            and first_param
+            and second_param
+        ):
+            UML_REL.remove_relationship(first_param, second_param)
 
         #######################################################
         # See menu again
@@ -147,6 +176,7 @@ def working_loop():
 def main_program_loop():
     prompt_main_menu()
     while True:
+        print("\n(main-menu)\n")
         print("\n==> ", end="")
         user_input: str = input()
         # Split the input by space
@@ -157,17 +187,15 @@ def main_program_loop():
         # Go to the working menu
         if command == InterfaceOptions.WORK.value:
             working_loop()
-        # # List all the created class names
+        # List all the created class names
         elif command == InterfaceOptions.LIST_CLASS.value:
             display_class_list()
-        # # Show the details of the chosen class
+        # Show the details of the chosen class
         elif command == InterfaceOptions.CLASS_DETAIL.value and first_param:
             display_class_detail(first_param)
-        #######################################################
-        # # Show the relationship of the chosen class with others
-        # elif command == InterfaceOptions.CLASS_REL.value and first_param:
-        #     class_rel(first_param)
-        #######################################################
+        # Show the relationship of the chosen class with others
+        elif command == InterfaceOptions.CLASS_REL.value:
+            display_relationship_list()
         # Show the instructions for this program
         elif command == InterfaceOptions.HELP.value:
             help()
@@ -176,7 +204,7 @@ def main_program_loop():
             sort_class_list()
         # Save the data
         elif command == InterfaceOptions.SAVE.value:
-            SAVE_LOAD.save_data_from_json(UML_MANAGER.data_list, "data.json")
+            SAVE_LOAD.save_data_from_json(UML_CLASS.data_list, "data.json")
         # Show the main menu again
         elif command == UMLClassInterfaceOption.SHOW_MENU.value:
             prompt_main_menu()
@@ -192,8 +220,106 @@ def main_program_loop():
 
 ########################################################################################################
 # MAIN MENU #
-def class_rel(class_name: str):
-    print("Inside relationship\n")
+
+
+# Display Class List #
+def display_class_list(classes_per_row=3):
+    # Generate class details split into lines
+    class_details_list = [
+        get_class_detail(class_name).split("\n")
+        for class_name in UML_MANAGER.class_list
+    ]
+    print(
+        "\n-------------------------------------------------------------------------------------------------\n"
+    )
+    # Chunk the class details into groups of `classes_per_row`
+    for i in range(0, len(class_details_list), classes_per_row):
+        chunk = class_details_list[i : i + classes_per_row]
+
+        # Use zip_longest to align and print side by side
+        for lines in zip_longest(*chunk, fillvalue=" " * 20):
+            print("   ".join(line.ljust(30) for line in lines))
+        print(
+            "\n-------------------------------------------------------------------------------------------------\n"
+        )
+
+
+# Display Relationship List #
+def display_relationship_list(classes_per_row=3):
+    # Generate class details split into lines
+    class_relationship_detail_list = [
+        get_relationship_detail(class_name).split("\n")
+        for class_name in UML_MANAGER.class_list
+    ]
+    print(
+        "\n-------------------------------------------------------------------------------------------------\n"
+    )
+    # Chunk the class relationship details into groups of `classes_per_row`
+    for i in range(0, len(class_relationship_detail_list), classes_per_row):
+        chunk = class_relationship_detail_list[i : i + classes_per_row]
+
+        # Use zip_longest to align and print side by side
+        for lines in zip_longest(*chunk, fillvalue=" " * 20):
+            print("   ".join(line.ljust(30) for line in lines))
+        print(
+            "\n-------------------------------------------------------------------------------------------------\n"
+        )
+
+
+# Display Class Details #
+def display_class_detail(class_name: str):
+    classes_detail_list = get_class_detail(class_name)
+    print(f"\n{classes_detail_list}")
+
+
+# Class Detail As String #
+def get_class_detail(class_name: str) -> str:
+    class_object = UML_CLASS.get_chosen_class(class_name)
+    output = []
+    output.append("|===================|")
+    output.append(f"{"--     Name     --":^21}")
+    output.append(f"{class_object['class_name']:^20}")
+    output.append("|*******************|")
+    attr_list = class_object["attr_list"]
+    output.append(f"{"--  Attribute  --":^21}")
+    for element in attr_list:
+        for key, val in element.items():
+            output.append(f"{val:^20}")
+    output.append("|*******************|")
+    rel_list = UML_MANAGER.relationship_list
+    output.append(f"{"-- Relationship  --":^21}")
+    for element in rel_list:
+        if element["source"] == class_name:
+            output.append(f"{"|-----------|":^20}")
+            output.append(f"{element["source"]:^20}")
+            output.append(f"{element["dest"]:^20}")
+            output.append(f"{element["relation"]:^20}")
+            output.append(f"{"|-----------|":^20}")
+
+    output.append("|===================|")
+    return "\n".join(output)
+
+
+# Get Class Relationships #
+def get_relationship_detail(class_name: str) -> str:
+    class_object = UML_CLASS.get_chosen_class(class_name)
+    output = []
+    output.append("|===================|")
+    output.append(f"{"--     Name     --":^21}")
+    output.append(f"{class_object['class_name']:^20}")
+    output.append("|*******************|")
+    rel_list = UML_MANAGER.relationship_list
+    output.append("|===================|")
+    output.append(f"{"-- Relationship  --":^21}")
+    for element in rel_list:
+        if element["source"] == class_name:
+            output.append(f"{"|-----------|":^20}")
+            output.append(f"{element["source"]:^20}")
+            output.append(f"{element["dest"]:^20}")
+            output.append(f"{element["relation"]:^20}")
+            output.append(f"{"|-----------|":^20}")
+    output.append("|===================|")
+    return "\n".join(output)
 
 
 def help():
@@ -204,34 +330,7 @@ def exit():
     print("Exited Program")
 
 
-########################################################################################################
-
-
-# Display Class List #
-def display_class_list():
-    print("\n===================")
-    print("--Class List--")
-    for class_name in UML_MANAGER.class_list:
-        print(class_name)
-    print("===================")
-
-
-# Display Class Details #
-def display_class_detail(class_name: str):
-    class_object = UML_MANAGER.get_chosen_class(class_name)
-    print("\n===================")
-    print("--Class Name--")
-    print(f"{class_object['class_name']}")  # Center with 20 spaces
-    print("*******************")
-    attr_list = class_object["attr_list"]
-    print("--Class Attribute--")
-    for element in attr_list:
-        for key, val in element.items():
-            print(f"{val}")
-    print("===================")
-
-
 # Sorting Class List #
 def sort_class_list():
-    UML_MANAGER.class_list.sort()
+    UML_CLASS.class_list.sort()
     display_class_list()
