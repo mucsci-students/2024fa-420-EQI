@@ -38,8 +38,8 @@ def add_class(class_name: str):
     is_name_exist = check_class_name(class_name, should_exist=False)
     if not is_name_exist:
         return
-    # Make sure user want to add or not
-    is_chosen_yes = user_choice(class_name)
+    # Make sure user want to add class or not
+    is_chosen_yes = user_choice(f"add class '{class_name}'")
     if not is_chosen_yes:
         return
     # Convert to json object and append to the list
@@ -56,6 +56,10 @@ def delete_class(class_name: str):
     is_name_exist = check_class_name(class_name, should_exist=True)
     if not is_name_exist:
         return
+    # Make sure user want to delete class or not
+    is_chosen_yes = user_choice(f"delete class '{class_name}'")
+    if not is_chosen_yes:
+        return
     # If class exist, get the class object and pop from the list
     class_object = get_chosen_class(class_name)
     class_and_attr_list.remove(class_object)
@@ -71,6 +75,12 @@ def rename_class(class_name: str, new_name: str):
         return
     # If it is able to rename, get the object from the list
     class_object = get_chosen_class(class_name)
+    # Make sure user want to rename class or not
+    is_chosen_yes = user_choice(
+        f"change from class name '{class_name}' to '{new_name}'"
+    )
+    if not is_chosen_yes:
+        return
     # Update source/dest name:
     change_name(class_name, new_name)
     # Change to new name
@@ -163,12 +173,10 @@ def get_chosen_class(class_name: str) -> dict[str, list[dict[str, str]]]:
             return dictionary
 
 
-# User Decision Making For "add_class()" Function #
-def user_choice(class_name: str) -> bool:
+# User Decision Making #
+def user_choice(action: str) -> bool:
     while True:
-        user_input = input(
-            f"Are you sure you want to add class '{class_name}'? (Yes/No): "
-        ).lower()
+        user_input = input(f"Are you sure you want to {action}? (Yes/No): ").lower()
         if user_input in ["yes", "y"]:
             return True
         elif user_input in ["no", "n"]:

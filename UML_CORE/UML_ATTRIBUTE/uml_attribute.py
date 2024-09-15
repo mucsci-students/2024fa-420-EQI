@@ -43,6 +43,10 @@ def add_attr(class_name:str, attr_name:str):
     is_attr_exist = check_attr_name(attr_list, attr_name,class_name,False)
     if not is_attr_exist:
         return
+    # Make sure user want to add attribute or not
+    is_chosen_yes = user_choice(f"add attribute '{attr_name}' to class '{class_name}'")
+    if not is_chosen_yes:
+        return
     # Create JSON object for attribute
     json_attr = get_attr_json_format(attr_name)
     # Add JSON attribute object to global object that holds classes
@@ -70,6 +74,10 @@ def delete_attr(class_name:str, attr_name:str):
     # if not, called function will print error, current function ends
     is_attr_exist = check_attr_name(attr_list, attr_name,class_name, True)
     if not is_attr_exist:
+        return
+    # Make sure user want to delete attribute or not
+    is_chosen_yes = user_choice(f"delete attribute '{attr_name}' from class '{class_name}'")
+    if not is_chosen_yes:
         return
     # Get attribute object that exists in class object
     attr_object = get_attr_object(attr_list, attr_name)  
@@ -104,6 +112,10 @@ def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     # if it does, called function will print error, current function ends
     is_new_attr_exist = check_attr_name(attr_list, new_attr_name,class_name, False)
     if not is_new_attr_exist:
+        return
+    # Make sure user want to rename attribute or not
+    is_chosen_yes = user_choice(f"rename attribute name '{old_attr_name}' to attribute name '{new_attr_name}' from class '{class_name}'")
+    if not is_chosen_yes:
         return   
     # Find old attribute and change name to new attribute
     for cls in class_and_attr_list:
@@ -173,6 +185,18 @@ def get_attr_object(attr_list:str, attr_name) -> dict[str, str]:
     for attribute in attr_list:
         if (attribute["attr_name"] == attr_name):
             return attribute
+        
+# User Decision Making #
+def user_choice(action: str) -> bool:
+    while True:
+        user_input = input(f"Are you sure you want to {action}? (Yes/No): ").lower()
+        if user_input in ["yes", "y"]:
+            return True
+        elif user_input in ["no", "n"]:
+            print("Action cancelled.")
+            return False
+        else:
+            print("Invalid input. Please enter 'Yes' or 'No'.")
 
 ################################################################
 
