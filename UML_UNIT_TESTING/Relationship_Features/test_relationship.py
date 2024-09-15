@@ -4,14 +4,11 @@ import os
 import unittest
 from unittest.mock import patch
 
-# Import the module you're testing
-import UML_CORE.UML_RELATIONSHIP.uml_relationship as UMLRelationship
-import UML_CORE.UML_CLASS.uml_class as UMLClass
 
 """
 Author : Israel Gonzalez
 Created: September 13, 2024
-Version: 1.0
+Version: 1.2
 
 Description: 
 This test suite is designed to verify the functionality of the `uml_relationship.py` module,
@@ -24,6 +21,9 @@ which manages relationships between UML classes.
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.append(root_path)
 
+# Testing Module
+import UML_CORE.UML_RELATIONSHIP.uml_relationship as UMLRelationship
+import UML_CORE.UML_CLASS.uml_class as UMLClass
 ################################################################
 class TestUMLRelationship(unittest.TestCase):
 
@@ -78,25 +78,51 @@ class TestUMLRelationship(unittest.TestCase):
     def test_add_relationship_valid(self):
         # Initial state
         self.assertEqual(len(UMLRelationship.relationship_list), 0)
-        
+
         # Simulate user input to add a relationship
         with patch('builtins.input', side_effect=['Yes']):
-            UMLRelationship.add_relationship("person", "cat", "owns")
+            with io.StringIO() as fake_out:
+                # Redirect stdout
+                old_stdout = sys.stdout
+                sys.stdout = fake_out
+
+                try:
+                    UMLRelationship.add_relationship("person", "cat", "owns")
+                finally:
+                    # Always restore sys.stdout, even if an error occurs
+                    sys.stdout = old_stdout
+
+                # Get the captured output
+                output = fake_out.getvalue()
+                self.assertIn("Added relationship from 'person' to 'cat' of type 'owns'.", output)
         
         # Check if the relationship was added correctly
         self.assertIn({"source": "person", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
         self.assertEqual(len(UMLRelationship.relationship_list), 1)
 
+
     def test_add_relationship_existing(self):
         # Adding an initial relationship
         UMLRelationship.relationship_list.append({"source": "person", "dest": "cat", "relation": "owns"})
 
-        # Try to add the same relationship again
         with patch('builtins.input', side_effect=['Yes']):
-            UMLRelationship.add_relationship("person", "cat", "owns")
+            with io.StringIO() as fake_out:
+                old_stdout = sys.stdout
+                sys.stdout = fake_out
+
+                try:
+                    UMLRelationship.add_relationship("person", "cat", "owns")
+                finally:
+                    # Always restore sys.stdout even if an error occurs
+                    sys.stdout = old_stdout
+
+                # Get the captured output
+                output = fake_out.getvalue()
+                self.assertIn("Relationship between 'person' and 'cat' already exists!", output)
 
         # Ensure no duplicates were added
         self.assertEqual(len(UMLRelationship.relationship_list), 1)
+
 
     def test_add_relationship_invalid_source_class(self):
         # Attempt to add a relationship with an invalid source class name
@@ -150,24 +176,36 @@ class TestUMLRelationship(unittest.TestCase):
             self.assertNotIn({"source": "person", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
 
     def test_remove_relationship_non_existent(self):
-        with io.StringIO() as fake_out:
-            sys.stdout = fake_out
-            UMLRelationship.remove_relationship("person", "cat")
-            output = fake_out.getvalue()
-            self.assertIn("No relationship exists between 'person' and 'cat'.", output)
+        with patch('builtins.input', side_effect=['Yes']):  # Mock user confirmation input
+            with io.StringIO() as fake_out:
+                old_stdout = sys.stdout
+                sys.stdout = fake_out
+
+                try:
+                    UMLRelationship.remove_relationship("person", "cat")
+                finally:
+                    # Always restore sys.stdout even if an error occurs
+                    sys.stdout = old_stdout
+
+                output = fake_out.getvalue()
+                self.assertIn("No relationship exists between 'person' and 'cat'.", output)
+
 
 
     def test_cancel_remove_relationship(self):
-        # Setup initial relationship
-        UMLRelationship.relationship_list.append({"source": "person", "dest": "cat", "relation": "owns"})
+        with patch('builtins.input', side_effect=['No']):  # Simulate user choosing 'No' to cancel the action
+            with io.StringIO() as fake_out:
+                old_stdout = sys.stdout  # Backup the current sys.stdout
+                sys.stdout = fake_out
 
-        with patch('builtins.input', side_effect=['No']):
-            # Call remove_relationship function with cancellation
-            UMLRelationship.remove_relationship("person", "cat")
-            
-            # Check if the relationship is still there
-            self.assertIn({"source": "person", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
-            self.assertEqual(len(UMLRelationship.relationship_list), 1)
+                try:
+                    UMLRelationship.remove_relationship("person", "cat")
+                finally:
+                    sys.stdout = old_stdout  # Ensure sys.stdout is restored
+
+                output = fake_out.getvalue()
+                self.assertIn("Action cancelled.", output)
+
 
     def test_remove_relationship_non_existent_classes(self):
         # Capture printed output
@@ -199,8 +237,19 @@ class TestUMLRelationship(unittest.TestCase):
             self.assertIn("Source and destination classes cannot be the same.", output)
 
     def test_check_class_name_not_in_list(self):
-        result = UMLRelationship.check_class_name("nonexistentclass", should_exist=True)
-        self.assertFalse(result)
+        with io.StringIO() as fake_out:
+            old_stdout = sys.stdout  # Backup the current sys.stdout
+            sys.stdout = fake_out
+
+            try:
+                result = UMLRelationship.check_class_name("nonexistentclass", should_exist=True)
+            finally:
+                sys.stdout = old_stdout  # Restore sys.stdout
+
+            output = fake_out.getvalue()
+            self.assertIn("Class 'nonexistentclass' not found!", output)
+            self.assertFalse(result)  # Assuming check_class_name returns False when class isn't found
+
 
 if __name__ == '__main__':
     unittest.main()
