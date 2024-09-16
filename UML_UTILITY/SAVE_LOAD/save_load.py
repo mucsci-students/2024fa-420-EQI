@@ -1,9 +1,14 @@
-################################################################
-#   Author : Quang Bui
-#   Created: September 12, 2024
-#
-#   This file is for the save/load features
-################################################################
+"""
+Author : Quang Bui
+Created: September 12, 2024
+
+Description:
+    Implement Save / Load features
+
+List of last date modified:
+- September 15, 2024 (By Quang)
+
+"""
 
 import json
 
@@ -13,6 +18,7 @@ def save_data_from_json(data: dict[str, list[str]], file_path: str):
     try:
         with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
+            print("Succesfully save data!")
     except FileNotFoundError:
         print(f"File {file_path} not found.")
         return None

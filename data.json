@@ -6,7 +6,7 @@
                     "attr_name": "heart"
                 }
             ],
-            "class_name": "Person"
+            "class_name": "person"
         },
         {
             "attr_list": [
@@ -14,7 +14,7 @@
                     "attr_name": "tail"
                 }
             ],
-            "class_name": "Cat"
+            "class_name": "cat"
         },
         {
             "attr_list": [
@@ -22,23 +22,23 @@
                     "attr_name": "money"
                 }
             ],
-            "class_name": "Bank"
+            "class_name": "bank"
         }
     ],
     [
         {
-            "source": "Cat",
-            "dest": "Person",
+            "source": "cat",
+            "dest": "person",
             "relation": "pet"
         },
         {
-            "source": "Person",
-            "dest": "Cat",
+            "source": "person",
+            "dest": "cat",
             "relation": "owner"
         },
         {
-            "source": "Person",
-            "dest": "Bank",
+            "source": "person",
+            "dest": "bank",
             "relation": "deptor"
         }
     ]

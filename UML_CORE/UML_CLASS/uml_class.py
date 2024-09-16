@@ -1,35 +1,31 @@
-################################################################
-#   Author : Quang Bui
-#   Created: September 12, 2024
-#
-#   This file has UML class features
-################################################################
+"""
+Author : Quang Bui
+Created: September 12, 2024
 
+Description:
+    This shell has UML class deatures
+
+List of date modified:
+- September 15, 2024 (By Quang)
+
+"""
 
 ################################################################
 # IMPORTED MODULES #
 
-import UML_UTILITY.SAVE_LOAD.save_load as SAVE_LOAD
+import UML_MANAGER.uml_manager as UML_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
 
-# LOADING DATA FROM JSON FILE TO GLOBAL DICTIONARY #
-data_list = SAVE_LOAD.load_data_from_json("data.json")
-# Create a class so that we can display it or sort it alphabetically easily
-class_list: list[str] = []
-# If there is no data in json file
-# Provides an empty list if "classes" key is missing
-if data_list is None:
-    data_list = [[], []]
-# Get list of classes and its attributes
-class_and_attr_list = data_list[0]
-# Get list of relationships
-relationship_list = data_list[1]
-# Add class name to class_list
-for dictionary in class_and_attr_list:
-    class_list.append(dictionary["class_name"])
-
+# GET DATA FROM JSON FILE #
+data_list = UML_MANAGER.data_list
+# GET CLASS AND ITS ATTRIBUTES LIST #
+class_and_attr_list = UML_MANAGER.class_and_attr_list
+# GET RELATIONSHIP LIST #
+relationship_list = UML_MANAGER.relationship_list
+# GET CLASS NAME LIST #
+class_list = UML_MANAGER.class_list
 
 ################################################################################
 # WORKING WITH CLASSES #
@@ -42,8 +38,8 @@ def add_class(class_name: str):
     is_name_exist = check_class_name(class_name, should_exist=False)
     if not is_name_exist:
         return
-    # Make sure user want to add or not
-    is_chosen_yes = user_choice(class_name)
+    # Make sure user want to add class or not
+    is_chosen_yes = user_choice(f"add class '{class_name}'")
     if not is_chosen_yes:
         return
     # Convert to json object and append to the list
@@ -60,6 +56,10 @@ def delete_class(class_name: str):
     is_name_exist = check_class_name(class_name, should_exist=True)
     if not is_name_exist:
         return
+    # Make sure user want to delete class or not
+    is_chosen_yes = user_choice(f"delete class '{class_name}'")
+    if not is_chosen_yes:
+        return
     # If class exist, get the class object and pop from the list
     class_object = get_chosen_class(class_name)
     class_and_attr_list.remove(class_object)
@@ -75,8 +75,14 @@ def rename_class(class_name: str, new_name: str):
         return
     # If it is able to rename, get the object from the list
     class_object = get_chosen_class(class_name)
+    # Make sure user want to rename class or not
+    is_chosen_yes = user_choice(
+        f"change from class name '{class_name}' to '{new_name}'"
+    )
+    if not is_chosen_yes:
+        return
     # Update source/dest name:
-    update_name_in_relationship(class_name, new_name)
+    change_name(class_name, new_name)
     # Change to new name
     class_object["class_name"] = new_name
     class_list.remove(class_name)
@@ -140,7 +146,7 @@ def is_able_to_rename(class_name: str, new_name: str) -> bool:
 
 
 # Change Source Class / Dest Class Name #
-def update_name_in_relationship(class_name: str, new_name: str):
+def change_name(class_name: str, new_name: str):
     for each_dictionary in relationship_list:
         for key, value in each_dictionary.items():
             if value == class_name:
@@ -167,12 +173,10 @@ def get_chosen_class(class_name: str) -> dict[str, list[dict[str, str]]]:
             return dictionary
 
 
-# User Decision Making For "add_class()" Function #
-def user_choice(class_name: str) -> bool:
+# User Decision Making #
+def user_choice(action: str) -> bool:
     while True:
-        user_input = input(
-            f"Are you sure you want to add class '{class_name}'? (Yes/No): "
-        ).lower()
+        user_input = input(f"Are you sure you want to {action}? (Yes/No): ").lower()
         if user_input in ["yes", "y"]:
             return True
         elif user_input in ["no", "n"]:

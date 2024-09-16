@@ -1,22 +1,27 @@
-################################################################
-#   Author : Emily Riley
-#   Created: September 13, 2024
-#
-#   A shell to handle atttribute functions
-################################################################
+"""
+Author : Emily Riley
+Created: September 13, 2024
+
+Description:
+    A shell to handle atttribute functions
+
+List of last date modified:
+- September 15, 2024 (By Quang)
+
+"""
 
 
 ################################################################
 # IMPORTED MODULES #
 
 import UML_CORE.UML_CLASS.uml_class as UML_CLASS
+import UML_MANAGER.uml_manager as UML_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
-# LOADING DATA FROM CLASS FILE #
 
-# Get class and attr list from UML_CLASS
-class_and_attr_list = UML_CLASS.class_and_attr_list
+# GET CLASS AND ITS ATTRIBUTES LIST #
+class_and_attr_list = UML_MANAGER.class_and_attr_list
 
 ################################################################
 # ADD, DELETE, RENAME ATTRIBUTE FUNCTIONS #
@@ -24,7 +29,7 @@ class_and_attr_list = UML_CLASS.class_and_attr_list
 # Function to add an attribute to a class #
 def add_attr(class_name:str, attr_name:str):
     # Put class name in lowercase
-    class_name = class_name.lower()
+    class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
     is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
@@ -32,11 +37,15 @@ def add_attr(class_name:str, attr_name:str):
         return
     # Get attribute list for specific class
     attr_list = get_attr_list(class_name)
-    attr_name = attr_name.lower()
+    attr_name = attr_name
     # Check if attribute already exists
     # if it does, called function will print error, current function ends
     is_attr_exist = check_attr_name(attr_list, attr_name,class_name,False)
     if not is_attr_exist:
+        return
+    # Make sure user want to add attribute or not
+    is_chosen_yes = user_choice(f"add attribute '{attr_name}' to class '{class_name}'")
+    if not is_chosen_yes:
         return
     # Create JSON object for attribute
     json_attr = get_attr_json_format(attr_name)
@@ -51,7 +60,7 @@ def add_attr(class_name:str, attr_name:str):
 # Function to delete an attribute from a class #
 def delete_attr(class_name:str, attr_name:str):
     # Put class name in lowercase
-    class_name = class_name.lower()
+    class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
     is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
@@ -60,11 +69,15 @@ def delete_attr(class_name:str, attr_name:str):
     # Get attribute list for specific class
     attr_list = get_attr_list(class_name)
     # Attribute name lowercase
-    attr_name = attr_name.lower()
+    attr_name = attr_name
     # Check if attribute already exists
     # if not, called function will print error, current function ends
     is_attr_exist = check_attr_name(attr_list, attr_name,class_name, True)
     if not is_attr_exist:
+        return
+    # Make sure user want to delete attribute or not
+    is_chosen_yes = user_choice(f"delete attribute '{attr_name}' from class '{class_name}'")
+    if not is_chosen_yes:
         return
     # Get attribute object that exists in class object
     attr_object = get_attr_object(attr_list, attr_name)  
@@ -79,7 +92,7 @@ def delete_attr(class_name:str, attr_name:str):
 # Function to rename an attribute in a class
 def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     # Put class name in lowercase
-    class_name = class_name.lower()
+    class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
     is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
@@ -88,17 +101,21 @@ def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     # Get attribute list for specific class
     attr_list = get_attr_list(class_name)
     # Lowercase both attributes
-    old_attr_name = old_attr_name.lower()
-    new_attr_name = new_attr_name.lower()
+    old_attr_name = old_attr_name
+    new_attr_name = new_attr_name
     # Check if old attribute name already exists
     # if not, called function will print error, current function ends
     is_old_attr_exist = check_attr_name(attr_list, old_attr_name,class_name, True)
     if not is_old_attr_exist:
-        return
+        return False
     # Check if new attribute name already exists
     # if it does, called function will print error, current function ends
     is_new_attr_exist = check_attr_name(attr_list, new_attr_name,class_name, False)
     if not is_new_attr_exist:
+        return
+    # Make sure user want to rename attribute or not
+    is_chosen_yes = user_choice(f"rename attribute name '{old_attr_name}' to attribute name '{new_attr_name}' from class '{class_name}'")
+    if not is_chosen_yes:
         return   
     # Find old attribute and change name to new attribute
     for cls in class_and_attr_list:
@@ -168,6 +185,18 @@ def get_attr_object(attr_list:str, attr_name) -> dict[str, str]:
     for attribute in attr_list:
         if (attribute["attr_name"] == attr_name):
             return attribute
+        
+# User Decision Making #
+def user_choice(action: str) -> bool:
+    while True:
+        user_input = input(f"Are you sure you want to {action}? (Yes/No): ").lower()
+        if user_input in ["yes", "y"]:
+            return True
+        elif user_input in ["no", "n"]:
+            print("Action cancelled.")
+            return False
+        else:
+            print("Invalid input. Please enter 'Yes' or 'No'.")
 
 ################################################################
 
