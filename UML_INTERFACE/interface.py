@@ -187,12 +187,16 @@ def main_program_loop():
         # Go to the working menu
         if command == InterfaceOptions.WORK.value:
             working_loop()
-        # List all the created class names
+        # List all the created class names or all class detail
         elif command == InterfaceOptions.LIST_CLASS.value:
-            display_class_list()
+            is_detail = ask_user_display_class_list()
+            if is_detail:
+                display_class_list_detail()
+            else:
+                display_list_of_only_class_name()
         # Show the details of the chosen class
         elif command == InterfaceOptions.CLASS_DETAIL.value and first_param:
-            display_class_detail(first_param)
+            display_class_list_detail(first_param)
         # Show the relationship of the chosen class with others
         elif command == InterfaceOptions.CLASS_REL.value:
             display_relationship_list()
@@ -223,7 +227,7 @@ def main_program_loop():
 
 
 # Display Class List #
-def display_class_list(classes_per_row=3):
+def display_class_list_detail(classes_per_row=3):
     # Generate class details split into lines
     class_details_list = [
         get_class_detail(class_name).split("\n")
@@ -267,7 +271,7 @@ def display_relationship_list(classes_per_row=3):
 
 
 # Display Class Details #
-def display_class_detail(class_name: str):
+def display_single_class_detail(class_name: str):
     classes_detail_list = get_class_detail(class_name)
     print(f"\n{classes_detail_list}")
 
@@ -321,6 +325,26 @@ def get_relationship_detail(class_name: str) -> str:
     output.append("|===================|")
     return "\n".join(output)
 
+# Print only list of class names
+def display_list_of_only_class_name():
+    print("\n|===================|")
+    print(f"{"--     Name     --":^20}")
+    print("|*******************|")
+    class_list = UML_MANAGER.class_list
+    for class_name in class_list:
+        print(f"{class_name:^20}")
+    print("|===================|")
+    
+# Asking if user want to print list of all class names or list of all class details
+def ask_user_display_class_list() -> bool:
+    while True:
+        user_input = input("\nDo you want to print all class detail? (Yes/No): ").lower()
+        if user_input in ["yes", "y"]:
+            return True
+        elif user_input in ["no", "n"]:
+            return False
+        else:
+            print("Invalid input. Please enter 'Yes' or 'No'.")
 
 def help():
     print("Inside help\n")
