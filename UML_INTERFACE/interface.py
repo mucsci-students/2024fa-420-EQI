@@ -27,7 +27,6 @@ class InterfaceOptions(Enum):
     CLASS_REL = "class_rel"
     SAVE = "save"
     SORT = "sort"
-    SHOW_MENU = "show_menu"
     HELP = "help"
     EXIT = "exit"
 
@@ -41,7 +40,7 @@ class UMLClassInterfaceOption(Enum):
     RENAME_ATTR = "rename_attr"
     ADD_REL = "add_rel"
     DELETE_REL = "delete_rel"
-    SHOW_MENU = "show_menu"
+    HELP = "help"
     BACK = "back"
 
 
@@ -53,7 +52,6 @@ def prompt_main_menu():
     print("Type 'class_rel' to see the relationships between class(es)")
     print("Type 'save' to save data")
     print("Type 'sort' to sort the class list in alphabetical order")
-    print("Type 'show_menu' to see the menu again")
     print("Type 'help' to see the instructions")
     print("Type 'exit' to quit program")
 
@@ -64,9 +62,7 @@ def prompt_working_menu():
     print("Type 'delete_class <class_name>' to delete a class")
     print("Type 'rename_class <class_name> <new_name>' to rename a class")
     # Attribute
-    print(
-        "Type 'add_attr <class_name> <attr_name>' to add an attribute"
-    )
+    print("Type 'add_attr <class_name> <attr_name>' to add an attribute")
     print(
         "Type 'delete_attr <class_name> <attr_name>' to delete an attribute from the chosen class"
     )
@@ -80,7 +76,7 @@ def prompt_working_menu():
     print(
         "Type 'delete_rel <chosen_class_name> <destination_class_name>' to delete a relationship"
     )
-    print("Type 'show_menu' to see the menu again")
+    print("Type 'help' to see the instruction")
     print("Type 'back' to go back to main menu'")
 
 
@@ -160,7 +156,7 @@ def working_loop():
 
         #######################################################
         # See menu again
-        elif command == UMLClassInterfaceOption.SHOW_MENU.value:
+        elif command == UMLClassInterfaceOption.HELP.value:
             prompt_working_menu()
         #######################################################
         # Go back to main menu
@@ -200,18 +196,15 @@ def main_program_loop():
         # Show the relationship of the chosen class with others
         elif command == InterfaceOptions.CLASS_REL.value:
             display_relationship_list()
-        # Show the instructions for this program
+        # Show the main menu again
         elif command == InterfaceOptions.HELP.value:
-            help()
+            prompt_main_menu()
         # Sort the class list
         elif command == InterfaceOptions.SORT.value:
             sort_class_list()
         # Save the data
         elif command == InterfaceOptions.SAVE.value:
             SAVE_LOAD.save_data_from_json(UML_CLASS.data_list, "data.json")
-        # Show the main menu again
-        elif command == UMLClassInterfaceOption.SHOW_MENU.value:
-            prompt_main_menu()
         # Exit the program
         elif command == InterfaceOptions.EXIT.value:
             break
@@ -325,6 +318,7 @@ def get_relationship_detail(class_name: str) -> str:
     output.append("|===================|")
     return "\n".join(output)
 
+
 # Print only list of class names
 def display_list_of_only_class_name():
     print("\n|===================|")
@@ -334,20 +328,20 @@ def display_list_of_only_class_name():
     for class_name in class_list:
         print(f"{class_name:^20}")
     print("|===================|")
-    
+
+
 # Asking if user want to print list of all class names or list of all class details
 def ask_user_display_class_list() -> bool:
     while True:
-        user_input = input("\nDo you want to print all class detail? (Yes/No): ").lower()
+        user_input = input(
+            "\nDo you want to print all class detail? (Yes/No): "
+        ).lower()
         if user_input in ["yes", "y"]:
             return True
         elif user_input in ["no", "n"]:
             return False
         else:
             print("Invalid input. Please enter 'Yes' or 'No'.")
-
-def help():
-    print("Inside help\n")
 
 
 def exit():
