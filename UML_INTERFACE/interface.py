@@ -357,4 +357,4 @@ def exit():
 # Sorting Class List #
 def sort_class_list():
     UML_CLASS.class_list.sort()
-    display_class_list()
+    display_class_list_detail()
