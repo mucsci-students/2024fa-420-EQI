@@ -65,13 +65,13 @@ def prompt_working_menu():
     print("Type 'rename_class <class_name> <new_name>' to rename a class")
     # Attribute
     print(
-        "Type 'add_attr <class_name> <access_specifier> <data_type> <attr_name>' to add an attribute"
+        "Type 'add_attr <class_name> <attr_name>' to add an attribute"
     )
     print(
         "Type 'delete_attr <class_name> <attr_name>' to delete an attribute from the chosen class"
     )
     print(
-        "Type 'rename_attr <attr_name> <current_attribute_name> <new_name>' to rename an attribute"
+        "Type 'rename_attr <class_name> <current_attribute_name> <new_name>' to rename an attribute"
     )
     # Relationship
     print(
