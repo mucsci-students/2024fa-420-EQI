@@ -196,7 +196,7 @@ def main_program_loop():
                 display_list_of_only_class_name()
         # Show the details of the chosen class
         elif command == InterfaceOptions.CLASS_DETAIL.value and first_param:
-            display_class_list_detail(first_param)
+            display_single_class_detail(first_param)
         # Show the relationship of the chosen class with others
         elif command == InterfaceOptions.CLASS_REL.value:
             display_relationship_list()
