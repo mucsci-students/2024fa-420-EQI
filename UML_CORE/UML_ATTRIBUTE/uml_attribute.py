@@ -22,19 +22,18 @@ from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 # GET CLASS AND ITS ATTRIBUTES LIST #
 class_and_attr_list = UML_MANAGER.class_and_attr_list
+class_list = UML_MANAGER.class_list
 
 ################################################################
 # ADD, DELETE, RENAME ATTRIBUTE FUNCTIONS #
 
 # Function to add an attribute to a class #
 def add_attr(class_name:str, attr_name:str):
-    # Put class name in lowercase
-    class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
-    is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
+    is_class_exist = check_class_name_exist(class_name)
     if not is_class_exist:
-        return
+        return 
     # Get attribute list for specific class
     attr_list = get_attr_list(class_name)
     attr_name = attr_name
@@ -63,7 +62,7 @@ def delete_attr(class_name:str, attr_name:str):
     class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
-    is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
+    is_class_exist = check_class_name_exist(class_name)
     if not is_class_exist:
         return
     # Get attribute list for specific class
@@ -95,7 +94,7 @@ def rename_attr(class_name:str, old_attr_name:str, new_attr_name:str):
     class_name = class_name
     # Check if class name exists, 
     # if not, called function will print error, current function stops
-    is_class_exist = UML_CLASS.check_class_name(class_name, should_exist=True)
+    is_class_exist = check_class_name_exist(class_name)
     if not is_class_exist:
         return
     # Get attribute list for specific class
@@ -159,6 +158,13 @@ def check_attr_name(attr_list:str, attr_name:str,class_name:str, should_exist:bo
         return False
     # True in any other cases
     return True
+
+def check_class_name_exist(class_name):
+    for cls in class_list:
+        if cls == class_name:
+            return True
+    print(f"Class '{class_name}' not found!")
+    return False
     
 
 ################################################################
