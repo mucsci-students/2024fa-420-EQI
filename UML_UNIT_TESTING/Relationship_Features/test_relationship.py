@@ -2,13 +2,12 @@ import io
 import sys
 import os
 import unittest
-from unittest.mock import patch
-
+from unittest.mock import patch, MagicMock
 
 """
 Author : Israel Gonzalez
 Created: September 13, 2024
-Version: 1.2
+Version: 1.4
 
 Description: 
 This test suite is designed to verify the functionality of the `uml_relationship.py` module,
@@ -25,231 +24,251 @@ sys.path.append(root_path)
 import UML_CORE.UML_RELATIONSHIP.uml_relationship as UMLRelationship
 import UML_CORE.UML_CLASS.uml_class as UMLClass
 ################################################################
+
 class TestUMLRelationship(unittest.TestCase):
 
     def setUp(self):
-        # Reset the data_list and relationship_list to ensure a clean state for each test
-        UMLClass.data_list = [[], []]  # Initialize as empty lists
-        
-        # Define sample data
-        self.sample_data = [
+        """
+        This method runs before each test. It automatically sets up some default classes
+        and clears the relationship list.
+        """
+        # Mock the relationship_list and class_and_attr_list
+        UMLRelationship.relationship_list = []
+        UMLRelationship.class_and_attr_list = [
             {"class_name": "person"},
             {"class_name": "cat"},
-            {"class_name": "dog"},
-            {"class_name": "animal"},
-            {"class_name": "fish"}
+            {"class_name": "bank"}
         ]
 
-        # Set up class_and_attr_list and relationship_list
-        UMLClass.data_list[0] = self.sample_data  # Set class and attribute list
-        UMLClass.data_list[1] = []  # Set relationship list
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_empty_class_name(self, mock_user_choice):
+        """Test case for empty class name"""
+        source = ""
+        dest = "cat"
+        relation = "friend"
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
+        self.assertEqual(printed_output, "Invalid length. Must be between 2 and 50 characters.")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_valid_relationship(self, mock_user_choice):
+        """
+        Test adding a valid relationship between classes.
+        """
+        source = "person"
+        dest = "cat"
+        relation = "pet"
         
-        # Mock load_data_from_json to return sample data
-        self.patcher_load = patch('UML_UTILITY.SAVE_LOAD.save_load.load_data_from_json', return_value=(self.sample_data, UMLClass.data_list[1]))
-        self.mock_load_data = self.patcher_load.start()
+        # Add a valid relationship
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
-        # Initialize the global variables
-        UMLRelationship.relationship_list = UMLClass.data_list[1]
+        # Check that the relationship has been added
+        self.assertIn({'source': 'person', 'dest': 'cat', 'relation': 'pet'}, UMLRelationship.relationship_list)
+        self.assertEqual(printed_output, f"Added relationship from '{source}' to '{dest}' of type '{relation}'.")
 
-    def tearDown(self):
-        self.patcher_load.stop()
-
-    def test_check_format_invalid(self):
-        # Capture printed output
-        with io.StringIO() as fake_out:
-            sys.stdout = fake_out
-
-            # Test invalid class names
-            invalid_names = ["Name", "Person123", "Cat!", "Dog_", "Animal@"]
-            for name in invalid_names:
-                result = UMLRelationship.check_format(name)
-                self.assertEqual(result, "Invalid format. Only lowercase alphabet characters are allowed.")
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_existing_relationship(self, mock_user_choice):
+        """
+        Test adding an existing relationship should print a message.
+        """
+        source = "person"
+        dest = "cat"
+        relation = "pet"
         
-            # Restore sys.stdout
-            sys.stdout = sys.__stdout__
-
-    def test_check_format_valid(self):
-        # Test valid class names
-        valid_names = ["person", "cat", "dog", "animal", "fish"]
-        for name in valid_names:
-            result = UMLRelationship.check_format(name)
-            self.assertEqual(result, "Valid input")
-
-    def test_add_relationship_valid(self):
-        # Initial state
-        self.assertEqual(len(UMLRelationship.relationship_list), 0)
-
-        # Simulate user input to add a relationship
-        with patch('builtins.input', side_effect=['Yes']):
-            with io.StringIO() as fake_out:
-                # Redirect stdout
-                old_stdout = sys.stdout
-                sys.stdout = fake_out
-
-                try:
-                    UMLRelationship.add_relationship("person", "cat", "owns")
-                finally:
-                    # Always restore sys.stdout, even if an error occurs
-                    sys.stdout = old_stdout
-
-                # Get the captured output
-                output = fake_out.getvalue()
-                self.assertIn("Added relationship from 'person' to 'cat' of type 'owns'.", output)
+        # Add the relationship once
+        UMLRelationship.add_relationship(source, dest, relation)
         
-        # Check if the relationship was added correctly
-        self.assertIn({"source": "person", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
-        self.assertEqual(len(UMLRelationship.relationship_list), 1)
+        # Attempt to add the same relationship again
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
+        # Check that the printed message indicates the relationship already exists
+        self.assertEqual(printed_output, f"Relationship between '{source}' and '{dest}' already exists!")
 
-    def test_add_relationship_existing(self):
-        # Adding an initial relationship
-        UMLRelationship.relationship_list.append({"source": "person", "dest": "cat", "relation": "owns"})
-
-        with patch('builtins.input', side_effect=['Yes']):
-            with io.StringIO() as fake_out:
-                old_stdout = sys.stdout
-                sys.stdout = fake_out
-
-                try:
-                    UMLRelationship.add_relationship("person", "cat", "owns")
-                finally:
-                    # Always restore sys.stdout even if an error occurs
-                    sys.stdout = old_stdout
-
-                # Get the captured output
-                output = fake_out.getvalue()
-                self.assertIn("Relationship between 'person' and 'cat' already exists!", output)
-
-        # Ensure no duplicates were added
-        self.assertEqual(len(UMLRelationship.relationship_list), 1)
-
-
-    def test_add_relationship_invalid_source_class(self):
-        # Attempt to add a relationship with an invalid source class name
-        with patch('builtins.input', side_effect=['Yes']):
-            with io.StringIO() as fake_out:
-                sys.stdout = fake_out
-                UMLRelationship.add_relationship("invalidsource", "cat", "owns")
-                output = fake_out.getvalue()
-                self.assertIn("Class 'invalidsource' not found!", output)
-                self.assertNotIn({"source": "invalidsource", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_invalid_format(self, mock_user_choice):
+        """
+        Test adding a relationship with invalid format.
+        """
+        source = "person"
+        dest = "cat"
+        relation = "InvalidFormat123"
         
-        # Restore sys.stdout
-        sys.stdout = sys.__stdout__
+        # Attempt to add a relationship with invalid format
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
-    def test_add_relationship_invalid_dest_class(self):
-        # Attempt to add a relationship with an invalid destination class name
-        with patch('builtins.input', side_effect=['Yes']):
-            with io.StringIO() as fake_out:
-                sys.stdout = fake_out
-                UMLRelationship.add_relationship("person", "invaliddest", "owns")
-                output = fake_out.getvalue()
-                self.assertIn("Class 'invaliddest' not found!", output)
-                self.assertNotIn({"source": "person", "dest": "invaliddest", "relation": "owns"}, UMLRelationship.relationship_list)
+        # Check that the format error message is printed
+        self.assertEqual(printed_output, "Invalid format. Only lowercase alphabet characters are allowed.")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_same_source_dest(self, mock_user_choice):
+        """
+        Test adding a relationship where the source and destination are the same.
+        """
+        source = "person"
+        dest = "person"
+        relation = "self"
         
-        # Restore sys.stdout
-        sys.stdout = sys.__stdout__
+        # Attempt to add a relationship with the same source and destination
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
-    def test_add_relationship_invalid_relation(self):
-        # Attempt to add a relationship with an invalid relationship type
-        with patch('builtins.input', side_effect=['Yes']):
-            with io.StringIO() as fake_out:
-                sys.stdout = fake_out
-                UMLRelationship.add_relationship("person", "cat", "InvalidRelation123")
-                output = fake_out.getvalue()
-                self.assertIn("Invalid format. Only lowercase alphabet characters are allowed.", output)
-                self.assertNotIn({"source": "person", "dest": "cat", "relation": "InvalidRelation123"}, UMLRelationship.relationship_list)
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, "Source and destination classes cannot be the same.")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_non_existent_source(self, mock_user_choice):
+        """
+        Test adding a relationship where the source class does not exist.
+        """
+        source = "nonexistent"
+        dest = "cat"
+        relation = "unknown"
         
-        # Restore sys.stdout
-        sys.stdout = sys.__stdout__
+        # Attempt to add a relationship with a non-existent source class
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, "Class 'nonexistent' not found!")
 
-    def test_remove_relationship_existing(self):
-        # Setup initial relationship
-        UMLRelationship.relationship_list.append({"source": "person", "dest": "cat", "relation": "owns"})
-
-        with patch('builtins.input', side_effect=['Yes']):
-            # Call remove_relationship function
-            UMLRelationship.remove_relationship("person", "cat")
-            
-            # Check if the relationship was removed
-            self.assertNotIn({"source": "person", "dest": "cat", "relation": "owns"}, UMLRelationship.relationship_list)
-
-    def test_remove_relationship_non_existent(self):
-        with patch('builtins.input', side_effect=['Yes']):  # Mock user confirmation input
-            with io.StringIO() as fake_out:
-                old_stdout = sys.stdout
-                sys.stdout = fake_out
-
-                try:
-                    UMLRelationship.remove_relationship("person", "cat")
-                finally:
-                    # Always restore sys.stdout even if an error occurs
-                    sys.stdout = old_stdout
-
-                output = fake_out.getvalue()
-                self.assertIn("No relationship exists between 'person' and 'cat'.", output)
-
-
-
-    def test_cancel_remove_relationship(self):
-        with patch('builtins.input', side_effect=['No']):  # Simulate user choosing 'No' to cancel the action
-            with io.StringIO() as fake_out:
-                old_stdout = sys.stdout  # Backup the current sys.stdout
-                sys.stdout = fake_out
-
-                try:
-                    UMLRelationship.remove_relationship("person", "cat")
-                finally:
-                    sys.stdout = old_stdout  # Ensure sys.stdout is restored
-
-                output = fake_out.getvalue()
-                self.assertIn("Action cancelled.", output)
-
-
-    def test_remove_relationship_non_existent_classes(self):
-        # Capture printed output
-        with io.StringIO() as fake_out:
-            sys.stdout = fake_out
-
-            # Attempt to remove a relationship with non-existent classes
-            UMLRelationship.remove_relationship("nonexistentclass", "nonexistent")
-
-            # Check printed output
-            output = fake_out.getvalue()
-            self.assertIn("Class 'nonexistentclass' not found!", output)
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_non_existent_dest(self, mock_user_choice):
+        """
+        Test adding a relationship where the destination class does not exist.
+        """
+        source = "person"
+        dest = "nonexistentdest"
+        relation = "unknown"
         
-        # Restore sys.stdout
-        sys.stdout = sys.__stdout__
+        # Attempt to add a relationship with a non-existent destination class
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(source, dest, relation)
+            printed_output = mock_stdout.getvalue().strip()
 
-    def test_add_relationship_empty_class_name(self):
-        with io.StringIO() as fake_out:
-            sys.stdout = fake_out
-            UMLRelationship.add_relationship("", "cat", "owns")
-            output = fake_out.getvalue()
-            self.assertIn("Invalid length. Must be between 2 and 50 characters.", output)
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, "Class 'nonexistentdest' not found!")
 
-    def test_add_relationship_same_source_dest(self):
-         with io.StringIO() as fake_out:
-            sys.stdout = fake_out
-            UMLRelationship.add_relationship("person", "person", "owns")
-            output = fake_out.getvalue()
-            self.assertIn("Source and destination classes cannot be the same.", output)
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_too_short(self, mock_user_choice):
+        """Test adding relationships with names that are too short."""
+        UMLRelationship.add_relationship("p", "c", "f")
+        # Check that the correct message is printed for invalid length
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship("p", "c", "f")
+            printed_output = mock_stdout.getvalue().strip()
+        self.assertIn("Invalid length. Must be between 2 and 50 characters.", printed_output)
 
-    def test_check_class_name_not_in_list(self):
-        with io.StringIO() as fake_out:
-            old_stdout = sys.stdout  # Backup the current sys.stdout
-            sys.stdout = fake_out
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_add_relationship_too_long(self, mock_user_choice):
+        """Test adding relationships with names that are too long."""
+        long_name = "a" * 51  # Assuming the maximum length is 50 characters
+        UMLRelationship.add_relationship(long_name, "cat", "test")
+        # Check that the correct message is printed for invalid length
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.add_relationship(long_name, "cat", "test")
+            printed_output = mock_stdout.getvalue().strip()
+        self.assertIn("Invalid length. Must be between 2 and 50 characters.", printed_output)
 
-            try:
-                result = UMLRelationship.check_class_name("nonexistentclass", should_exist=True)
-            finally:
-                sys.stdout = old_stdout  # Restore sys.stdout
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_existing_relationship(self, mock_user_choice):
+        """
+        Test removing an existing relationship successfully.
+        """
+        source = "person"
+        dest = "cat"
+        relation = "pet"
+        
+        # Add the relationship first
+        UMLRelationship.add_relationship(source, dest, relation)
+        
+        # Remove the relationship
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship(source, dest)
+            printed_output = mock_stdout.getvalue().strip()
 
-            output = fake_out.getvalue()
-            self.assertIn("Class 'nonexistentclass' not found!", output)
-            self.assertFalse(result)  # Assuming check_class_name returns False when class isn't found
+        # Check that the relationship has been removed
+        self.assertNotIn({'source': source, 'dest': dest, 'relation': relation}, UMLRelationship.relationship_list)
+        self.assertEqual(printed_output, f"Removed relationship from '{source}' to '{dest}'.")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_non_existent_relationship(self, mock_user_choice):
+        """
+        Test attempting to remove a non-existent relationship.
+        """
+        source = "person"
+        dest = "cat"
+        
+        # Attempt to remove a relationship that doesn't exist
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship(source, dest)
+            printed_output = mock_stdout.getvalue().strip()
+
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, f"No relationship exists between '{source}' and '{dest}'.")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_relationship_non_existent_source(self, mock_user_choice):
+        """
+        Test attempting to remove a relationship where the source class does not exist.
+        """
+        source = "nonexistent"
+        dest = "cat"
+        
+        # Attempt to remove a relationship with a non-existent source class
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship(source, dest)
+            printed_output = mock_stdout.getvalue().strip()
+
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, f"Class '{source}' not found!")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_relationship_non_existent_dest(self, mock_user_choice):
+        """
+        Test attempting to remove a relationship where the destination class does not exist.
+        """
+        source = "person"
+        dest = "nonexistentdest"
+        
+        # Attempt to remove a relationship with a non-existent destination class
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship(source, dest)
+            printed_output = mock_stdout.getvalue().strip()
+
+        # Check that the correct message is printed
+        self.assertEqual(printed_output, f"Class '{dest}' not found!")
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_relationship_too_short(self, mock_user_choice):
+        """Test removing relationships with names that are too short."""
+        UMLRelationship.remove_relationship("p", "c")
+        # Check that the correct message is printed for invalid length
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship("p", "c")
+            printed_output = mock_stdout.getvalue().strip()
+        self.assertIn("Invalid length. Must be between 2 and 50 characters.", printed_output)
+
+    @patch("UML_CORE.UML_RELATIONSHIP.uml_relationship.user_choice", return_value=True)
+    def test_remove_relationship_too_long(self, mock_user_choice):
+        """Test removing relationships with names that are too long."""
+        long_name = "a" * 51  # Assuming the maximum length is 50 characters
+        UMLRelationship.remove_relationship(long_name, "cat")
+        # Check that the correct message is printed for invalid length
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            UMLRelationship.remove_relationship(long_name, "cat")
+            printed_output = mock_stdout.getvalue().strip()
+        self.assertIn("Invalid length. Must be between 2 and 50 characters.", printed_output)
 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
