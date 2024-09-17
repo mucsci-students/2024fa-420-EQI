@@ -44,7 +44,7 @@ class TestUMLAttributeAdd(unittest.TestCase):
 
     @patch("UML_CORE.UML_CLASS.uml_class.user_choice", return_value=True)
     @patch("UML_CORE.UML_ATTRIBUTE.uml_attribute.user_choice", return_value=False)
-    def test_add_attr_cancel(self, mock_user_choice, mock_user_choice2):
+    def test_add_attr_cancel(self, mock_user_choice):
         UMLClass.add_class("chicken")
         """Test Case 3: Cancel adding a valid attribute"""
         # Expected: No output, attribute should not be in class
