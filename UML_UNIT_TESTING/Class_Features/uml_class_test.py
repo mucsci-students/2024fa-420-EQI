@@ -1,3 +1,15 @@
+"""
+Author : Quang Bui
+Created: September 12, 2024
+
+Description:
+    This shell has UML class features
+
+List of date modified:
+- September 18, 2024 (By Quang)
+
+"""
+
 import os
 import sys
 import unittest
@@ -15,6 +27,21 @@ import UML_CORE.UML_CLASS.uml_class as UMLClass
 
 
 class TestUMLClassAdd(unittest.TestCase):
+    def setUp(self):
+        """
+        This method runs before each test. It automatically sets up some default classes
+        and clears the relationship list.
+        """
+        # Mock the relationship_list and class_and_attr_list
+        UMLClass.class_list = ["house", "person"]
+        UMLClass.class_and_attr_list = [
+            {"class_name": "house", 
+             "attr_list": [
+                 {"attr_name": "roof"},
+                 {"attr_name": "garage"}]},
+            {"class_name": "person",
+             "attr_list": []}
+        ]
     ######################################################################
     # TEST ADDING CLASS #
     @patch("UML_CORE.UML_CLASS.uml_class.user_choice", return_value=True)
@@ -67,14 +94,16 @@ class TestUMLClassAdd(unittest.TestCase):
 
     ######################################################################
     # TEST DELETE CLASS #
-    def test_delete_class_that_exists(self):
+    @patch("UML_CORE.UML_CLASS.uml_class.user_choice", return_value=True)
+    def test_delete_class_that_exists(self, mock_user_choice):
         """Test Case 1: Delete a valid class"""
         # Expected: Successfully removed class 'house'!
         class_name = "house"
         UMLClass.delete_class(class_name)
         self.assertNotIn(class_name, UMLClass.class_list)
-
-    def test_delete_class_invalid_format(self):
+        
+    @patch("UML_CORE.UML_CLASS.uml_class.user_choice", return_value=True)
+    def test_delete_class_invalid_format(self, mock_user_choice):
         """Test Case 2: Delete a class with invalid name"""
         # Expected: Invalid format. Only alphabet characters are allowed.
         class_name = "123house#$@"

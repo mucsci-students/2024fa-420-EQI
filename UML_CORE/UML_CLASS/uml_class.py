@@ -3,7 +3,7 @@ Author : Quang Bui
 Created: September 12, 2024
 
 Description:
-    This shell has UML class deatures
+    This shell has UML class features
 
 List of date modified:
 - September 15, 2024 (By Quang)
