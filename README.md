@@ -13,6 +13,7 @@ A project developed by team EQI for the 2024 Fall semester course.
 
 ## Table of Contents
 - [Introduction](#introduction)
+- [Requirements](#requirements)
 - [Instructions](#instructions)
   - [Step 1: Clone the Repository](#step-1-clone-the-repository)
   - [Step 2: Set Up a Virtual Environment](#step-2-set-up-a-virtual-environment)
@@ -25,6 +26,10 @@ A project developed by team EQI for the 2024 Fall semester course.
 This project is a collaborative effort developed by Team EQI for the Fall 2024 semester as part of the CSCI 420 course. The primary focus of the course is to encourage collaboration, teamwork, and the principles of software development in a group setting. Throughout the semester, the team will work together to design, build, and refine a functional software program.
 
 Our project aims to showcase the collective skills of the team by integrating individual contributions into a cohesive system. By leveraging version control, effective communication, and shared responsibility, this project emphasizes the importance of collaboration in modern software development. The program's final product will demonstrate core programming concepts while fostering an environment of continuous learning and teamwork.
+## Requirements
+
+To ensure compatibility, the Python version must be **3.12.x** (where 'x' can be any sub-version). You can download and install the latest version of Python 3.12 from the official website here [Download Python 3.12](https://www.python.org/downloads/). 
+Please make sure to update your environment accordingly.
 
 ## Instructions
 
