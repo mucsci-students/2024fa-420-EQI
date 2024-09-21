@@ -82,13 +82,19 @@ def remove_relationship(source: str, dest: str):
 ################################################################################
 # CHECKING CLASS NAME #
 
-def validate_class_name(class_name: str) -> bool:
-    # Load the data again if necessary
-    data_list = UML_STORAGE_MANAGER.data_list
-    class_and_attr_list = data_list[0] if data_list else []
+# def validate_class_name(class_name: str) -> bool:
+#     # Load the data again if necessary
+#     data_list = UML_STORAGE_MANAGER.data_list
+#     class_and_attr_list = data_list[0] if data_list else []
 
-    # Check if class exists in the list
-    return any(cls for cls in class_and_attr_list if cls["class_name"] == class_name)
+#     # Check if class exists in the list
+#     return any(cls for cls in class_and_attr_list if cls["class_name"] == class_name)
+
+def validate_class_name(class_name: str) -> bool:
+    for dictionary in class_and_attr_list:
+        if dictionary["class_name"] == class_name:
+            return True
+    return False
 
 
 def check_class_name(class_name: str, should_exist: bool) -> bool:
@@ -107,6 +113,7 @@ def check_class_name(class_name: str, should_exist: bool) -> bool:
         return False
 
     return True
+
 
 ################################################################################
 # OTHER HELPER FUNCTIONS #
