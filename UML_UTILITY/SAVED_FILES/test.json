@@ -1,0 +1,27 @@
+[
+    [
+        {
+            "attr_list": [
+                {
+                    "attr_name": "name"
+                },
+                {
+                    "attr_name": "age"
+                },
+                {
+                    "attr_name": "eyes"
+                },
+                {
+                    "attr_name": "legs"
+                }
+            ],
+            "method_list": [],
+            "class_name": "person"
+        },
+        {
+            "attr_list": [],
+            "class_name": "dog"
+        }
+    ],
+    []
+]
