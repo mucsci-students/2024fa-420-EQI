@@ -1,6 +1,6 @@
 # MAIN PROGRAM #
 
-from UML_INTERFACE import interface as INTERFACE
+from UML_INTERFACE import uml_interface as INTERFACE
 
 
 def main():
