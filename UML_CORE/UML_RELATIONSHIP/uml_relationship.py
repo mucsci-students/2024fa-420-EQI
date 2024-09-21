@@ -1,4 +1,4 @@
-import UML_MANAGER.uml_manager as UML_MANAGER
+import UML_MANAGER.uml_storage_manager as UML_STORAGE_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 """
@@ -18,13 +18,13 @@ List of last date modified:
 ################################################################################
 
 # GET DATA FROM JSON FILE #
-data_list = UML_MANAGER.data_list
+data_list = UML_STORAGE_MANAGER.data_list
 # GET CLASS AND ITS ATTRIBUTES LIST #
-class_and_attr_list = UML_MANAGER.class_and_attr_list
+class_and_attr_list = UML_STORAGE_MANAGER.class_and_attr_list
 # GET RELATIONSHIP LIST #
-relationship_list = UML_MANAGER.relationship_list
+relationship_list = UML_STORAGE_MANAGER.relationship_list
 # GET CLASS NAME LIST #
-class_list = UML_MANAGER.class_list
+class_list = UML_STORAGE_MANAGER.class_list
 
 ################################################################################
 # WORKING WITH RELATIONSHIPS #
@@ -84,7 +84,7 @@ def remove_relationship(source: str, dest: str):
 
 def validate_class_name(class_name: str) -> bool:
     # Load the data again if necessary
-    data_list = UML_MANAGER.data_list
+    data_list = UML_STORAGE_MANAGER.data_list
     class_and_attr_list = data_list[0] if data_list else []
 
     # Check if class exists in the list

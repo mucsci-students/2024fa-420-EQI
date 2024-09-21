@@ -3,29 +3,30 @@ Author : Quang Bui
 Created: September 12, 2024
 
 Description:
-    This shell has UML class features
+    This shell has UML class deatures
 
 List of date modified:
 - September 15, 2024 (By Quang)
+- September 19, 2024 (By Quang)
 
 """
 
 ################################################################
 # IMPORTED MODULES #
 
-import UML_MANAGER.uml_manager as UML_MANAGER
+import UML_MANAGER.uml_storage_manager as UML_STORAGE_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
 
 # GET DATA FROM JSON FILE #
-data_list = UML_MANAGER.data_list
+data_list = UML_STORAGE_MANAGER.data_list
 # GET CLASS AND ITS ATTRIBUTES LIST #
-class_and_attr_list = UML_MANAGER.class_and_attr_list
+class_and_attr_list = UML_STORAGE_MANAGER.class_and_attr_list
 # GET RELATIONSHIP LIST #
-relationship_list = UML_MANAGER.relationship_list
+relationship_list = UML_STORAGE_MANAGER.relationship_list
 # GET CLASS NAME LIST #
-class_list = UML_MANAGER.class_list
+class_list = UML_STORAGE_MANAGER.class_list
 
 ################################################################################
 # WORKING WITH CLASSES #
@@ -64,6 +65,7 @@ def delete_class(class_name: str):
     class_object = get_chosen_class(class_name)
     class_and_attr_list.remove(class_object)
     class_list.remove(class_name)
+    clean_up_relationship(class_name)
     print(f"Successfully removed class '{class_name}'!")
 
 
@@ -171,6 +173,7 @@ def get_chosen_class(class_name: str) -> dict[str, list[dict[str, str]]]:
     for dictionary in class_and_attr_list:
         if dictionary["class_name"] == class_name:
             return dictionary
+    return None
 
 
 # User Decision Making #
@@ -184,6 +187,16 @@ def user_choice(action: str) -> bool:
             return False
         else:
             print("Invalid input. Please enter 'Yes' or 'No'.")
+
+
+# Clean Up Relationship #
+def clean_up_relationship(class_name: str):
+    # Create a new list that excludes relationships with dest or source equal to class_name
+    relationship_list[:] = [
+        relationship
+        for relationship in relationship_list
+        if relationship["dest"] != class_name and relationship["source"] != class_name
+    ]
 
 
 ################################################################################

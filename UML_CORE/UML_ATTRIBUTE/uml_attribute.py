@@ -14,15 +14,14 @@ List of last date modified:
 ################################################################
 # IMPORTED MODULES #
 
-import UML_CORE.UML_CLASS.uml_class as UML_CLASS
-import UML_MANAGER.uml_manager as UML_MANAGER
+import UML_MANAGER.uml_storage_manager as UML_STORAGE_MANAGER
 from UML_UTILITY.FORMAT_CHECKING.validators import check_format
 
 ################################################################
 
 # GET CLASS AND ITS ATTRIBUTES LIST #
-class_and_attr_list = UML_MANAGER.class_and_attr_list
-class_list = UML_MANAGER.class_list
+class_and_attr_list = UML_STORAGE_MANAGER.class_and_attr_list
+class_list = UML_STORAGE_MANAGER.class_list
 
 ################################################################
 # ADD, DELETE, RENAME ATTRIBUTE FUNCTIONS #
