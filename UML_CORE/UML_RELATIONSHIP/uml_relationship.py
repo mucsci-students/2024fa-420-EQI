@@ -32,7 +32,7 @@ class_list = UML_STORAGE_MANAGER.class_list
 def add_relationship(source: str, dest: str, relation: str):
     # Ensure source and destination are not the same
     if source == dest:
-        print("Source and destination classes cannot be the same.")
+        print("\nSource and destination classes cannot be the same.")
         return
     
     # Validate source and destination class names
@@ -47,7 +47,7 @@ def add_relationship(source: str, dest: str, relation: str):
     
     # Check if the relationship already exists
     if any(rel for rel in relationship_list if rel["source"] == source and rel["dest"] == dest):
-        print(f"Relationship between '{source}' and '{dest}' already exists!")
+        print(f"\nRelationship between '{source}' and '{dest}' already exists!")
         return
     
      # Confirm addition action
@@ -56,7 +56,7 @@ def add_relationship(source: str, dest: str, relation: str):
 
     # Add the new relationship
     relationship_list.append({"source": source, "dest": dest, "relation": relation})
-    print(f"Added relationship from '{source}' to '{dest}' of type '{relation}'.")
+    print(f"\nAdded relationship from '{source}' to '{dest}' of type '{relation}'.")
 
 
 def remove_relationship(source: str, dest: str):
@@ -74,9 +74,9 @@ def remove_relationship(source: str, dest: str):
 
     # Check if a relationship was removed
     if len(relationship_list) < initial_len:
-        print(f"Removed relationship from '{source}' to '{dest}'.")
+        print(f"\nRemoved relationship from '{source}' to '{dest}'.")
     else:
-        print(f"No relationship exists between '{source}' and '{dest}'.")
+        print(f"\nNo relationship exists between '{source}' and '{dest}'.")
 
 
 ################################################################################
@@ -103,7 +103,7 @@ def check_class_name(class_name: str, should_exist: bool) -> bool:
     is_name_exist = validate_class_name(class_name)
 
     if should_exist and not is_name_exist:
-        print(f"Class '{class_name}' not found!")
+        print(f"\nClass '{class_name}' not found!")
         return False
 
     return True
@@ -113,11 +113,11 @@ def check_class_name(class_name: str, should_exist: bool) -> bool:
 
 def user_choice(action: str) -> bool:
     while True:
-        user_input = input(f"Are you sure you want to {action}? (Yes/No): ").lower()
+        user_input = input(f"\nAre you sure you want to {action}? (Yes/No): ").lower()
         if user_input in ["yes", "y"]:
             return True
         elif user_input in ["no", "n"]:
-            print("Action cancelled.")
+            print("\nAction cancelled.")
             return False
         else:
-            print("Invalid input. Please enter 'Yes' or 'No'.")
+            print("\nInvalid input. Please enter 'Yes' or 'No'.")

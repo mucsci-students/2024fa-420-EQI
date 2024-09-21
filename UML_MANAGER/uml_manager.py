@@ -101,7 +101,7 @@ def prompt_working_menu():
 # Display class(es) wrapper function #
 def display_wrapper():
     if len(UML_STORAGE_MANAGER.class_and_attr_list) == 0:
-        print("No class to display!")
+        print("\nNo class to display!")
         return
     is_detail = ask_user_choices("print all class detail")
     if is_detail:
@@ -113,7 +113,7 @@ def display_wrapper():
 # Display relationship(s) wrapper function #
 def display_relationship_wrapper():
     if len(UML_STORAGE_MANAGER.relationship_list) == 0:
-        print("No relationship to display!")
+        print("\nNo relationship to display!")
         return
     display_relationship_list()
     
@@ -186,7 +186,7 @@ def display_single_class_detail(class_name: str):
 # Display saved file's names #
 def display_saved_file_name():
     if len(UML_STORAGE_MANAGER.saved_file_name_list) == 0:
-        print("No saved file exists!")
+        print("\nNo saved file exists!")
         return
     print("\n|===================|")
     for dictionary in UML_STORAGE_MANAGER.saved_file_name_list:
@@ -203,7 +203,7 @@ def display_saved_file_name():
 def get_class_detail(class_name: str) -> str:
     class_object = UML_CLASS.get_chosen_class(class_name)
     if class_object is None:
-        print(f"Class '{class_name}' does not exist!")
+        print(f"\nClass '{class_name}' does not exist!")
         return
     output = []
     output.append("|===================|")
@@ -259,13 +259,11 @@ def get_relationship_detail(class_name: str) -> str:
 # Wrapper for saving function
 def saving_file_wrapper():
     file_name = get_file_name_to_save()
-    if file_name == "quit" or file_name is None:
+    if file_name is None:
+        return
+    if file_name == "quit":
         print()
         prompt_main_menu()
-        return
-    is_saving = ask_user_choices(f"save data to file '{file_name}.json'")
-    if not is_saving:
-        print("Canceled saving!")
         return
     UML_STORAGE_MANAGER.save_data_to_json(file_name)
 
@@ -286,7 +284,7 @@ def loading_file_wrapper():
         check_file_and_set_status(file_name)
         UML_STORAGE_MANAGER.update_data(new_data_list)
         keep_updating_data()
-        print(f"Successfully loaded file '{file_name}.json'")
+        print(f"\nSuccessfully loaded file '{file_name}.json'")
 
 
 # Wrapper for Delete saved file
@@ -304,7 +302,7 @@ def delete_saved_file_wrapper():
         return
     is_delete_saved_file = ask_user_choices(f"delete saved file '{file_name}.json'")
     if not is_delete_saved_file:
-        print("Canceled deleting!")
+        print("\nCanceled deleting!")
         return
     delete_saved_file(file_name)
 
@@ -329,7 +327,7 @@ def get_file_name_to_save() -> str:
         "\nPlease provide a name for the file you'd like to save or choose file from the list to override\nType 'quit' to go back to main menu:"
     )
     display_saved_file_name()
-    print("==>", end=" ")
+    print("==> ", end="")
     file_name = input()
     if file_name == "NAME_LIST":
         print(f"\nYou can't save to '{file_name}.json'\n")
@@ -340,6 +338,10 @@ def get_file_name_to_save() -> str:
     file_exists = any(file_name in dictionary for dictionary in name_list)
     # If the file name doesn't exist, add it to the list as a new dictionary
     if not file_exists and file_name != "quit":
+        is_saving = ask_user_choices(f"save data to file '{file_name}.json'")
+        if not is_saving:
+            print("\nCanceled saving!")
+            return
         name_list.append({file_name: "on"})
         UML_STORAGE_MANAGER.save_name_list(name_list)
     return file_name  # Return the file name
@@ -349,13 +351,13 @@ def get_file_name_to_save() -> str:
 def get_file_name_to_delete_load_clear(place_holder: str) -> str:
     name_list = UML_STORAGE_MANAGER.saved_file_name_list
     if len(name_list) == 0:
-        print("No saved file exists!\n")
+        print("\nNo saved file exists!\n")
         return
     print(
         f"\nPlease choose the file you want to {place_holder} or type 'quit' to go back to menu:"
     )
     display_saved_file_name()
-    print("\n==>", end=" ")
+    print("\n==> ", end="")
     file_name = input()
     return file_name
 
@@ -404,7 +406,7 @@ def set_all_file_off():
 def clear_current_data():
     name_list = UML_STORAGE_MANAGER.saved_file_name_list
     if len(name_list) == 0:
-        print("File is empty!\n")
+        print("\nFile is empty!")
         return
     for dictionary in name_list:
         for key in dictionary:
@@ -413,9 +415,9 @@ def clear_current_data():
                 UML_STORAGE_MANAGER.update_data(data_list)
                 keep_updating_data()
                 UML_STORAGE_MANAGER.save_data_to_json(key, is_clear=True)
-                print(f"Successfully clear data in file '{key}.json'")
+                print(f"\nSuccessfully clear data in file '{key}.json'")
                 return
-    print("No active file!")
+    print("\nNo active file!")
 
 
 ########################################################################################################
@@ -443,7 +445,7 @@ def ask_user_choices(action: str) -> bool:
 # Exit Program #
 def exit():
     set_all_file_off()
-    print("Exited Program")
+    print("\nExited Program")
     
 # Reset Storage #
 def reset_storage():
@@ -456,13 +458,13 @@ def reset_storage():
 def end_session():
     set_all_file_off()
     reset_storage()
-    print("Successfully back to default program!")
+    print("\nSuccessfully back to default program!")
 
 
 # Sorting Class List #
 def sort_class_list():
     if len(UML_STORAGE_MANAGER.class_list) == 0:
-        print("No class to sort!")
+        print("\nNo class to sort!")
         return
     UML_STORAGE_MANAGER.class_list.sort()
     display_class_list_detail()

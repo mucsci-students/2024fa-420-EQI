@@ -103,7 +103,7 @@ def working_loop():
             break
         else:
             print(
-                "Unknown command or wrong argument, see the instruction for more details"
+                "\nUnknown command or wrong argument, see the instruction for more details"
             )
 
 
@@ -160,7 +160,7 @@ def main_program_loop():
             break
         else:
             print(
-                f"Unknown command '{user_input}'. Type 'help' for a list of commands."
+                f"\nUnknown command '{user_input}'. Type 'help' for a list of commands."
             )
     UML_MANAGER.exit()
     
