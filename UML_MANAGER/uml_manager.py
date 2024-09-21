@@ -259,7 +259,7 @@ def get_relationship_detail(class_name: str) -> str:
 # Wrapper for saving function
 def saving_file_wrapper():
     file_name = get_file_name_to_save()
-    if file_name == "quit":
+    if file_name == "quit" or file_name is None:
         print()
         prompt_main_menu()
         return
@@ -331,6 +331,9 @@ def get_file_name_to_save() -> str:
     display_saved_file_name()
     print("==>", end=" ")
     file_name = input()
+    if file_name == "NAME_LIST":
+        print(f"\nYou can't save to '{file_name}.json'\n")
+        return None
     # Get the saved file name list (which is now a list of dictionaries)
     name_list = UML_STORAGE_MANAGER.saved_file_name_list
     # Check if the file name already exists in any dictionary in the list
