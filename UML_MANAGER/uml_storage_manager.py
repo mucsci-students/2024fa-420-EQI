@@ -31,11 +31,11 @@ def load_name():
             return data
     except FileNotFoundError:
         # Handle the case where the file is not found
-        print(f"File {file_path} not found.")
+        print(f"\nFile {file_path} not found.")
         return None
     except json.JSONDecodeError:
         # Handle JSON decoding errors (e.g., if the file is not in proper JSON format)
-        print(f"Error decoding JSON from {file_path}.")
+        print(f"\nError decoding JSON from {file_path}.")
         return None
 
 
@@ -65,7 +65,7 @@ def save_data_to_json(file_name: str, is_clear: bool = False):
             # If the file doesn't exist, create it and write the data list
             with open(file_path, "w") as json_file:
                 json.dump(data_list, json_file, indent=4)
-                print("Successfully saved data!")
+                print("\nSuccessfully saved data!")
                 return
         # If the file exists and the file name is in the saved list, update the data
         for dictionary in saved_file_name_list:
@@ -79,10 +79,10 @@ def save_data_to_json(file_name: str, is_clear: bool = False):
                 with open(file_path, "w") as file:
                     json.dump(data, file, indent=4)
                 if not is_clear:
-                    print("Successfully saved data!")
+                    print("\nSuccessfully saved data!")
     except json.JSONDecodeError:
         # Handle JSON decoding errors (e.g., if the file is not in proper JSON format)
-        print(f"Error decoding JSON from {file_path}.")
+        print(f"\nError decoding JSON from {file_path}.")
         return None
 
 
@@ -100,7 +100,7 @@ def load_data_from_json(file_name: str):
         return None
     except json.JSONDecodeError:
         # Handle JSON decoding errors (e.g., if the file is not in proper JSON format)
-        print(f"Error decoding JSON from {file_path}.")
+        print(f"\nError decoding JSON from {file_path}.")
         return None
 
 
@@ -113,11 +113,11 @@ def save_name_list(name_list: list[str]):
             json.dump(name_list, file, indent=4)
     except FileNotFoundError:
         # Handle the case where the file is not found
-        print(f"File {file_path} not found.")
+        print(f"\nFile {file_path} not found.")
         return None
     except json.JSONDecodeError:
         # Handle JSON decoding errors (e.g., if the file is not in proper JSON format)
-        print(f"Error decoding JSON from {file_path}.")
+        print(f"\nError decoding JSON from {file_path}.")
         return None
 
 
