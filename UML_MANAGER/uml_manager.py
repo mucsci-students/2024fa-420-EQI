@@ -458,6 +458,7 @@ def reset_storage():
 def end_session():
     set_all_file_off()
     reset_storage()
+    keep_updating_data()
     print("\nSuccessfully back to default program!")
 
 
