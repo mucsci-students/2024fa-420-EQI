@@ -1,0 +1,83 @@
+[
+    [
+        {
+            "attr_list": [
+                {
+                    "attr_name": "body"
+                },
+                {
+                    "attr_name": "head"
+                },
+                {
+                    "attr_name": "legs"
+                },
+                {
+                    "attr_name": "hands"
+                }
+            ],
+            "class_name": "human"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "ears"
+                },
+                {
+                    "attr_name": "tails"
+                }
+            ],
+            "class_name": "animal"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "roof"
+                },
+                {
+                    "attr_name": "garage"
+                }
+            ],
+            "class_name": "house"
+        },
+        {
+            "attr_list": [],
+            "class_name": "universe"
+        },
+        {
+            "attr_list": [],
+            "class_name": "planet"
+        }
+    ],
+    [
+        {
+            "source": "human",
+            "dest": "animal",
+            "relation": "owner"
+        },
+        {
+            "source": "animal",
+            "dest": "human",
+            "relation": "pet"
+        },
+        {
+            "source": "human",
+            "dest": "house",
+            "relation": "owner"
+        },
+        {
+            "source": "house",
+            "dest": "human",
+            "relation": "property"
+        },
+        {
+            "source": "universe",
+            "dest": "planet",
+            "relation": "parent"
+        },
+        {
+            "source": "planet",
+            "dest": "universe",
+            "relation": "child"
+        }
+    ]
+]

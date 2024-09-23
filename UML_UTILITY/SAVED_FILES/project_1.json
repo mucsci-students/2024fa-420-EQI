@@ -1,0 +1,62 @@
+[
+    [
+        {
+            "attr_list": [
+                {
+                    "attr_name": "head"
+                },
+                {
+                    "attr_name": "body"
+                }
+            ],
+            "class_name": "human"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "eyes"
+                },
+                {
+                    "attr_name": "tails"
+                }
+            ],
+            "class_name": "animal"
+        },
+        {
+            "attr_list": [
+                {
+                    "attr_name": "atm"
+                },
+                {
+                    "attr_name": "money"
+                },
+                {
+                    "attr_name": "creditcard"
+                }
+            ],
+            "class_name": "bank"
+        }
+    ],
+    [
+        {
+            "source": "human",
+            "dest": "animal",
+            "relation": "owner"
+        },
+        {
+            "source": "animal",
+            "dest": "human",
+            "relation": "pet"
+        },
+        {
+            "source": "human",
+            "dest": "bank",
+            "relation": "debtor"
+        },
+        {
+            "source": "bank",
+            "dest": "human",
+            "relation": "creditor"
+        }
+    ]
+]
