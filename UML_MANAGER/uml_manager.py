@@ -342,7 +342,7 @@ def get_file_name_to_save() -> str:
         if not is_saving:
             print("\nCanceled saving!")
             return
-        name_list.append({file_name: "on"})
+        name_list.append({file_name: "off"})
         UML_STORAGE_MANAGER.save_name_list(name_list)
     return file_name  # Return the file name
 
