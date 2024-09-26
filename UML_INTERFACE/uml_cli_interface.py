@@ -178,6 +178,19 @@ class UMLCommandLineInterface:
         ProgramManager._exit()
 
     #################################################################   
+    def __display_banner(self):
+        banner = r"""
+        ▗▖ ▗▖▗▖  ▗▖▗▖       ▗▄▄▄▖▗▄▄▄ ▗▄▄▄▖▗▄▄▄▖▗▄▖ ▗▄▄▖ 
+        ▐▌ ▐▌▐▛▚▞▜▌▐▌       ▐▌   ▐▌  █  █    █ ▐▌ ▐▌▐▌ ▐▌
+        ▐▌ ▐▌▐▌  ▐▌▐▌       ▐▛▀▀▘▐▌  █  █    █ ▐▌ ▐▌▐▛▀▚▖
+        ▝▚▄▞▘▐▌  ▐▌▐▙▄▄▖    ▐▙▄▄▖▐▙▄▄▀▗▄█▄▖  █ ▝▚▄▞▘▐▌ ▐▌
+                                             
+        
+            Welcome to the UML Management Interface!
+    For more information on commands, type "help" for the manual.
+        """
+        print(banner)
+
     def __prompt_menu(self):
         print("Welcome To Our UML Program!\n")
         # Class
@@ -212,6 +225,7 @@ class UMLCommandLineInterface:
         print("Type 'exit' to quit program")
 
     def main_program_loop(self):
+        self.__display_banner()
         self.__prompt_menu()
         while True:
             current_active_file: str = self.get_active_file()
