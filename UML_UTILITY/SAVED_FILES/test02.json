@@ -1,83 +1,87 @@
-[
-    [
+{
+    "classes": [
         {
-            "attr_list": [
+            "name": "Animal",
+            "fields": [],
+            "methods": []
+        },
+        {
+            "name": "Human",
+            "fields": [
                 {
-                    "attr_name": "body"
+                    "name": "Body"
                 },
                 {
-                    "attr_name": "head"
-                },
-                {
-                    "attr_name": "legs"
-                },
-                {
-                    "attr_name": "hands"
+                    "name": "Hands"
                 }
             ],
-            "class_name": "human"
-        },
-        {
-            "attr_list": [
+            "methods": [
                 {
-                    "attr_name": "ears"
+                    "name": "Attack",
+                    "params": []
                 },
                 {
-                    "attr_name": "tails"
-                }
-            ],
-            "class_name": "animal"
-        },
-        {
-            "attr_list": [
-                {
-                    "attr_name": "roof"
+                    "name": "Sleep",
+                    "params": []
                 },
                 {
-                    "attr_name": "garage"
+                    "name": "Run",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "Test01",
+            "fields": [
+                {
+                    "name": "field_test2"
+                },
+                {
+                    "name": "field_test3"
                 }
             ],
-            "class_name": "house"
-        },
-        {
-            "attr_list": [],
-            "class_name": "universe"
-        },
-        {
-            "attr_list": [],
-            "class_name": "planet"
+            "methods": [
+                {
+                    "name": "method_test2",
+                    "params": []
+                },
+                {
+                    "name": "method_test3",
+                    "params": []
+                }
+            ]
         }
     ],
-    [
+    "relationships": [
         {
-            "source": "human",
-            "dest": "animal",
-            "relation": "owner"
+            "source": "Human",
+            "destination": "Animal",
+            "type": "composition"
         },
         {
-            "source": "animal",
-            "dest": "human",
-            "relation": "pet"
+            "source": "Animal",
+            "destination": "Human",
+            "type": "aggregation"
         },
         {
-            "source": "human",
-            "dest": "house",
-            "relation": "owner"
+            "source": "Animal",
+            "destination": "Test01",
+            "type": "aggregation"
         },
         {
-            "source": "house",
-            "dest": "human",
-            "relation": "property"
+            "source": "Test01",
+            "destination": "Human",
+            "type": "composition"
         },
         {
-            "source": "universe",
-            "dest": "planet",
-            "relation": "parent"
+            "source": "Test01",
+            "destination": "Animal",
+            "type": "realization"
         },
         {
-            "source": "planet",
-            "dest": "universe",
-            "relation": "child"
+            "source": "Human",
+            "destination": "Test01",
+            "type": "composition"
         }
     ]
-]
+}
