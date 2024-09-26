@@ -1,16 +1,3 @@
-"""
-Author : Quang Bui
-Created: September 24, 2024
-
-Description:
-    This shell will manage the storages for all the data
-    of the UML program including saving/loading
-
-List of last date modified:
-
-
-"""
-
 ###################################################################################################
 
 # IMPORTED MODULES #
