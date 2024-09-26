@@ -246,27 +246,50 @@ class UMLCoreManager:
     
     ## RELATIONSHIP RELATED ##
     
+    # Add relationship wrapper #
+    def _add_relationship_wrapper(self, is_loading: bool):
+        print("\nType '<source_class> <destination_class> <type>")
+        print("\nYou must choose one of the types below:")
+        self.__display_type_enum()
+        print("Below is class list:")
+        self.__display_list_of_only_class_name()
+        print("\n==> ", end="")
+        user_input: str = input()
+        # Split the input by space
+        user_input_component = user_input.split()
+        # Get separate class name part and type part
+        source_class_name = user_input_component[0]
+        destination_class_name = (user_input_component[1] if len(user_input_component) > 1 else None)
+        type = user_input_component[2] if len(user_input_component) > 2 else None
+        # Check if user type the correct format
+        if source_class_name and destination_class_name and type:
+            # Check if source class exists or not
+            is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
+            # If the class does not exist, stop
+            if not is_source_class_exist:
+                return
+            # Check if destination class exists or not
+            is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
+            # If the class does not exist, stop
+            if not is_destination_class_exist:
+                return
+            # Check if the relationship already exist or not
+            is_relationship_exist = self.__relationship_exist(source_class_name, destination_class_name)
+            if is_relationship_exist:
+                print(f"\nRelation ship between class '{source_class_name}' to class '{destination_class_name}' has already existed!")
+                return
+            # Checking type, 
+            is_type_exist = self.__validate_type_existence(type, should_exist=True)
+            if not is_type_exist:
+                return
+            # If exists, then finally add relationship
+            self._add_relationship(source_class_name, destination_class_name, type, is_loading)
+        else:
+            print("\nWrong format! Please try again!")
+            
+            
     # Add relationship #
     def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool):
-        # Check if source class exists or not
-        is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
-        # If the class does not exist, stop
-        if not is_source_class_exist:
-            return
-        # Check if destination class exists or not
-        is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
-        # If the class does not exist, stop
-        if not is_destination_class_exist:
-            return
-        # Check if the relationship already exist or not
-        is_relationship_exist = self.__relationship_exist(source_class_name, destination_class_name)
-        if is_relationship_exist:
-            print(f"\nRelation ship between class '{source_class_name}' to class '{destination_class_name}' has already existed!")
-            return
-        # Checking type
-        is_type_exist = self.__validate_type_existence(rel_type, should_exist=True)
-        if not is_type_exist:
-            return
         # Create new relationship
         new_relationship = self.create_relationship(source_class_name, destination_class_name, rel_type)
         # Add new relationship to the list
@@ -492,7 +515,7 @@ class UMLCoreManager:
             if current_source_class_name == source_class_name:
                 return each_relationship
         return None
-    
+            
     #################################################################
     ### JSON FORMAT ###
     
@@ -766,7 +789,7 @@ class UMLCoreManager:
         if is_detail:
             self._display_class_list_detail()
         else:
-            self._display_list_of_only_class_name()
+            self.__display_list_of_only_class_name()
     
     # Display class list #
     def _display_class_list_detail(self, classes_per_row=3):
@@ -806,14 +829,14 @@ class UMLCoreManager:
             print("\n-------------------------------------------------------------------------------------------------\n")
     
     # Display only list of class names #
-    def _display_list_of_only_class_name(self):
+    def __display_list_of_only_class_name(self):
         print("\n|===================|")
         print(f"{"--     Name     --":^20}")
         print("|*******************|")
         class_list = self.__class_list
         for class_name in class_list:
             print(f"{class_name:^20}")
-        print("|===================|")
+        print("|===================|\n")
         
     # Display Class Details #
     def _display_single_class_detail(self, class_name: str):
@@ -833,7 +856,6 @@ class UMLCoreManager:
                 print(f"{key:^20}")
         print("|===================|\n")
         
-    
     # Get class detail #
     def __get_class_detail(self, class_name: str) -> str:
         is_class_exist = self.__validate_class_existence(class_name, should_exist=True)
@@ -900,16 +922,17 @@ class UMLCoreManager:
         self.__class_list = sorted_class_list
         self._display_class_list_detail()
         
-         
     #################################################################
     ### UTILITY FUNCTIONS ###  
     
     # Display type Enum #
     def __display_type_enum(self):
-        print("|=================|")
+        print("\n|=================|")
+        print(f"{"--     Type    --":^20}")
+        print("|*****************|")
         for type in RelationshipType:
             print(f"{type.value:^20}")
-        print("|=================|")
+        print("|=================|\n")
         
     # Saved file check #
     def _saved_file_name_check(self, save_file_name: str) -> bool:

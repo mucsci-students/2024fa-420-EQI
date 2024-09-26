@@ -1,3 +1,4 @@
+
 ###################################################################################################
 
 from typing import List, Dict
@@ -114,6 +115,12 @@ class UMLCommandLineInterface:
     ## RELATIONSHIP RELATED ##
     
     # Add relationship interface #
+    def add_relationship_wrapper(self):
+        """We use this one for our program, which has user input"""
+        ProgramManager._add_relationship_wrapper(is_loading=False)
+        
+    # Add relationship interface #
+    """We use this one for Unit Test to avoid the user input mock"""
     def add_relationship(self, source_class_name: str, destination_class_name: str, type: str):
         ProgramManager._add_relationship(source_class_name, destination_class_name, type, is_loading=False)
     
@@ -193,7 +200,7 @@ class UMLCommandLineInterface:
         print("Type 'delete_method <class_name> <method_name>' to delete a method from the chosen class")
         print("Type 'rename_method <class_name> <current_method_name> <new_name>' to rename a method\n")
         # Relationship
-        print("Type 'add_rel <source_class> <destination_class_name> <relationship_level>' to add relationship and relationship level")
+        print("Type 'add_rel to add relationship and relationship level")
         print("Type 'delete_rel <chosen_class_name> <destination_class_name>' to delete a relationship\n")
         # Class related commands
         print("Type 'list_class' to see the list of all created class(es)")
@@ -298,13 +305,8 @@ class UMLCommandLineInterface:
             #######################################################
 
             # Add relationship
-            elif (
-                command == InterfaceOptions.ADD_REL.value
-                and first_param
-                and second_param
-                and third_param
-            ):
-                self.add_relationship(first_param, second_param, third_param)
+            elif command == InterfaceOptions.ADD_REL.value:
+                self.add_relationship_wrapper()
             # Delete relationship #
             elif (
                 command == InterfaceOptions.DELETE_REL.value
