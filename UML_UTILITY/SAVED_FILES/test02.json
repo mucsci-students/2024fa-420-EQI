@@ -50,6 +50,11 @@
                     "params": []
                 }
             ]
+        },
+        {
+            "name": "Test02",
+            "fields": [],
+            "methods": []
         }
     ],
     "relationships": [
@@ -80,6 +85,11 @@
         },
         {
             "source": "Human",
+            "destination": "Test01",
+            "type": "composition"
+        },
+        {
+            "source": "Test02",
             "destination": "Test01",
             "type": "composition"
         }

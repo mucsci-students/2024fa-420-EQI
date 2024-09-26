@@ -1,4 +1,3 @@
-
 ###################################################################################################
 
 from typing import List, Dict
@@ -25,6 +24,7 @@ class InterfaceOptions(Enum):
     RENAME_METHOD = "rename_method"
     ADD_REL = "add_rel"
     DELETE_REL = "delete_rel"
+    TYPE_MOD = "type_mod"
     LIST_CLASS = "list_class"
     CLASS_DETAIL = "class_detail"
     CLASS_REL = "class_rel"
@@ -128,6 +128,10 @@ class UMLCommandLineInterface:
     def delete_relationship(self, source_class_name: str, destination_class_name: str):
         ProgramManager._delete_relationship(source_class_name, destination_class_name, is_loading=False)
     
+    # Change relationship type #
+    def change_type(self, source_class_name: str, destination_class_name: str, type: str):
+        ProgramManager._change_type(source_class_name, destination_class_name, type)
+    
     ## DISPLAY RELATED ##
     
     # Display saved file list #
@@ -201,7 +205,8 @@ class UMLCommandLineInterface:
         print("Type 'rename_method <class_name> <current_method_name> <new_name>' to rename a method\n")
         # Relationship
         print("Type 'add_rel to add relationship and relationship level")
-        print("Type 'delete_rel <chosen_class_name> <destination_class_name>' to delete a relationship\n")
+        print("Type 'delete_rel <chosen_class_name> <destination_class_name>' to delete a relationship")
+        print("Type 'type_mod <source_class_name> <destination_class_name> <type>' to change the type of a relationship\n")
         # Class related commands
         print("Type 'list_class' to see the list of all created class(es)")
         print("Type 'class_detail <class_name>' to see the detail of the chosen class")
@@ -304,7 +309,7 @@ class UMLCommandLineInterface:
             
             #######################################################
 
-            # Add relationship
+            # Add relationship #
             elif command == InterfaceOptions.ADD_REL.value:
                 self.add_relationship_wrapper()
             # Delete relationship #
@@ -314,7 +319,14 @@ class UMLCommandLineInterface:
                 and second_param
             ):
                 self.delete_relationship(first_param, second_param)
-                
+            # Chang relationship type #
+            elif (
+                command == InterfaceOptions.TYPE_MOD.value 
+                and first_param
+                and second_param
+                and third_param
+            ):
+                self.change_type(first_param, second_param, third_param)
             #######################################################
                 
             # List all the created class names or all class detail #

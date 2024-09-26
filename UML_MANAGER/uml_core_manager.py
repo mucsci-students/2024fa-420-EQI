@@ -263,6 +263,10 @@ class UMLCoreManager:
         type = user_input_component[2] if len(user_input_component) > 2 else None
         # Check if user type the correct format
         if source_class_name and destination_class_name and type:
+            # Check if class names are identical or not
+            if source_class_name == destination_class_name:
+                print("\nYou can't create relationship to the class itself!")
+                return
             # Check if source class exists or not
             is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
             # If the class does not exist, stop
@@ -315,12 +319,41 @@ class UMLCoreManager:
             print(f"\nRelation ship between class '{source_class_name}' to class '{destination_class_name}' does not exist!")
             return
         # Get chosen relationship
-        current_relationship = self.__get_chosen_relationship(source_class_name)
+        current_relationship = self.__get_chosen_relationship(source_class_name, destination_class_name)
         # Remove relationship
         self.__relationship_list.remove(current_relationship)
         if not is_loading:
-            print(f"\nSuccessfully removed relationship between class '{source_class_name}' to class '{destination_class_name}'!")      
-        
+            print(f"\nSuccessfully removed relationship between class '{source_class_name}' to class '{destination_class_name}'!")  
+    
+    # Change type #
+    def _change_type(self, source_class_name: str, destination_class_name: str, new_type: str):
+            # Check if class names are identical or not
+            if source_class_name == destination_class_name:
+                print("\nNo relationship from a class to itself!")
+                return
+            # Check source class existence
+            is_source_class_name_exist = self.__validate_class_existence(source_class_name, should_exist=True)
+            if not is_source_class_name_exist:
+                return
+            # Check destination class existence
+            is_destination_class_name_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
+            if not is_destination_class_name_exist:
+                return
+            # Check if new type is identical to current type:
+            current_type = self.__get_chosen_relationship_type(source_class_name, destination_class_name)
+            if current_type == new_type:
+                print(f"\nNew type '{new_type}' is identical to the existing type of the current relationship!")
+                return
+            # Check if type already existed or not
+            is_type_exist = self.__validate_type_existence(new_type, should_exist=True)
+            if not is_type_exist:
+                return
+            current_relationship = self.__get_chosen_relationship(source_class_name, destination_class_name)
+            if current_relationship is None:
+                return
+            current_relationship._set_type(new_type)
+            print(f"\nSuccessfully changed the type between class '{source_class_name}' and class '{destination_class_name}' to '{new_type}'!")
+            
     #################################################################
     ### HELPER FUNCTIONS ###  
     
@@ -482,9 +515,8 @@ class UMLCoreManager:
     
     # Relationship type check #
     def __type_exist(self, type_name: str) -> bool:
-        for relationship_type in RelationshipType:
-            if relationship_type.value == type_name:
-                return True
+        if type_name in RelationshipType._value2member_map_:
+            return True
         return False
     
     # Validate type name based on whether it should exist or not #
@@ -494,7 +526,7 @@ class UMLCoreManager:
             print(f"\nType '{type_name}' does not exist!")
             return False
         return True
-    
+
     # Check relationship exists or not #
     def __relationship_exist(self, source_class_name: str, destination_class_name: str) -> bool:
         # Get relationship list
@@ -507,13 +539,22 @@ class UMLCoreManager:
         return False
     
     # Get chosen relationship #
-    def __get_chosen_relationship(self, source_class_name: str):
+    def __get_chosen_relationship(self, source_class_name: str, destination_class_name: str) -> Relationship:
         # Get relationship list
         relationship_list = self.__relationship_list
         for each_relationship in relationship_list:
             current_source_class_name = each_relationship._get_source_class()
-            if current_source_class_name == source_class_name:
+            current_destination_class_name = each_relationship._get_destination_class()
+            if current_source_class_name == source_class_name and current_destination_class_name == destination_class_name:
                 return each_relationship
+        return None
+    
+    # Get chosen relationship type #
+    def __get_chosen_relationship_type(self, source_class_name: str, destination_class_name: str) -> str | None:
+        current_relationship = self.__get_chosen_relationship(source_class_name, destination_class_name)
+        if current_relationship is not None:
+            return current_relationship._get_type()
+        print(f"\nNo relationship between class '{source_class_name}' and class '{destination_class_name}'!")
         return None
             
     #################################################################
@@ -856,6 +897,7 @@ class UMLCoreManager:
                 print(f"{key:^20}")
         print("|===================|\n")
         
+    
     # Get class detail #
     def __get_class_detail(self, class_name: str) -> str:
         is_class_exist = self.__validate_class_existence(class_name, should_exist=True)
@@ -922,6 +964,7 @@ class UMLCoreManager:
         self.__class_list = sorted_class_list
         self._display_class_list_detail()
         
+         
     #################################################################
     ### UTILITY FUNCTIONS ###  
     
