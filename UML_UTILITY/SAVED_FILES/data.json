@@ -1,147 +1,80 @@
-[
-    [
+{
+    "classes": [
         {
-            "attr_list": [
+            "name": "Human",
+            "fields": [
                 {
-                    "attr_name": "name"
+                    "name": "Body"
                 },
                 {
-                    "attr_name": "age"
+                    "name": "Head"
                 },
                 {
-                    "attr_name": "eyes"
-                },
-                {
-                    "attr_name": "legs"
+                    "name": "Legs"
                 }
             ],
-            "method_list": [],
-            "class_name": "human"
+            "methods": [
+                {
+                    "name": "Walk",
+                    "params": []
+                },
+                {
+                    "name": "Run",
+                    "params": []
+                }
+            ]
         },
         {
-            "attr_list": [
+            "name": "House",
+            "fields": [
                 {
-                    "attr_name": "4 legs"
+                    "name": "Roof"
                 },
                 {
-                    "attr_name": "tail"
+                    "name": "Garage"
+                },
+                {
+                    "name": "Door"
                 }
             ],
-            "method_list": [],
-            "class_name": "dog"
+            "methods": []
         },
         {
-            "attr_list": [
-                {
-                    "attr_name": "galaxy"
-                },
-                {
-                    "attr_name": "meteorite"
-                }
-            ],
-            "method_list": [],
-            "class_name": "universe"
+            "name": "Cat",
+            "fields": [],
+            "methods": []
         },
         {
-            "attr_list": [
-                {
-                    "attr_name": "roof"
-                },
-                {
-                    "attr_name": "door"
-                },
-                {
-                    "attr_name": "room"
-                },
-                {
-                    "attr_name": "garage"
-                }
-            ],
-            "method_list": [],
-            "class_name": "house"
+            "name": "Dog",
+            "fields": [],
+            "methods": []
         },
         {
-            "attr_list": [
-                {
-                    "attr_name": "race"
-                },
-                {
-                    "attr_name": "environment"
-                }
-            ],
-            "method_list": [],
-            "class_name": "animal"
-        },
-        {
-            "attr_list": [
-                {
-                    "attr_name": "ears"
-                }
-            ],
-            "method_list": [],
-            "class_name": "cat"
-        },
-        {
-            "attr_list": [
-                {
-                    "attr_name": "earth"
-                },
-                {
-                    "attr_name": "mars"
-                }
-            ],
-            "method_list": [],
-            "class_name": "planet"
-        },
-        {
-            "attr_list": [],
-            "method_list": [
-                {
-                    "method_name": "attack",
-                    "parameters": [
-                        "paramone",
-                        "paramtwo"
-                    ]
-                }
-            ],
-            "class_name": "test"
+            "name": "Chicken",
+            "fields": [],
+            "methods": []
         }
     ],
-    [
+    "relationships": [
         {
-            "dest": "human",
-            "relation": "pet",
-            "source": "dog"
+            "source": "Human",
+            "destination": "Cat",
+            "type": "aggregation"
         },
         {
-            "dest": "dog",
-            "relation": "owner",
-            "source": "human"
+            "source": "Human",
+            "destination": "House",
+            "type": "composition"
         },
         {
-            "source": "universe",
-            "dest": "planet",
-            "relation": "parent_class"
+            "source": "Human",
+            "destination": "Dog",
+            "type": "aggregation"
         },
         {
-            "source": "planet",
-            "dest": "universe",
-            "relation": "sub_class"
-        },
-        {
-            "source": "animal",
-            "dest": "cat",
-            "relation": "parent_class"
-        },
-        {
-            "source": "human",
-            "dest": "cat",
-            "relation": "owner"
-        },
-        {
-            "source": "cat",
-            "dest": "human",
-            "relation": "pet"
+            "source": "Dog",
+            "destination": "Cat",
+            "type": "aggregation"
         }
     ]
-]
+}
