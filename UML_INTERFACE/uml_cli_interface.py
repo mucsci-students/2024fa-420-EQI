@@ -158,6 +158,10 @@ class UMLCommandLineInterface:
     def get_active_file(self) -> str:
         return ProgramManager._get_active_file()
     
+    # Saved file name check #
+    def saved_file_name_check(self, file_name: str) -> bool:
+        return ProgramManager._saved_file_name_check(file_name)
+    
     # Clear current active data #
     def clear_current_active_data(self):
         ProgramManager._clear_current_active_data()

@@ -595,7 +595,7 @@ class UMLCoreManager:
         if user_input == "quit":
             print("\nCanceled loading!")
             return
-        is_loading = self.__saved_file_name_check(user_input)
+        is_loading = self._saved_file_name_check(user_input)
         if not is_loading:
             print(f"\nFile '{user_input}.json' does not exist")
             return
@@ -912,7 +912,7 @@ class UMLCoreManager:
         print("|=================|")
         
     # Saved file check #
-    def __saved_file_name_check(self, save_file_name: str) -> bool:
+    def _saved_file_name_check(self, save_file_name: str) -> bool:
         saved_list = self.__storage_manager._get_saved_list()
         for each_pair in saved_list:
             for file_name in each_pair:
