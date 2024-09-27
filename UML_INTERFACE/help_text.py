@@ -111,39 +111,28 @@ def show_help():
 
 def show_manual():
     """Display the manual with pagination depending on the platform."""
-    # Create a header message
-    header_message = "Press 'q' to exit manual.\n\n"
-    # Combine the header with the help text
-    manual_text = header_message + help_text
-
-    # Get the operating system
+    manual_text = "Press 'q' to exit manual.\n\n" + help_text
     current_os = platform.system()
 
     try:
-        # Check if the system is Linux or macOS
+        # Linux and macOS use 'less'
         if current_os in ["Linux", "Darwin"]:
-            # Check if 'less' is available
             if shutil.which("less"):
                 with subprocess.Popen(['less'], stdin=subprocess.PIPE) as proc:
                     proc.communicate(input=manual_text.encode('utf-8'))
             else:
                 print(manual_text)  # Fallback if 'less' isn't available
 
-        # Check if the system is Windows
+        # Windows uses Powershell's 'Out-Host -Paging'
         elif current_os == "Windows":
-            # Check if 'more' is available
-            if shutil.which("more"):
-                with subprocess.Popen(['more'], stdin=subprocess.PIPE, shell=True) as proc:
-                    proc.communicate(input=manual_text.encode('utf-8'))
-            else:
-                print(manual_text)  # Fallback if 'more' isn't available
+            powershell_command = ['powershell', '-Command', 'Out-Host -Paging']
+            with subprocess.Popen(powershell_command, stdin=subprocess.PIPE, shell=True) as proc:
+                proc.communicate(input=manual_text.encode('utf-8'))
 
         else:
-            # If the OS is not recognized, just print the help text
             print(manual_text)
 
     except Exception as e:
-        # In case of any errors, print the manual without pagination
         print(f"Error displaying manual: {e}")
         print(manual_text)
 
