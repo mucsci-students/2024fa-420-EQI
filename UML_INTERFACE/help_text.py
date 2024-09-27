@@ -1,6 +1,4 @@
-import subprocess
-import platform
-import shutil
+import pydoc  # For cross-platform paging
 
 help_text = """
 *** NAME ***
@@ -110,31 +108,9 @@ def show_help():
     print(help_text)
 
 def show_manual():
-    """Display the manual with pagination depending on the platform."""
+    """Display the manual with pagination."""
     manual_text = "Press 'q' to exit manual.\n\n" + help_text
-    current_os = platform.system()
-
-    try:
-        # Linux and macOS use 'less'
-        if current_os in ["Linux", "Darwin"]:
-            if shutil.which("less"):
-                with subprocess.Popen(['less'], stdin=subprocess.PIPE) as proc:
-                    proc.communicate(input=manual_text.encode('utf-8'))
-            else:
-                print(manual_text)  # Fallback if 'less' isn't available
-
-        # Windows uses Powershell's 'Out-Host -Paging'
-        elif current_os == "Windows":
-            powershell_command = ['powershell', '-Command', 'Out-Host -Paging']
-            with subprocess.Popen(powershell_command, stdin=subprocess.PIPE, shell=True) as proc:
-                proc.communicate(input=manual_text.encode('utf-8'))
-
-        else:
-            print(manual_text)
-
-    except Exception as e:
-        print(f"Error displaying manual: {e}")
-        print(manual_text)
+    pydoc.pager(manual_text)
 
 # Usage example
 if __name__ == "__main__":
