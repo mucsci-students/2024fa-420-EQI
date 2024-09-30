@@ -1,10 +1,53 @@
 {
     "classes": [
         {
-            "name": "Test02",
+            "name": "Animal",
+            "fields": [
+                {
+                    "name": "Tails"
+                },
+                {
+                    "name": "Paws"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Run",
+                    "params": [
+                        {
+                            "name": "SpeedUnit"
+                        }
+                    ]
+                },
+                {
+                    "name": "Lick",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "Person",
             "fields": [],
-            "methods": []
+            "methods": [
+                {
+                    "name": "Attack",
+                    "params": [
+                        {
+                            "name": "Damage"
+                        },
+                        {
+                            "name": "Critical"
+                        }
+                    ]
+                }
+            ]
         }
     ],
-    "relationships": []
+    "relationships": [
+        {
+            "source": "Person",
+            "destination": "Animal",
+            "type": "aggregation"
+        }
+    ]
 }

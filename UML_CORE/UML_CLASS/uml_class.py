@@ -1,8 +1,8 @@
-from typing import List
+from typing import List, Dict
 
 from UML_CORE.UML_FIELD.uml_field import UMLField as Field
 from UML_CORE.UML_METHOD.uml_method import UMLMethod as Method
-
+from UML_CORE.UML_PARAMETER.uml_parameter import UMLParameter as Parameter
 class UMLClass:
     #################################################################
     # Uml class constructor
@@ -15,8 +15,9 @@ class UMLClass:
         # Store method name and the related method object
         # so we can easily access to the its details
         self.__method_list: List[Method] = []
-        # # Store source class, destination class, and the type of relationship (e.g. Composition, Aggregation, etc.)
-        # self.__relationship_list: List[Relationship] = []
+        # Store method and its parameters
+        self.__method_and_parameter_list: Dict[str, List[Parameter]] = {}
+                
 
     #################################################################
     # Method to get UML class's data members #
@@ -28,6 +29,9 @@ class UMLClass:
 
     def _get_class_method_list(self) -> List[Method]:
         return self.__method_list
+    
+    def _get_method_and_parameters_list(self) ->Dict[str, List[Parameter]]:
+        return self.__method_and_parameter_list
     
     def __str__(self):
         return f"Class name: {self.__class_name}"
