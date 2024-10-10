@@ -1,8 +1,14 @@
-from UML_INTERFACE.uml_interface import UMLCommandLineInterface as Interface  
+from UML_INTERFACE.uml_controller_interface import UMLInterface as Interface  
+from UML_MVC.UML_VIEW.UML_CLI_VIEW.uml_cli_view import UMLView as CLIView
+
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_view import MainWindow as GUIView
 
 def main():
-    program_interface = Interface()
-    program_interface.main_program_loop()
-
+    # Console View
+    cli_view = CLIView()
+    interface = Interface(cli_view)
+    interface.attach_observer(cli_view)
+    interface.main_program_loop()
+    
 if __name__ == "__main__":
     main()
