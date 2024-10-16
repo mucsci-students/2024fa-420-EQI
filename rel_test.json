@@ -1,0 +1,56 @@
+{
+    "classes": [
+        {
+            "name": "House",
+            "fields": [],
+            "methods": []
+        },
+        {
+            "name": "Human",
+            "fields": [],
+            "methods": []
+        },
+        {
+            "name": "Animal",
+            "fields": [],
+            "methods": []
+        },
+        {
+            "name": "TEST",
+            "fields": [],
+            "methods": []
+        }
+    ],
+    "relationships": [
+        {
+            "source": "Human",
+            "destination": "Human",
+            "type": "Aggregation"
+        },
+        {
+            "source": "Human",
+            "destination": "Animal",
+            "type": "Composition"
+        },
+        {
+            "source": "Animal",
+            "destination": "Animal",
+            "type": "Realization"
+        },
+        {
+            "source": "Animal",
+            "destination": "Human",
+            "type": "Inheritance"
+        },
+        {
+            "source": "House",
+            "destination": "Animal",
+            "type": "Realization"
+        },
+        {
+            "source": "House",
+            "destination": "Human",
+            "type": "Composition"
+        }
+    ]
+}

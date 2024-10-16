@@ -41,8 +41,17 @@
         },
         {
             "name": "Cat",
-            "fields": [],
-            "methods": []
+            "fields": [
+                {
+                    "name": "furry"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "meow",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "Dog",
