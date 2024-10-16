@@ -44,11 +44,11 @@ Clone the project repository from GitHub to your local machine using the appropr
 
 - **Windows (Powershell):**    
   ```bash
-  git clone https://github.com/QUANGBUI24/Prototype4.git; cd Prototype4
+  git clone https://github.com/mucsci-students/2024fa-420-EQI.git; cd 2024fa-420-EQI
 
 - **macOS and Linux:**
   ```bash
-  git clone https://github.com/QUANGBUI24/Prototype4.git && cd Prototype4
+  git clone https://github.com/mucsci-students/2024fa-420-EQI.git && cd 2024fa-420-EQI
  
 ### Step 2: Set Up a Virtual Environment
 
@@ -63,6 +63,7 @@ Clone the project repository from GitHub to your local machine using the appropr
   python3 -m venv venv
 
 ### Step 3: Run the Build Script**
+- **To run GUI**
 - **Windows (Powershell):**  
   ```bash
   python build.py
@@ -71,30 +72,18 @@ Clone the project repository from GitHub to your local machine using the appropr
   ```bash
   python3 build.py
 
-## Unit Tests:
-- **After finishing step 2 in the instructions, type the command below:**
+- **To run CLI**
 - **Windows (Powershell):**  
   ```bash
-  python UML_UNIT_TESTING\test_runner.py 
+  python build.py --cli
 
 - **macOS and Linux:** 
   ```bash
-  python3 UML_UNIT_TESTING/test_runner.py
+  python3 build.py --cli
 
 ## Note:
-
 - **If you want to run the program using Visual Studio Code:**
     - 1 - Open the program folder
     - 2 - Follow step 2 in the instruction on VSCode terminal
     - 3 - Follow step 3 in the instruction on VSCode terminal or 
 open **build.py** file, then hit the run button
-
-- **If you want to run the test using Visual Studio Code:**
-    - 1 - Open the program folder
-    - 2 - Follow step 2 in the instruction on VSCode terminal
-    - 3 - Follow step 3 in the instruction on VSCode terminal or 
-open **test_runner.py** file, then hit the run button
-
-- **If you have crash or unexpected program termination, it will disrupt the active status, below is the solution to fix it:**
-    - 1 - When you open the program again, type command **default** and it will set all the file status to **off** without exiting the program
-    - 2 - Start working as usual
