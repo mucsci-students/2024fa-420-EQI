@@ -41,9 +41,16 @@ class RelationshipType(Enum):
     Enum for specifying different types of UML relationships.
     The values represent the kind of relationship between classes in a UML diagram.
     """
-    AGGREGATION = "aggregation"
-    COMPOSITION = "composition"
-    INHERITANCE = "inheritance"
-    REALIZATION = "realization"
+    AGGREGATION = "Aggregation"
+    COMPOSITION = "Composition"
+    INHERITANCE = "Inheritance"
+    REALIZATION = "Realization"
+    
+class BoxDefaultStat(Enum):
+    BOX_DEFAULT_WIDTH = 170
+    BOX_DEFAULT_HEIGHT = 50
+    BOX_DEFAULT_X = 0
+    BOX_DEFAULT_Y = 0
+    BOX_DEFAULT_MARGIN = 10
     
 ###################################################################################################

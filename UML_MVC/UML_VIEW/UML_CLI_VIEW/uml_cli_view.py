@@ -34,7 +34,7 @@ class UMLView(Observer):
         """
         self.console = Console()
     
-    def update(self, event_type: str, data: Dict, is_loading: bool):
+    def _update(self, event_type: str, data: Dict, is_loading: bool):
         """
         Handles updates to the UML data based on the event type and displays a message to the user.
         
@@ -113,7 +113,7 @@ class UMLView(Observer):
             class_name = data["class_name"]
             method_name = data["method_name"]
             param_name = data["param_name"]
-            self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'{param_name}'[/bold white] from method [bold white]'{method_name}' from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Rename parameter
         elif event_type == InterfaceOptions.RENAME_PARAM.value:
@@ -368,7 +368,7 @@ class UMLView(Observer):
         """
         if len(saved_list) == 0:
             self.console.print("\n[bold red]No saved file exists![/bold red]")
-            return
+            return False
 
         table = Table(title="\n[bold white]Saved Files[bold white]", show_header=True, header_style="bold yellow", border_style="bold dodger_blue2")
         table.add_column("File Name", justify="center", style="bold white")
@@ -379,6 +379,7 @@ class UMLView(Observer):
 
         # Print the saved files table
         self.console.print(table)
+        return True
     
     def _ask_user_choices(self, action: str) -> bool:
         """

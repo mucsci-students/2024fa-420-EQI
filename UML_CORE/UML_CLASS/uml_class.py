@@ -7,7 +7,7 @@ class UMLClass:
     #################################################################
     # Uml class constructor
     # Create UML class with a name including:
-    def __init__(self, class_name: str):
+    def __init__(self, class_name: str = ""):
         self.__class_name = class_name
         # Store field name and the related field object
         # so we can easily access to the its details

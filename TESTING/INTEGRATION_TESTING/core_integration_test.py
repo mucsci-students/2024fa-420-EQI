@@ -13,7 +13,7 @@ from UML_CORE.UML_CLASS.uml_class import UMLClass
 from UML_CORE.UML_FIELD.uml_field import UMLField
 from UML_CORE.UML_METHOD.uml_method import UMLMethod
 from UML_CORE.UML_RELATIONSHIP.uml_relationship import UMLRelationship
-from UML_MANAGER.uml_core_manager import UMLCoreManager
+from UML_CONTROLLER.uml_controller import UMLCoreManager
 
 ###############################################################################
 
