@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import sys
+import argparse
 
 REQUIRED_PYTHON_MAJOR = 3
 REQUIRED_PYTHON_MINOR = 12
@@ -49,7 +50,7 @@ def activate_venv():
         print("\nDependencies installed successfully.\n")
 
 
-def run_program():
+def run_program(cli_mode=False):
     """Runs the main program using the virtual environment's Python."""
     print("Running main.py...\n")
 
@@ -72,7 +73,14 @@ def run_program():
         "==========================================================================================================================================================================================\n"
     )
 
-    result = subprocess.run([python_executable, "main.py"])
+    # Build the command to run the program
+    command = [python_executable, "main.py"]
+    
+    # Add the --cli argument if cli_mode is True
+    if cli_mode:
+        command.append("--cli")
+
+    result = subprocess.run(command)
     if result.returncode != 0:
         print("\nFailed to run the program.")
     else:
@@ -80,6 +88,13 @@ def run_program():
 
 
 if __name__ == "__main__":
+    # Set up argument parser to handle the --cli argument
+    parser = argparse.ArgumentParser(description="Build and run the UML application.")
+    parser.add_argument('--cli', action='store_true', help="Run the program in CLI mode")
+    args = parser.parse_args()
+
     check_python_version()
     activate_venv()
-    run_program()
+
+    # Pass the --cli argument to the main program if provided
+    run_program(cli_mode=args.cli)

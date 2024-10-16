@@ -1,17 +1,20 @@
 [
     {
+        "TEST001": "off"
+    },
+    {
+        "rel_test": "off"
+    },
+    {
+        "gui_save": "off"
+    },
+    {
+        "hey": "off"
+    },
+    {
         "data": "off"
     },
     {
         "format": "off"
-    },
-    {
-        "test": "off"
-    },
-    {
-        "test02": "off"
-    },
-    {
-        "test03": "off"
     }
 ]

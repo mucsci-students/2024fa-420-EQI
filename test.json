@@ -41,8 +41,17 @@
         },
         {
             "name": "Cat",
-            "fields": [],
-            "methods": []
+            "fields": [
+                {
+                    "name": "furry"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "meow",
+                    "params": []
+                }
+            ]
         },
         {
             "name": "Dog",
@@ -55,26 +64,5 @@
             "methods": []
         }
     ],
-    "relationships": [
-        {
-            "source": "Human",
-            "destination": "Cat",
-            "type": "aggregation"
-        },
-        {
-            "source": "Human",
-            "destination": "House",
-            "type": "composition"
-        },
-        {
-            "source": "Human",
-            "destination": "Dog",
-            "type": "aggregation"
-        },
-        {
-            "source": "Dog",
-            "destination": "Cat",
-            "type": "aggregation"
-        }
-    ]
+    "relationships": []
 }

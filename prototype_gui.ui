@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1556</width>
+    <height>1218</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="left_tool_bar">
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="add_class"/>
+   <addaction name="delete_class"/>
+   <addaction name="rename_class"/>
+   <addaction name="separator"/>
+   <addaction name="add_field"/>
+   <addaction name="delete_field"/>
+   <addaction name="rename_field"/>
+   <addaction name="separator"/>
+   <addaction name="add_method"/>
+   <addaction name="delete_method"/>
+   <addaction name="rename_method"/>
+   <addaction name="separator"/>
+   <addaction name="add_param"/>
+   <addaction name="delete_param"/>
+   <addaction name="rename_param"/>
+   <addaction name="replace_param"/>
+   <addaction name="separator"/>
+   <addaction name="add_rel"/>
+   <addaction name="delete_rel"/>
+   <addaction name="change_type"/>
+   <addaction name="separator"/>
+   <addaction name="default_state"/>
+   <addaction name="export_pdf"/>
+   <addaction name="export_png"/>
+   <addaction name="reset_view"/>
+   <addaction name="change_grid_color"/>
+   <addaction name="toggle_mode"/>
+   <addaction name="toggle_grid"/>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1556</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="Open"/>
+    <addaction name="separator"/>
+    <addaction name="Save"/>
+    <addaction name="SaveAs"/>
+    <addaction name="separator"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionHehe">
+   <property name="text">
+    <string>Hehe</string>
+   </property>
+  </action>
+  <action name="New">
+   <property name="text">
+    <string>New...</string>
+   </property>
+   <property name="statusTip">
+    <string>Create new file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="Open">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+   <property name="statusTip">
+    <string>Open saved file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="Save">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="statusTip">
+    <string>Save data to current file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="SaveAs">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+   <property name="statusTip">
+    <string>Create new saved file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="Quit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Quit program</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+  </action>
+  <action name="actionEdit_Mode">
+   <property name="text">
+    <string>Edit Mode</string>
+   </property>
+  </action>
+  <action name="actionView_Mode">
+   <property name="text">
+    <string>View Mode</string>
+   </property>
+  </action>
+  <action name="Edit">
+   <property name="text">
+    <string>Edit Mode</string>
+   </property>
+   <property name="statusTip">
+    <string>Enter the edit mode</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionView_Mode_2">
+   <property name="text">
+    <string>View Mode</string>
+   </property>
+  </action>
+  <action name="actionHelp_Me">
+   <property name="text">
+    <string>Help Me</string>
+   </property>
+  </action>
+  <action name="Copy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="Paste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+   <property name="statusTip">
+    <string>Paste data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="Instructions">
+   <property name="text">
+    <string>Instructions</string>
+   </property>
+   <property name="statusTip">
+    <string>See instructions</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="Cut">
+   <property name="text">
+    <string>Cut</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="About">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="add_class">
+   <property name="text">
+    <string>Add Class</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Shift+N</string>
+   </property>
+  </action>
+  <action name="toggle_grid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle Grid</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="change_grid_color">
+   <property name="text">
+    <string>Change Grid Color</string>
+   </property>
+  </action>
+  <action name="delete_class">
+   <property name="text">
+    <string>Delete Class</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Del</string>
+   </property>
+  </action>
+  <action name="reset_view">
+   <property name="text">
+    <string>Reset View</string>
+   </property>
+  </action>
+  <action name="toggle_mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle Mode</string>
+   </property>
+  </action>
+  <action name="rename_class">
+   <property name="text">
+    <string>Rename Class</string>
+   </property>
+  </action>
+  <action name="add_field">
+   <property name="text">
+    <string>Add Field</string>
+   </property>
+  </action>
+  <action name="delete_field">
+   <property name="text">
+    <string>Delete Field</string>
+   </property>
+  </action>
+  <action name="rename_field">
+   <property name="text">
+    <string>Rename Field</string>
+   </property>
+  </action>
+  <action name="add_method">
+   <property name="text">
+    <string>Add Method</string>
+   </property>
+  </action>
+  <action name="delete_method">
+   <property name="text">
+    <string>Delete Method</string>
+   </property>
+  </action>
+  <action name="rename_method">
+   <property name="text">
+    <string>Rename Method</string>
+   </property>
+  </action>
+  <action name="add_param">
+   <property name="text">
+    <string>Add Parameter</string>
+   </property>
+  </action>
+  <action name="delete_param">
+   <property name="text">
+    <string>Delete Parameter</string>
+   </property>
+  </action>
+  <action name="rename_param">
+   <property name="text">
+    <string>Rename Parameter</string>
+   </property>
+  </action>
+  <action name="replace_param">
+   <property name="text">
+    <string>Replace Parameter</string>
+   </property>
+  </action>
+  <action name="export_pdf">
+   <property name="text">
+    <string>PDF</string>
+   </property>
+  </action>
+  <action name="export_png">
+   <property name="text">
+    <string>PNG</string>
+   </property>
+  </action>
+  <action name="default_state">
+   <property name="text">
+    <string>Default State</string>
+   </property>
+  </action>
+  <action name="add_rel">
+   <property name="text">
+    <string>Add Relationship</string>
+   </property>
+  </action>
+  <action name="delete_rel">
+   <property name="text">
+    <string>Delete Relationship</string>
+   </property>
+  </action>
+  <action name="change_type">
+   <property name="text">
+    <string>Change Relationship Type</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

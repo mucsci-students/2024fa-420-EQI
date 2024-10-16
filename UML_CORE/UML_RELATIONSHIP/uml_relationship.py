@@ -3,9 +3,9 @@ class UMLRelationship:
     # Create a relationship between classes
     def __init__(
         self,
-        source_class: str,
-        destination_class: str,
-        rel_type: str
+        source_class: str = "",
+        destination_class: str = "",
+        rel_type: str = ""
     ):
         self.__source_class = source_class
         self.__destination_class = destination_class

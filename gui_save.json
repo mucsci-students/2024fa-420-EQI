@@ -1,0 +1,93 @@
+{
+    "classes": [
+        {
+            "name": "TEST",
+            "fields": [
+                {
+                    "name": "Field_1"
+                },
+                {
+                    "name": "Field_2"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Method_1",
+                    "params": [
+                        {
+                            "name": "Param_1"
+                        },
+                        {
+                            "name": "Param_2"
+                        }
+                    ]
+                },
+                {
+                    "name": "Method_2",
+                    "params": [
+                        {
+                            "name": "Param_3"
+                        },
+                        {
+                            "name": "Param_4"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "TEST_2",
+            "fields": [
+                {
+                    "name": "1_Field"
+                },
+                {
+                    "name": "2_Field"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "1_Method",
+                    "params": [
+                        {
+                            "name": "1_Param"
+                        },
+                        {
+                            "name": "2_Param"
+                        }
+                    ]
+                },
+                {
+                    "name": "2_Method",
+                    "params": [
+                        {
+                            "name": "3_Param"
+                        },
+                        {
+                            "name": "4_Param"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "TEST_3",
+            "fields": [
+                {
+                    "name": "Field_Test_1"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Method_Test_1",
+                    "params": [
+                        {
+                            "name": "Param_Test_1"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "relationships": []
+}

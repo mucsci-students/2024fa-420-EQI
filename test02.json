@@ -2,8 +2,32 @@
     "classes": [
         {
             "name": "Animal",
-            "fields": [],
-            "methods": []
+            "fields": [
+                {
+                    "name": "Ears"
+                },
+                {
+                    "name": "Eyes"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Crawl",
+                    "params": [
+                        {
+                            "name": "crawl_speed"
+                        }
+                    ]
+                },
+                {
+                    "name": "Lick",
+                    "params": [
+                        {
+                            "name": "lick_speed"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "name": "Human",
@@ -70,41 +94,5 @@
             "methods": []
         }
     ],
-    "relationships": [
-        {
-            "source": "Human",
-            "destination": "Animal",
-            "type": "composition"
-        },
-        {
-            "source": "Animal",
-            "destination": "Human",
-            "type": "aggregation"
-        },
-        {
-            "source": "Animal",
-            "destination": "Test01",
-            "type": "aggregation"
-        },
-        {
-            "source": "Test01",
-            "destination": "Human",
-            "type": "composition"
-        },
-        {
-            "source": "Test01",
-            "destination": "Animal",
-            "type": "realization"
-        },
-        {
-            "source": "Human",
-            "destination": "Test01",
-            "type": "composition"
-        },
-        {
-            "source": "Test02",
-            "destination": "Test01",
-            "type": "composition"
-        }
-    ]
+    "relationships": []
 }
