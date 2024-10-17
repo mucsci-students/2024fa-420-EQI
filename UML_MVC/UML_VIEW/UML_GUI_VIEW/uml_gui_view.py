@@ -4,7 +4,7 @@
 
 from PyQt5 import uic
 from PyQt5 import QtWidgets
-from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_grid import GridGraphicsView
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUIView
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 from UML_MVC.uml_observer import UMLObserver as Observer
 
@@ -31,7 +31,8 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         uic.loadUi('prototype_gui.ui', self)
 
         # Create a grid view where UML class boxes and relationships will be displayed, and set it as the central widget
-        self.grid_view = GridGraphicsView(self.interface)
+        self.grid_view = GUIView(self.interface)
+        self.grid_view.set_grid_visible(False)
         self.setCentralWidget(self.grid_view)
         self.box = UMLClassBox(self.interface)
 
@@ -40,16 +41,11 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         # Find and connect buttons to their respective actions for user interaction
         # These buttons control the visibility and appearance of the UML grid and handle adding/removing UML components
 
-        ## GRID/VIEW BUTTONS ##
-        self.toggle_grid_button = self.findChild(QtWidgets.QAction, "toggle_grid")  # Toggle grid visibility
-        self.change_grid_color_button = self.findChild(QtWidgets.QAction, "change_grid_color")  # Change grid color
-        self.reset_view_button = self.findChild(QtWidgets.QAction, "reset_view")  # Reset the view
+        ## DARK/LIGHT MODE BUTTONS ##
+
         self.toggle_mode_button = self.findChild(QtWidgets.QAction, "toggle_mode")  # Toggle light/dark mode
 
         # Connect grid/view actions to their respective methods
-        self.toggle_grid_button.triggered.connect(self.toggle_grid_method)
-        self.change_grid_color_button.triggered.connect(self.change_gridColor_method)
-        self.reset_view_button.triggered.connect(self.reset_view_method)
         self.toggle_mode_button.triggered.connect(self.toggle_mode_method)
 
         ## UML DIAGRAM BUTTONS ##
@@ -121,18 +117,12 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         self.save_action.triggered.connect(self.save_gui)
 
         #################################################################
-        # Action to reset to default state (session end)
-        self.default_state_action = self.findChild(QtWidgets.QAction, "default_state")  # End session and reset
-        self.default_state_action.triggered.connect(self.end_session_gui)
-
+        self.new_file_action = self.findChild(QtWidgets.QAction, "New")
+        self.new_file_action.triggered.connect(self.new_file_gui)
+        
         #################################################################
-        # Actions for exporting diagrams as images (PDF/PNG)
-        self.export_pdf_action = self.findChild(QtWidgets.QAction, "export_pdf")  # Export as PDF
-        self.export_png_action = self.findChild(QtWidgets.QAction, "export_png")  # Export as PNG
-
-        # Connect export actions to their respective methods
-        self.export_pdf_action.triggered.connect(self.export_pdf_gui)
-        self.export_png_action.triggered.connect(self.export_png_gui)
+        self.help_action = self.findChild(QtWidgets.QAction, "Help")
+        self.help_action.triggered.connect(self.show_instructions)
 
     #################################################################
     ### EVENT FUNCTIONS ###
@@ -263,60 +253,20 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         """
         self.grid_view.save_gui()
 
-    def end_session_gui(self):
+    def new_file_gui(self):
         """
         End the current session and reset to the default state.
         """
-        self.grid_view.end_session()
+        self.grid_view.new_file()
 
     #################################################################
-    ## GRID EVENTS ##
-    def toggle_grid_method(self, checked):
-        """
-        Toggle the visibility of the grid in the view.
-
-        Parameters:
-        - checked (bool): True if the grid should be visible, False otherwise.
-        """
-        self.grid_view.set_grid_visible(checked)
-
-    def change_gridColor_method(self):
-        """
-        Open a color dialog to change the grid color.
-        """
-        color = QtWidgets.QColorDialog.getColor(
-            initial=self.grid_view.grid_color,
-            parent=self,
-            title="Select Grid Color"
-        )
-        if color.isValid():
-            self.grid_view.set_grid_color(color)
-
-    def reset_view_method(self):
-        """
-        Reset the grid view to the default state (default zoom, pan, etc.).
-        """
-        self.grid_view.reset_view()
+    ## DARK/LIGHT MODE EVENTS ##
 
     def toggle_mode_method(self):
         """
         Toggle between light and dark modes in the application.
         """
         self.grid_view.toggle_mode()
-
-    #################################################################
-    ## EXPORT EVENTS ##
-    def export_pdf_gui(self):
-        """
-        Export the UML diagram as a PDF.
-        """
-        self.grid_view.export_pdf()
-
-    def export_png_gui(self):
-        """
-        Export the UML diagram as a PNG image.
-        """
-        self.grid_view.export_png()
 
     #################################################################
     ## WINDOW EVENTS ##
@@ -328,14 +278,33 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         - event (QCloseEvent): The event that occurs when closing the window.
         """
         reply = QtWidgets.QMessageBox.question(self, "Exit",
-                                               "Are you sure you want to quit?",
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                               QtWidgets.QMessageBox.No)
+                                               "Any unsaved work will be deleted! Are you sure you want to quit?",
+                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Save)
 
         # If the user chooses 'Yes', the program will exit
         if reply == QtWidgets.QMessageBox.Yes:
             print("Program is exiting...")
             self.interface.exit()  # Call interface exit logic
             event.accept()  # Accept the close event to exit the application
+        elif reply == QtWidgets.QMessageBox.Save:
+            self.grid_view.save_gui()
         else:
             event.ignore()  # Ignore the close event to keep the application running
+            
+    def show_instructions(self):
+        instruction_text = """
+        Instructions:
+        1. Use the left mouse button to select and drag class box.
+        2. Right-click to open the context menu with additional options.
+        3. Use the toolbar for more actions like save, load, and edit.
+        4. Press Ctrl+S to quickly save your progress.
+        """
+        
+        # Create the pop-up window
+        msg_box = QtWidgets.QMessageBox()
+        msg_box.setWindowTitle("Instructions")
+        msg_box.setText(instruction_text)
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        
+        # Show the pop-up window
+        msg_box.exec_()

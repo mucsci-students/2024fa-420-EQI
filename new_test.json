@@ -1,0 +1,91 @@
+{
+    "classes": [
+        {
+            "name": "Human",
+            "fields": [
+                {
+                    "name": "body"
+                },
+                {
+                    "name": "ears"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Attack",
+                    "params": [
+                        {
+                            "name": "Damage"
+                        }
+                    ]
+                },
+                {
+                    "name": "Run",
+                    "params": [
+                        {
+                            "name": "Speed"
+                        },
+                        {
+                            "name": "Stamina"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Animal",
+            "fields": [
+                {
+                    "name": "heart"
+                },
+                {
+                    "name": "habbit"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "Bite",
+                    "params": [
+                        {
+                            "name": "Damage"
+                        },
+                        {
+                            "name": "Bite_Rate"
+                        }
+                    ]
+                },
+                {
+                    "name": "Lick",
+                    "params": [
+                        {
+                            "name": "Speed"
+                        },
+                        {
+                            "name": "Critical"
+                        },
+                        {
+                            "name": "Strength"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "source": "Human",
+            "destination": "Animal",
+            "type": "Composition"
+        },
+        {
+            "source": "Human",
+            "destination": "Human",
+            "type": "Realization"
+        },
+        {
+            "source": "Animal",
+            "destination": "Human",
+            "type": "Composition"
+        }
+    ]
+}
