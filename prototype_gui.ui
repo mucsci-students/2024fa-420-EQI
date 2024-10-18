@@ -15,11 +15,12 @@
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QToolBar" name="left_tool_bar">
+  <widget class="QToolBar" name="toolBar">
    <property name="font">
     <font>
-     <family>MV Boli</family>
-     <pointsize>14</pointsize>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
     </font>
    </property>
    <property name="windowTitle">
@@ -31,55 +32,13 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="add_class"/>
-   <addaction name="delete_class"/>
-   <addaction name="rename_class"/>
+   <addaction name="New"/>
+   <addaction name="Open"/>
+   <addaction name="Save"/>
+   <addaction name="SaveAs"/>
    <addaction name="separator"/>
-   <addaction name="add_field"/>
-   <addaction name="delete_field"/>
-   <addaction name="rename_field"/>
-   <addaction name="separator"/>
-   <addaction name="add_method"/>
-   <addaction name="delete_method"/>
-   <addaction name="rename_method"/>
-   <addaction name="separator"/>
-   <addaction name="add_param"/>
-   <addaction name="delete_param"/>
-   <addaction name="rename_param"/>
-   <addaction name="replace_param"/>
-   <addaction name="separator"/>
-   <addaction name="add_rel"/>
-   <addaction name="delete_rel"/>
-   <addaction name="change_type"/>
-   <addaction name="separator"/>
-   <addaction name="default_state"/>
-   <addaction name="export_pdf"/>
-   <addaction name="export_png"/>
-   <addaction name="reset_view"/>
-   <addaction name="change_grid_color"/>
    <addaction name="toggle_mode"/>
-   <addaction name="toggle_grid"/>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1556</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="Open"/>
-    <addaction name="separator"/>
-    <addaction name="Save"/>
-    <addaction name="SaveAs"/>
-    <addaction name="separator"/>
-   </widget>
-   <addaction name="menuFile"/>
+   <addaction name="Help"/>
   </widget>
   <action name="actionSave">
    <property name="text">
@@ -102,6 +61,10 @@
    </property>
   </action>
   <action name="New">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/blue-document.png</normaloff>UML_ICONS/blue-document.png</iconset>
+   </property>
    <property name="text">
     <string>New...</string>
    </property>
@@ -113,6 +76,10 @@
    </property>
   </action>
   <action name="Open">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/open-folder.png</normaloff>UML_ICONS/open-folder.png</iconset>
+   </property>
    <property name="text">
     <string>Open...</string>
    </property>
@@ -124,6 +91,10 @@
    </property>
   </action>
   <action name="Save">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/floppy-disk.png</normaloff>UML_ICONS/floppy-disk.png</iconset>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
@@ -135,6 +106,10 @@
    </property>
   </action>
   <action name="SaveAs">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/Save-as-icon.png</normaloff>UML_ICONS/Save-as-icon.png</iconset>
+   </property>
    <property name="text">
     <string>Save As...</string>
    </property>
@@ -161,25 +136,14 @@
     <string>F4</string>
    </property>
   </action>
-  <action name="actionEdit_Mode">
+  <action name="toggle_mode">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/bulb.png</normaloff>
+     <normalon>bulb.png</normalon>UML_ICONS/bulb.png</iconset>
+   </property>
    <property name="text">
-    <string>Edit Mode</string>
-   </property>
-  </action>
-  <action name="actionView_Mode">
-   <property name="text">
-    <string>View Mode</string>
-   </property>
-  </action>
-  <action name="Edit">
-   <property name="text">
-    <string>Edit Mode</string>
-   </property>
-   <property name="statusTip">
-    <string>Enter the edit mode</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+D</string>
+    <string>Dark/Light Mode</string>
    </property>
   </action>
   <action name="actionView_Mode_2">
@@ -214,30 +178,6 @@
     <string>Ctrl+V</string>
    </property>
   </action>
-  <action name="Instructions">
-   <property name="text">
-    <string>Instructions</string>
-   </property>
-   <property name="statusTip">
-    <string>See instructions</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+I</string>
-   </property>
-  </action>
-  <action name="Cut">
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
-  </action>
-  <action name="About">
-   <property name="text">
-    <string>About</string>
-   </property>
-  </action>
   <action name="add_class">
    <property name="text">
     <string>Add Class</string>
@@ -269,11 +209,6 @@
     </font>
    </property>
   </action>
-  <action name="change_grid_color">
-   <property name="text">
-    <string>Change Grid Color</string>
-   </property>
-  </action>
   <action name="delete_class">
    <property name="text">
     <string>Delete Class</string>
@@ -286,22 +221,6 @@
    </property>
    <property name="shortcut">
     <string>Del</string>
-   </property>
-  </action>
-  <action name="reset_view">
-   <property name="text">
-    <string>Reset View</string>
-   </property>
-  </action>
-  <action name="toggle_mode">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Toggle Mode</string>
    </property>
   </action>
   <action name="rename_class">
@@ -359,21 +278,6 @@
     <string>Replace Parameter</string>
    </property>
   </action>
-  <action name="export_pdf">
-   <property name="text">
-    <string>PDF</string>
-   </property>
-  </action>
-  <action name="export_png">
-   <property name="text">
-    <string>PNG</string>
-   </property>
-  </action>
-  <action name="default_state">
-   <property name="text">
-    <string>Default State</string>
-   </property>
-  </action>
   <action name="add_rel">
    <property name="text">
     <string>Add Relationship</string>
@@ -387,6 +291,15 @@
   <action name="change_type">
    <property name="text">
     <string>Change Relationship Type</string>
+   </property>
+  </action>
+  <action name="Help">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/help-web-button.png</normaloff>UML_ICONS/help-web-button.png</iconset>
+   </property>
+   <property name="text">
+    <string>Help</string>
    </property>
   </action>
  </widget>

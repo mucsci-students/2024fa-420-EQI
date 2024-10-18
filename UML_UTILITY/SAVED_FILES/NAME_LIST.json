@@ -9,12 +9,12 @@
         "gui_save": "off"
     },
     {
-        "hey": "off"
-    },
-    {
         "data": "off"
     },
     {
-        "format": "off"
+        "new_test": "off"
+    },
+    {
+        "hey": "off"
     }
 ]

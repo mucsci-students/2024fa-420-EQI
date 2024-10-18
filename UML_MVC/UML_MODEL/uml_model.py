@@ -18,7 +18,7 @@ from UML_CORE.UML_PARAMETER.uml_parameter import UMLParameter as Parameter
 from UML_CORE.UML_RELATIONSHIP.uml_relationship import UMLRelationship as Relationship
 from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager as Storage
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions, RelationshipType
-from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_grid import GridGraphicsView as GUIView
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUIView
 # Get the root directory where the main.py file exists
 root_directory = os.path.dirname(os.path.abspath(__file__))  # This gets the current script's directory
 root_directory = os.path.abspath(os.path.join(root_directory, "..", ".."))  # Move to the root directory (where main.py is)
@@ -142,10 +142,8 @@ class UMLModel:
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name):
+            return False
         # Check if the class already exists
         is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=False)
         # If the class already exists, exit the function
@@ -169,10 +167,8 @@ class UMLModel:
             class_name (str): The name of the class to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name):
+            return False
         # Check if the class exists
         is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         # If the class does not exist, exit the function
@@ -198,15 +194,9 @@ class UMLModel:
             new_name (str): The new name for the class.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(current_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current class name [bold white]'{current_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New class name [bold white]'{new_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=current_name, new_name=new_name):
+            return False
+
         # Check if renaming is possible (class name validation)
         is_able_to_rename = self.__check_class_rename(current_name, new_name)
         if not is_able_to_rename:
@@ -235,15 +225,8 @@ class UMLModel:
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Field name [bold white]'{field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=field_name):
+            return False
         # Check if both the class and the field do not already exist
         is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=field_name, class_should_exist=True, field_should_exist=False)
         if not is_class_and_field_exist:
@@ -268,10 +251,8 @@ class UMLModel:
             field_name (str): The name of the field to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=field_name):
+            return False
         # Check if both the class and the field exist
         is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=field_name, class_should_exist=True, field_should_exist=True)
         if not is_class_and_field_exist:
@@ -297,20 +278,8 @@ class UMLModel:
             new_field_name (str): The new name for the field.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current Field name [bold white]'{current_field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New field name [bold white]'{new_field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=current_field_name, new_name=new_field_name):
+            return False
         # Check if renaming is possible (field name validation)
         is_able_to_rename = self.__check_field_or_method_rename(class_name, current_field_name, new_field_name, is_field=True)
         if not is_able_to_rename:
@@ -336,15 +305,8 @@ class UMLModel:
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=method_name):
+            return False
         # Check if the class exists and the method does not already exist
         is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=False)
         if not is_class_and_method_exist:
@@ -372,15 +334,8 @@ class UMLModel:
             method_name (str): The name of the method to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=method_name):
+            return False
         # Check if both the class and the method exist
         is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
         if not is_class_and_method_exist:
@@ -408,20 +363,8 @@ class UMLModel:
             new_method_name (str): The new name for the method.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current method name [bold white]'{current_method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New method name [bold white]'{new_method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=current_method_name, new_name=new_method_name):
+            return False
         # Check if renaming is possible (method name validation)
         is_able_to_rename = self.__check_field_or_method_rename(class_name, current_method_name, new_method_name, is_field=False)
         if not is_able_to_rename:
@@ -451,20 +394,8 @@ class UMLModel:
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Parameter name [bold white]'{parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=method_name, parameter_name=parameter_name):
+            return False
         # Check if the class, method, and parameter do not already exist
         is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
         if not is_class_and_method_and_parameter_exist:
@@ -489,20 +420,8 @@ class UMLModel:
             parameter_name (str): The name of the parameter to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Parameter name [bold white]'{parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=method_name, parameter_name=parameter_name):
+            return False
         # Check if the class, method, and parameter exist
         is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True)
         if not is_class_and_method_and_parameter_exist:
@@ -528,26 +447,8 @@ class UMLModel:
             new_parameter_name (str): The new name for the parameter.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current parameter name [bold white]'{new_parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New parameter name [bold white]'{new_parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        
+        if not self._is_valid_input(class_name=class_name, method_name=method_name, parameter_name=current_parameter_name, new_name=new_parameter_name):
+            return False
         # Validate that the class, method, and current parameter exist, and that the new parameter does not already exist
         is_class_and_method_and_current_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=current_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True)
         is_new_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=new_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
@@ -571,15 +472,8 @@ class UMLModel:
             method_name (str): The name of the method whose parameter list will be replaced.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, method_name=method_name):
+            return False
         # Check if the class and method exist
         is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
         if not is_class_and_method_exist:
@@ -592,9 +486,7 @@ class UMLModel:
         unique_param_names = list(set(new_param_name_list))
         for param in unique_param_names:
             # Check valid input #
-            is_input_valid = self._is_valid_input(param)
-            if not is_input_valid:
-                self.__console.print(f"\n[bold red]Parameter name [bold white]'{param}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
+            if not self._is_valid_input(parameter_name=param):
                 return
         if len(unique_param_names) != len(new_param_name_list):
             self.__console.print("\n[bold red]Duplicate parameters detected:[/bold red]")
@@ -661,20 +553,8 @@ class UMLModel:
         destination_class_name = user_input_component[1] if len(user_input_component) > 1 else None
         type = user_input_component[2] if len(user_input_component) > 2 else None
         # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(type)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Type name [bold white]'{type}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, type=type):
+            return 
         if source_class_name and destination_class_name and type:
             # Validate class and relationship existence
             is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
@@ -738,15 +618,8 @@ class UMLModel:
             destination_class_name (str): The name of the destination class.
         """
         # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name):
+            return False
         # Validate class existence and relationship
         is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
         is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
@@ -777,20 +650,8 @@ class UMLModel:
             new_type (str): The new type for the relationship (e.g., change from aggregation to composition).
         """
         # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_type)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Type name [bold white]'{new_type}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, new_name=new_type):
+            return False
         is_source_class_name_exist = self.__validate_class_existence(source_class_name, should_exist=True)
         is_destination_class_name_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
         if not is_source_class_name_exist or not is_destination_class_name_exist:
@@ -1391,6 +1252,7 @@ class UMLModel:
         saved_list_gui = self.__storage_manager._get_saved_list_gui()
         self.__storage_manager._update_saved_list_gui(saved_list_gui)
         # Save data to JSON via the GUI
+        self.__storage_manager._save_data_to_json(file_name, main_data)
         self.__storage_manager._save_data_to_json_gui(full_path, main_data)
 
     # Load data #
@@ -1438,6 +1300,7 @@ class UMLModel:
         is_file_exist = self._check_saved_file_exist(file_name)
         if not is_file_exist:
             self.__storage_manager._add_name_to_saved_file(file_name)
+        self.__storage_manager._save_data_to_json(file_name, main_data)
         self.__update_data_members_gui(main_data, graphical_view)
         self.__check_file_and_set_status(file_name)
         self._check_file_and_set_status_gui(file_path)
@@ -1646,7 +1509,7 @@ class UMLModel:
         return False
     
     # End session and return to blank state #
-    def _end_session(self):
+    def _new_file(self):
         """
         Ends the current session and resets the program to its default blank state by resetting all data and turning off active files.
         """
@@ -1904,23 +1767,42 @@ class UMLModel:
         # Display updated UML data
         self.__user_view._display_uml_data(self.__main_data)
         
-    def _is_valid_input(self, user_input):
+    def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, type=None, new_name=None):
         """
-        Check if the user input contains only letters, numbers, and underscores.
+        Check if the user input contains only letters, numbers, and underscores for all provided parameters.
 
         Args:
-        user_input (str): The input string to validate.
+            class_name (str, optional): The name of the class to validate.
+            field_name (str, optional): The name of the field to validate.
+            method_name (str, optional): The name of the method to validate.
+            parameter_name (str, optional): The name of the parameter to validate.
+            source_class (str, optional): The source class name to validate.
+            destination_class (str, optional): The destination class name to validate.
+            type (str, optional): The type of relationship.
+            new_name (str, optional): The new name to validate (e.g., for renaming a class).
 
         Returns:
-        bool: True if input is valid (contains only a-z, A-Z, 0-9, and _), False otherwise.
+            bool: True if all provided inputs are valid (contain only a-z, A-Z, 0-9, and _), False otherwise.
         """
         # Regular expression pattern to allow only a-z, A-Z, 0-9, and _
         pattern = r'^[a-zA-Z0-9_]+$'
+        
+        inputs = {
+            "class_name": class_name,
+            "field_name": field_name, 
+            "method_name": method_name, 
+            "parameter_name": parameter_name, 
+            "source_class" : source_class,
+            "destination_class" : destination_class,
+            "type" : type,
+            "new_name" : new_name,
+        }
 
-        # Match the input string against the pattern
-        if re.match(pattern, user_input):
-            return True
-        else:
-            return False
+        for input_type, user_input in inputs.items():
+            if user_input is not None and not re.match(pattern, user_input):
+                self.__console.print(f"\n[bold red]Input for {input_type} [bold white]'{user_input}'[/bold white] is invalid! "
+                                    "Only letters, numbers, and underscores are allowed![/bold red]")
+                return False
+        return True
                            
 ###################################################################################################

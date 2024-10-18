@@ -1,0 +1,15 @@
+{
+    "classes": [
+        {
+            "name": "Human",
+            "fields": [],
+            "methods": []
+        },
+        {
+            "name": "Animal",
+            "fields": [],
+            "methods": []
+        }
+    ],
+    "relationships": []
+}

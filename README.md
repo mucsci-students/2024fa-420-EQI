@@ -44,11 +44,11 @@ Clone the project repository from GitHub to your local machine using the appropr
 
 - **Windows (Powershell):**    
   ```bash
-  git clone https://github.com/mucsci-students/2024fa-420-EQI.git; cd 2024fa-420-EQI
+  git clone https://github.com/QUANGBUI24/Prototype4.git; cd Prototype4
 
 - **macOS and Linux:**
   ```bash
-  git clone https://github.com/mucsci-students/2024fa-420-EQI.git && cd 2024fa-420-EQI
+  git clone https://github.com/QUANGBUI24/Prototype4.git && cd Prototype4
  
 ### Step 2: Set Up a Virtual Environment
 

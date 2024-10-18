@@ -745,16 +745,13 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         Handle mouse release events to stop dragging or resizing the UML box.
         
-        This method stops the resizing or dragging action once the mouse is released, 
-        and it may snap the box to the nearest grid position if the box is being dragged.
+        This method stops the resizing or dragging action once the mouse is released.
 
         Parameters:
         - event (QGraphicsSceneMouseEvent): The mouse event.
         """
-        # If the box was being dragged, snap it to the nearest grid and stop dragging
         if self.is_box_dragged:
             self.is_box_dragged = False  # Reset dragging flag
-            self.snap_to_grid()  # Snap the box to the nearest grid position
             event.accept()
         # If the box was being resized, stop the resizing process
         elif self.is_resizing:
@@ -765,27 +762,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
 
     #################################################################
     ### UTILITY FUNCTIONS ###
-    
-    def snap_to_grid(self, current_grid_size=15):
-        """
-        Snap the UML box to the nearest grid position.
-
-        This method calculates the nearest grid coordinates based on the current position of the box
-        and adjusts the position to align it with the grid. The grid size can be adjusted using the parameter.
-
-        Parameters:
-        - current_grid_size (int): The size of the grid to snap to (default is 20).
-        """
-        grid_size = current_grid_size * self.transform().m11()  # Adjust for zoom factor
-        pos = self.pos()  # Get the current position of the box
-
-        # Calculate new x and y positions by snapping to the nearest grid points
-        new_x = round(pos.x() / grid_size) * grid_size
-        new_y = round(pos.y() / grid_size) * grid_size
-
-        # Update the box's position and internal content
-        self.setPos(new_x, new_y)
-        self.update_box()
 
     def get_field_text_height(self):
         """
