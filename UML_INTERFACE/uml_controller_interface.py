@@ -29,7 +29,7 @@ class UMLInterface:
         Initializes the UMLInterface with the specified view. Each UMLInterface instance maintains its 
         own program components, including the model, controller, and console, which makes testing easier.
 
-        Args:
+        Parameters:
             view: The view object responsible for presenting information to the user.
         """
         self.Console = Console()  # Rich console instance for formatted output
@@ -47,7 +47,7 @@ class UMLInterface:
         """
         Creates a new UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be created.
 
         Returns:
@@ -60,7 +60,7 @@ class UMLInterface:
         """
         Creates a new field for a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             field_name (str): The name of the field to be created.
 
         Returns:
@@ -73,7 +73,7 @@ class UMLInterface:
         """
         Creates a new method for a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             method_name (str): The name of the method to be created.
 
         Returns:
@@ -86,7 +86,7 @@ class UMLInterface:
         """
         Creates a new parameter for a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             parameter_name (str): The name of the parameter to be created.
 
         Returns:
@@ -99,7 +99,7 @@ class UMLInterface:
         """
         Creates a new relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class (str): The name of the source class.
             destination_class (str): The name of the destination class.
             rel_type (str): The type of relationship (e.g., aggregation, composition).
@@ -178,7 +178,7 @@ class UMLInterface:
         """
         Extracts class data from the provided class data dictionary.
 
-        Args:
+        Parameters:
             class_data (List[Dict]): The class data to be extracted.
 
         Returns:
@@ -202,7 +202,7 @@ class UMLInterface:
         Validates the existence of UML entities like class, field, method, or parameter.
         This can be used for testing and verifying the existence of various UML components.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to check.
             field_name (str): The name of the field to check.
             method_name (str): The name of the method to check.
@@ -228,7 +228,7 @@ class UMLInterface:
         """
         Adds a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be added.
         """
         return self.Model._add_class(class_name, is_loading=False)
@@ -238,7 +238,7 @@ class UMLInterface:
         """
         Deletes a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be deleted.
         """
         return self.Model._delete_class(class_name)
@@ -248,7 +248,7 @@ class UMLInterface:
         """
         Renames a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             current_name (str): The current name of the class.
             new_name (str): The new name for the class.
         """
@@ -261,7 +261,7 @@ class UMLInterface:
         """
         Adds a field to a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be added.
         """
@@ -272,22 +272,24 @@ class UMLInterface:
         """
         Deletes a field from a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be deleted.
         """
         return self.Model._delete_field(class_name, field_name)
     
     # Rename field interface #
-    def rename_field(self, class_name: str, current_field_name: str, new_field_name: str):
+    def rename_field(self, class_name: str, current_field_name: str, new_field_name: str, current_type=None, new_type=None):
         """
         Renames a field in a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             current_field_name (str): The current name of the field.
             new_field_name (str): The new name for the field.
         """
+        if current_type and new_type:
+            return self.Model._rename_field(class_name, current_field_name, new_field_name, current_type, new_type)
         return self.Model._rename_field(class_name, current_field_name, new_field_name)
         
     ## METHOD RELATED ##
@@ -297,7 +299,7 @@ class UMLInterface:
         """
         Adds a method to a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be added.
         """
@@ -308,7 +310,7 @@ class UMLInterface:
         """
         Deletes a method from a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be deleted.
         """
@@ -319,7 +321,7 @@ class UMLInterface:
         """
         Renames a method in a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             current_method_name (str): The current name of the method.
             new_method_name (str): The new name for the method.
@@ -333,7 +335,7 @@ class UMLInterface:
         """
         Adds a parameter to a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be added.
@@ -345,7 +347,7 @@ class UMLInterface:
         """
         Deletes a parameter from a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be deleted.
@@ -357,7 +359,7 @@ class UMLInterface:
         """
         Renames a parameter in a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             current_parameter_name (str): The current name of the parameter.
@@ -370,7 +372,7 @@ class UMLInterface:
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
@@ -381,7 +383,7 @@ class UMLInterface:
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
@@ -394,7 +396,7 @@ class UMLInterface:
         """
         Adds a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             type (str): The type of relationship.
@@ -406,7 +408,7 @@ class UMLInterface:
         """
         Deletes a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
         """
@@ -417,12 +419,15 @@ class UMLInterface:
         """
         Changes the type of a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             new_type (str): The new type of relationship.
         """
         return self.Model._change_type(source_class_name, destination_class_name, new_type)
+    
+    def change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None):
+        return self.Model._change_data_type(class_name, input_name, new_type, is_field, is_method, is_param)
     
     ## SAVE/LOAD RELATED ##
     
@@ -438,7 +443,7 @@ class UMLInterface:
         """
         Saves the UML diagram data to a specified file and path for GUI-based saving.
 
-        Args:
+        Parameters:
             file_name: The name of the file to save.
             file_path: The path where the file will be saved.
         """
@@ -487,7 +492,7 @@ class UMLInterface:
         """
         Checks if the provided file name already exists in the saved files.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to check.
 
         Returns:
@@ -537,7 +542,7 @@ class UMLInterface:
         """
         Attaches an observer to the model for the observer pattern implementation.
 
-        Args:
+        Parameters:
             observer: The observer to attach.
         """
         self.Model._attach_observer(observer)
@@ -547,7 +552,7 @@ class UMLInterface:
         """
         Detaches an observer from the model for the observer pattern implementation.
 
-        Args:
+        Parameters:
             observer: The observer to detach.
         """
         self.Model._detach_observer(observer)
@@ -567,7 +572,7 @@ class UMLInterface:
         """
         Check if the user input contains only letters, numbers, and underscores for all provided parameters.
 
-        Args:
+        Parameters:
             class_name (str, optional): The name of the class to validate.
             field_name (str, optional): The name of the field to validate.
             method_name (str, optional): The name of the method to validate.

@@ -1,108 +1,108 @@
-from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QPainter
-from PyQt5.QtWidgets import (
-    QApplication, QGraphicsScene, QGraphicsView, QGraphicsPathItem, 
-    QGraphicsTextItem, QGraphicsItem
-)
-from math import atan2, cos, sin
+from PyQt5 import QtWidgets
 
-class Arrow(QGraphicsPathItem):
-    def __init__(self, start_point, end_point, parent=None):
-        super().__init__(parent)
-        self.start_point = start_point
-        self.end_point = end_point
+class CustomInputDialog(QtWidgets.QDialog):
+    def __init__(self, title="Input Dialog"):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.input_widgets = {}  # Store all input widgets for retrieval
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout)
 
-        # Create a QGraphicsTextItem for the arrow label
-        self.text_item = QGraphicsTextItem("Double click to edit", self)
-        self.text_item.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.text_item.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.text_item.setTextInteractionFlags(Qt.NoTextInteraction)  # Start with no text interaction
+    def add_input(self, label_text, widget_type, options=None):
+        """
+        Abstract method to add various types of input fields to the dialog.
 
-        self.setPen(QPen(Qt.black, 2))
-        self.update_arrow()
+        Parameters:
+        - label_text (str): The label text for the input.
+        - widget_type (str): Type of the widget ('combo', 'line', etc.).
+        - options (list): Optional list of options for combo boxes.
 
-    def update_arrow(self):
-        path = QPainterPath(self.start_point)
-        path.lineTo(self.end_point)
-
-        # Calculate the angle of the arrow line
-        angle = atan2(self.end_point.y() - self.start_point.y(), self.end_point.x() - self.start_point.x())
+        Returns:
+        - QWidget: The created input widget.
+        """
+        label = QtWidgets.QLabel(label_text)
+        self.layout.addWidget(label)
         
-        # Arrowhead dimensions
-        arrow_size = 10
-        arrow_p1 = QPointF(self.end_point.x() - arrow_size * cos(angle - 0.5), self.end_point.y() - arrow_size * sin(angle - 0.5))
-        arrow_p2 = QPointF(self.end_point.x() - arrow_size * cos(angle + 0.5), self.end_point.y() - arrow_size * sin(angle + 0.5))
+        if widget_type == 'combo':
+            combo_box = QtWidgets.QComboBox()
+            if options:
+                combo_box.addItems(options)
+            self.layout.addWidget(combo_box)
+            return combo_box
+        
+        elif widget_type == 'line':
+            line_edit = QtWidgets.QLineEdit()
+            self.layout.addWidget(line_edit)
+            return line_edit
+        
+        # Add more widget types as needed (e.g., checkboxes, date pickers)
+        # Example for a checkbox:
+        elif widget_type == 'checkbox':
+            checkbox = QtWidgets.QCheckBox()
+            self.layout.addWidget(checkbox)
+            return checkbox
 
-        # Add the arrowhead
-        path.moveTo(self.end_point)
-        path.lineTo(arrow_p1)
-        path.moveTo(self.end_point)
-        path.lineTo(arrow_p2)
+    def add_field_popup(self, class_list):
+        """
+        Example: Creates a dialog for adding a field.
+        Uses the abstract method to dynamically create inputs.
+        """
+        class_combo_box = self.add_input("Select Class:", widget_type="combo", options=class_list)
+        field_name_input = self.add_input("Enter Field Name:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets['class_combo_box'] = class_combo_box
+        self.input_widgets['field_name_input'] = field_name_input
+        
+        self.add_buttons()
 
-        self.setPath(path)
+    def add_method_popup(self, class_list):
+        """
+        Example: Creates a dialog for adding a method.
+        Uses the abstract method to dynamically create inputs.
+        """
+        class_combo_box = self.add_input("Select Class:", widget_type="combo", options=class_list)
+        method_name_input = self.add_input("Enter Method Name:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets['class_combo_box'] = class_combo_box
+        self.input_widgets['method_name_input'] = method_name_input
+        
+        self.add_buttons()
 
-        # Position the QGraphicsTextItem above the middle of the arrow
-        mid_point = (self.start_point + self.end_point) / 2
-        self.text_item.setPos(mid_point.x() - 50, mid_point.y() - 30)
+    def add_buttons(self):
+        """
+        Helper function to add OK and Cancel buttons.
+        """
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.layout.addWidget(buttons)
 
-class ArrowScene(QGraphicsScene):
-    def __init__(self):
-        super().__init__()
-        self.setSceneRect(0, 0, 800, 600)
-        self.current_arrow = None
-        self.start_point = None
+    def get_inputs(self):
+        """
+        Retrieve input values based on the stored widgets.
+        """
+        inputs = {}
+        for key, widget in self.input_widgets.items():
+            if isinstance(widget, QtWidgets.QComboBox):
+                inputs[key] = widget.currentText()
+            elif isinstance(widget, QtWidgets.QLineEdit):
+                inputs[key] = widget.text()
+        return inputs
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.RightButton:
-            self.start_point = event.scenePos()
-            self.current_arrow = Arrow(self.start_point, self.start_point)
-            self.addItem(self.current_arrow)
-
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self.current_arrow:
-            self.current_arrow.end_point = event.scenePos()
-            self.current_arrow.update_arrow()
-
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.RightButton and self.current_arrow:
-            # Finalize the arrow placement
-            self.current_arrow.end_point = event.scenePos()
-            self.current_arrow.update_arrow()
-            self.current_arrow = None
-
-        super().mouseReleaseEvent(event)
-
-    def mouseDoubleClickEvent(self, event):
-        # Handle text editing on double-click
-        item = self.itemAt(event.scenePos(), self.views()[0].transform())
-        if isinstance(item, QGraphicsTextItem):
-            item.setTextInteractionFlags(Qt.TextEditorInteraction)
-            item.setFocus(Qt.MouseFocusReason)
-
-        super().mouseDoubleClickEvent(event)
-
-    def focusOutEvent(self, event):
-        # Disable text editing once focus is lost
-        for item in self.items():
-            if isinstance(item, QGraphicsTextItem):
-                item.setTextInteractionFlags(Qt.NoTextInteraction)
-        super().focusOutEvent(event)
-
-class ArrowView(QGraphicsView):
-    def __init__(self):
-        super().__init__()
-        self.setScene(ArrowScene())
-        self.setRenderHint(QPainter.Antialiasing)
-
-def main():
-    app = QApplication(sys.argv)
-    view = ArrowView()
-    view.show()
-    sys.exit(app.exec_())
-
+# Example usage
 if __name__ == "__main__":
-    main()
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    
+    dialog = CustomInputDialog(title="Add Field")
+    
+    # Example 1: Add Field
+    dialog.add_field_popup(class_list=["Class1", "Class2", "Class3"])
+    
+    if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        inputs = dialog.get_inputs()
+        print(f"Selected Class: {inputs['class_combo_box']}, Entered Field: {inputs['field_name_input']}")
+    
+    sys.exit(app.exec_())

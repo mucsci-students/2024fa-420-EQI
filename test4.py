@@ -1,139 +1,43 @@
 import sys
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QListWidget, QLabel
 
-
-class Box(QtWidgets.QGraphicsRectItem):
-    """
-    A simple rectangular box that can be selected, copied, and pasted.
-    """
-    def __init__(self, x, y, width, height, color=QtGui.QColor("lightblue")):
-        super().__init__(x, y, width, height)
-        self.setBrush(QtGui.QBrush(color))
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
-
-
-class GraphicsView(QtWidgets.QGraphicsView):
-    """
-    Custom QGraphicsView that supports adding, copying, and pasting boxes,
-    as well as selecting items by dragging a rectangular selection area.
-    """
-    def __init__(self):
-        super().__init__()
-        self.scene = QtWidgets.QGraphicsScene(self)
-        self.setScene(self.scene)
-        self.setRenderHint(QtGui.QPainter.Antialiasing)
-        
-        # To store the copied box
-        self.copied_box = None
-        
-        # For the rectangular selection feature
-        self.rubber_band = None  # Selection rectangle
-        self.origin_point = QtCore.QPointF()  # Starting point of the selection
-
-    def add_box(self, x=0, y=0, width=100, height=100):
-        """
-        Add a new box to the scene.
-        """
-        box = Box(x, y, width, height)
-        self.scene.addItem(box)
-
-    def copy_selected_box(self):
-        """
-        Copy the selected box if one is selected.
-        """
-        selected_items = self.scene.selectedItems()
-        if selected_items:
-            # Copy the first selected item (for simplicity)
-            self.copied_box = selected_items[0]
-
-    def paste_box(self):
-        """
-        Paste the copied box at a new location if one has been copied.
-        """
-        if self.copied_box:
-            # Create a new box with the same dimensions and color as the copied one
-            rect = self.copied_box.rect()
-            new_box = Box(0, 0, rect.width(), rect.height(), self.copied_box.brush().color())
-            new_box.setPos(self.copied_box.pos() + QtCore.QPointF(20, 20))  # Paste with a small offset
-            self.scene.addItem(new_box)
-
-    def mousePressEvent(self, event):
-        """
-        Handle mouse press events, including starting the rectangular selection.
-        """
-        if event.button() == QtCore.Qt.LeftButton:
-            self.origin_point = self.mapToScene(event.pos())
-            self.rubber_band = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Rectangle, self.viewport())
-            self.rubber_band.setGeometry(QtCore.QRect(event.pos(), event.pos()))
-            self.rubber_band.show()
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        """
-        Handle mouse move events, including updating the rectangular selection area.
-        """
-        if self.rubber_band:
-            rect = QtCore.QRectF(self.origin_point, self.mapToScene(event.pos())).normalized()
-            self.rubber_band.setGeometry(self.mapFromScene(rect).boundingRect())
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        """
-        Handle mouse release events, including finalizing the rectangular selection.
-        """
-        if self.rubber_band:
-            rubber_band_rect = self.rubber_band.geometry()
-            selection_rect = self.mapToScene(rubber_band_rect).boundingRect()
-            self.select_items_in_rect(selection_rect)
-            self.rubber_band.hide()
-            self.rubber_band = None
-        super().mouseReleaseEvent(event)
-        
-        
-    def select_items_in_rect(self, rect):
-        """
-        Select all items within the provided rectangular area.
-        """
-        items_in_rect = self.scene.items(rect)
-        for item in self.scene.selectedItems():
-            item.setSelected(False)  # Deselect previously selected items
-        for item in items_in_rect:
-            item.setSelected(True)  # Select new items in the rectangle
-
-
-class MainWindow(QtWidgets.QMainWindow):
+class SearchApp(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.view = GraphicsView()
-        self.setCentralWidget(self.view)
-
-        # Create the toolbar with Add, Copy, and Paste actions
-        toolbar = self.addToolBar("Tools")
-        add_action = toolbar.addAction("Add Box")
-        copy_action = toolbar.addAction("Copy")
-        paste_action = toolbar.addAction("Paste")
+        # List of strings to search from
+        self.items = ["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape"]
         
-        # Connect toolbar actions to their respective functions
-        add_action.triggered.connect(self.add_box)
-        copy_action.triggered.connect(self.copy_box)
-        paste_action.triggered.connect(self.paste_box)
+        # Create the search bar (QLineEdit)
+        self.search_bar = QLineEdit(self)
+        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.textChanged.connect(self.update_list)  # Connect to search function
 
-    def add_box(self):
-        self.view.add_box(0, 0, 100, 100)
+        # Create the list widget to display the search results
+        self.result_list = QListWidget(self)
+        self.update_list()  # Populate the list with all items initially
 
-    def copy_box(self):
-        self.view.copy_selected_box()
+        # Layout for widgets
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel("Search fruits:"))
+        layout.addWidget(self.search_bar)
+        layout.addWidget(self.result_list)
 
-    def paste_box(self):
-        self.view.paste_box()
+        self.setLayout(layout)
+        self.setWindowTitle("Simple Search App")
 
+    # Update list based on search query
+    def update_list(self):
+        search_text = self.search_bar.text().lower()  # Get text from search bar and convert to lowercase
+        self.result_list.clear()  # Clear previous results
+
+        # Filter items that match the search text
+        for item in self.items:
+            if search_text in item.lower():  # Case-insensitive search
+                self.result_list.addItem(item)
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
-    window.setWindowTitle("Rectangular Selection and Copy-Paste Example")
-    window.resize(800, 600)
+    app = QApplication(sys.argv)
+    window = SearchApp()
     window.show()
     sys.exit(app.exec_())
