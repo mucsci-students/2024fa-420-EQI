@@ -1,7 +1,6 @@
 import sys
 import os
-import unittest 
-
+import pytest
 
 ###############################################################################
 # ADD ROOT PATH #
@@ -9,43 +8,62 @@ import unittest
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.append(root_path)
 
-# Testing Module
+# Import the UMLRelationship class
 from UML_CORE.UML_RELATIONSHIP.uml_relationship import UMLRelationship
 
 ###############################################################################
 
-class TestUMLRelationship(unittest.TestCase):
+@pytest.fixture
+def uml_relationship():
+    # Fixture to set up an instance of UMLRelationship for testing
+    return UMLRelationship(
+        source_class="ClassA", 
+        destination_class="ClassB", 
+        rel_type="inheritance"
+    )
 
-    def setUp(self):
-        # Set up an instance of UMLRelationship for testing
-        self.test_relationship = UMLRelationship("classA", "classB", "association")
+def test_get_source_class(uml_relationship):
+    # Test getting the source class
+    assert uml_relationship._get_source_class() == "ClassA"
 
-    def test_get_source_class(self):
-        # Test that the source class name is returned correctly
-        self.assertEqual(self.test_relationship._get_source_class(), "classA")
+def test_get_destination_class(uml_relationship):
+    # Test getting the destination class
+    assert uml_relationship._get_destination_class() == "ClassB"
 
-    def test_get_destination_class(self):
-        # Test that the destination class name is returned correctly
-        self.assertEqual(self.test_relationship._get_destination_class(), "classB")
+def test_get_type(uml_relationship):
+    # Test getting the relationship type
+    assert uml_relationship._get_type() == "inheritance"
 
-    def test_get_type(self):
-        # Test that the relationship type is returned correctly
-        self.assertEqual(self.test_relationship._get_type(), "association")
+def test_set_source_class(uml_relationship):
+    # Test setting a new source class
+    uml_relationship._set_source_class("NewSourceClass")
+    assert uml_relationship._get_source_class() == "NewSourceClass"
 
-    def test_set_source_class(self):
-        # Test setting a new source class name
-        self.test_relationship._set_source_class("newClassA")
-        self.assertEqual(self.test_relationship._get_source_class(), "newClassA")
+def test_set_destination_class(uml_relationship):
+    # Test setting a new destination class
+    uml_relationship._set_destination_class("NewDestinationClass")
+    assert uml_relationship._get_destination_class() == "NewDestinationClass"
 
-    def test_set_destination_class(self):
-        # Test setting a new destination class name
-        self.test_relationship._set_destination_class("newClassB")
-        self.assertEqual(self.test_relationship._get_destination_class(), "newClassB")
+def test_set_type(uml_relationship):
+    # Test setting a new relationship type
+    uml_relationship._set_type("aggregation")
+    assert uml_relationship._get_type() == "aggregation"
 
-    def test_set_type(self):
-        # Test setting a new relationship type
-        self.test_relationship._set_type("aggregation")
-        self.assertEqual(self.test_relationship._get_type(), "aggregation")
+def test_str(uml_relationship):
+    # Test string representation of the relationship
+    expected_str = (
+        "Source: ClassA\nDestination: ClassB\nType: inheritance"
+    )
+    assert str(uml_relationship) == expected_str
 
-if __name__ == '__main__':
-    unittest.main()
+def test_convert_to_json_relationship(uml_relationship):
+    # Test conversion of UMLRelationship to JSON format
+    json_data = uml_relationship._convert_to_json_relationship()
+    
+    expected_json = {
+        "source": "ClassA",
+        "destination": "ClassB",
+        "type": "inheritance"
+    }
+    
+    assert json_data == expected_json
