@@ -27,7 +27,7 @@
     <string>toolBar</string>
    </property>
    <attribute name="toolBarArea">
-    <enum>LeftToolBarArea</enum>
+    <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
@@ -63,7 +63,7 @@
   <action name="New">
    <property name="icon">
     <iconset>
-     <normaloff>UML_ICONS/blue-document.png</normaloff>UML_ICONS/blue-document.png</iconset>
+     <normaloff>UML_ICONS/new-file.png</normaloff>UML_ICONS/new-file.png</iconset>
    </property>
    <property name="text">
     <string>New...</string>
@@ -78,7 +78,7 @@
   <action name="Open">
    <property name="icon">
     <iconset>
-     <normaloff>UML_ICONS/open-folder.png</normaloff>UML_ICONS/open-folder.png</iconset>
+     <normaloff>UML_ICONS/open-file.png</normaloff>UML_ICONS/open-file.png</iconset>
    </property>
    <property name="text">
     <string>Open...</string>
@@ -93,7 +93,7 @@
   <action name="Save">
    <property name="icon">
     <iconset>
-     <normaloff>UML_ICONS/floppy-disk.png</normaloff>UML_ICONS/floppy-disk.png</iconset>
+     <normaloff>UML_ICONS/save.png</normaloff>UML_ICONS/save.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -108,7 +108,7 @@
   <action name="SaveAs">
    <property name="icon">
     <iconset>
-     <normaloff>UML_ICONS/Save-as-icon.png</normaloff>UML_ICONS/Save-as-icon.png</iconset>
+     <normaloff>UML_ICONS/save-as.png</normaloff>UML_ICONS/save-as.png</iconset>
    </property>
    <property name="text">
     <string>Save As...</string>
@@ -137,6 +137,9 @@
    </property>
   </action>
   <action name="toggle_mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset>
      <normaloff>UML_ICONS/bulb.png</normaloff>
@@ -296,7 +299,7 @@
   <action name="Help">
    <property name="icon">
     <iconset>
-     <normaloff>UML_ICONS/help-web-button.png</normaloff>UML_ICONS/help-web-button.png</iconset>
+     <normaloff>UML_ICONS/question-mark.png</normaloff>UML_ICONS/question-mark.png</iconset>
    </property>
    <property name="text">
     <string>Help</string>
