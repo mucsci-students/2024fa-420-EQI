@@ -9,14 +9,13 @@ class UMLClass:
     # Create UML class with a name including:
     def __init__(self, class_name: str = ""):
         self.__class_name = class_name
+        
         # Store field name and the related field object
         # so we can easily access to the its details
         self.__field_list: List[Field] = []
-        # Store method name and the related method object
-        # so we can easily access to the its details
-        self.__method_list: List[Method] = []
+        
         # Store method and its parameters
-        self.__method_and_parameter_list: Dict[str, List[Parameter]] = {}
+        self.__method_and_parameter_list: List[Dict[Method, List[Parameter]]] = []
                 
 
     #################################################################
@@ -26,11 +25,8 @@ class UMLClass:
 
     def _get_class_field_list(self) -> List[Field]:
         return self.__field_list
-
-    def _get_class_method_list(self) -> List[Method]:
-        return self.__method_list
     
-    def _get_method_and_parameters_list(self) ->Dict[str, List[Parameter]]:
+    def _get_method_and_parameters_list(self) -> List[Dict[Method, List[Parameter]]]:
         return self.__method_and_parameter_list
     
     def __str__(self):

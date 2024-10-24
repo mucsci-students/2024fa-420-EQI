@@ -64,6 +64,7 @@ class UMLController:
         second_param = parameters[1] if len(parameters) > 1 else None
         third_param = parameters[2] if len(parameters) > 2 else None
         fourth_param = parameters[3] if len(parameters) > 3 else None
+        fifth_param = parameters[4] if len(parameters) > 4 else None
         
         #######################################################
         
@@ -94,8 +95,9 @@ class UMLController:
             command == InterfaceOptions.ADD_FIELD.value
             and first_param
             and second_param
+            and third_param
         ):
-            self.__model._add_field(first_param, second_param, is_loading=False)
+            self.__model._add_field(class_name=first_param, type=second_param, field_name=third_param, is_loading=False)
         
         # Delete field from class
         elif (
@@ -103,7 +105,7 @@ class UMLController:
             and first_param
             and second_param
         ):
-            self.__model._delete_field(first_param, second_param)
+            self.__model._delete_field(class_name=first_param, field_name=second_param)
         
         # Rename field in class
         elif (
@@ -112,7 +114,16 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._rename_field(first_param, second_param, third_param)
+            self.__model._rename_field(class_name=first_param, old_field_name=second_param, new_field_name=third_param)
+        
+        # Change field type in class
+        elif (
+            command == InterfaceOptions.FIELD_TYPE.value
+            and first_param
+            and second_param
+            and third_param
+        ):
+            self.__model._change_data_type(class_name=first_param, input_name=second_param, new_type=third_param, is_field=True)
 
         #######################################################
         
@@ -123,39 +134,49 @@ class UMLController:
             command == InterfaceOptions.ADD_METHOD.value
             and first_param
             and second_param
+            and third_param
         ):
-            self.__model._add_method(first_param, second_param, is_loading=False)
+            self.__model._add_method(class_name=first_param, type=second_param, method_name=third_param, is_loading=False)
         
         # Delete method from class
         elif (
             command == InterfaceOptions.DELETE_METHOD.value
             and first_param
-            and second_param
         ):
-            self.__model._delete_method(first_param, second_param)
+            self.__model._delete_method(class_name=first_param)
         
         # Rename method in class
         elif (
             command == InterfaceOptions.RENAME_METHOD.value
             and first_param
-            and second_param
-            and third_param
         ):
-            self.__model._rename_method(first_param, second_param, third_param)
+            self.__model._rename_method(class_name=first_param)
+        
+        # Change method type in class
+        elif (
+            command == InterfaceOptions.METHOD_TYPE.value
+            and first_param
+        ):
+            self.__model._change_data_type(class_name=first_param, is_method=True)
 
         #######################################################
         
         # Handle parameter-related commands
 
         # Add parameter to method
+        # elif (
+        #     command == InterfaceOptions.ADD_PARAM.value
+        #     and first_param
+        #     and second_param
+        #     and third_param
+        #     and fourth_param
+        # ):
+        #     self.__model._add_parameter(class_name=first_param, method_name=second_param, type=third_param, parameter_name=fourth_param, is_loading=False)
         elif (
             command == InterfaceOptions.ADD_PARAM.value
             and first_param
-            and second_param
-            and third_param
         ):
-            self.__model._add_parameter(first_param, second_param, third_param, is_loading=False)
-        
+            self.__model._add_parameter(class_name=first_param)
         # Delete parameter from method
         elif (
             command == InterfaceOptions.DELETE_PARAM.value
@@ -245,7 +266,7 @@ class UMLController:
         
         # Reset to a blank program
         elif command == InterfaceOptions.DEFAULT.value:
-            self.__model._end_session()
+            self.__model._new_file()
         
         # Sort the list of classes alphabetically
         elif command == InterfaceOptions.SORT.value:
@@ -253,6 +274,6 @@ class UMLController:
         
         # Handle unknown command
         else:
-            self.__console.print(f"\n[bold red]Unknown command [bold white]'{command}'[/bold white]. Type 'help' for a list of commands.[/bold red]")
+            self.__console.print("\n[bold red]Unknown command. Type [bold white]'help'[/bold white] for a list of commands.[/bold red]")
 
 ###################################################################################################

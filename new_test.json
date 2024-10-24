@@ -1,91 +1,40 @@
 {
     "classes": [
         {
-            "name": "Human",
+            "name": "human",
             "fields": [
                 {
-                    "name": "body"
+                    "name": "health",
+                    "type": "int"
                 },
                 {
-                    "name": "ears"
+                    "name": "mana",
+                    "type": "int"
                 }
             ],
             "methods": [
                 {
-                    "name": "Attack",
-                    "params": [
-                        {
-                            "name": "Damage"
-                        }
-                    ]
+                    "name": "get_health",
+                    "return_type": "int",
+                    "params": []
                 },
                 {
-                    "name": "Run",
-                    "params": [
-                        {
-                            "name": "Speed"
-                        },
-                        {
-                            "name": "Stamina"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "Animal",
-            "fields": [
-                {
-                    "name": "heart"
+                    "name": "attack",
+                    "return_type": "void",
+                    "params": []
                 },
                 {
-                    "name": "habbit"
-                }
-            ],
-            "methods": [
-                {
-                    "name": "Bite",
-                    "params": [
-                        {
-                            "name": "Damage"
-                        },
-                        {
-                            "name": "Bite_Rate"
-                        }
-                    ]
+                    "name": "sprint",
+                    "return_type": "void",
+                    "params": []
                 },
                 {
-                    "name": "Lick",
-                    "params": [
-                        {
-                            "name": "Speed"
-                        },
-                        {
-                            "name": "Critical"
-                        },
-                        {
-                            "name": "Strength"
-                        }
-                    ]
+                    "name": "walk",
+                    "return_type": "void",
+                    "params": []
                 }
             ]
         }
     ],
-    "relationships": [
-        {
-            "source": "Human",
-            "destination": "Animal",
-            "type": "Composition"
-        },
-        {
-            "source": "Human",
-            "destination": "Human",
-            "type": "Realization"
-        },
-        {
-            "source": "Animal",
-            "destination": "Human",
-            "type": "Composition"
-        }
-    ]
+    "relationships": []
 }
