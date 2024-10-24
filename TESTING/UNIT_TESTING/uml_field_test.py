@@ -1,7 +1,6 @@
 import sys
 import os
-import unittest 
-
+import pytest
 
 ###############################################################################
 # ADD ROOT PATH #
@@ -13,24 +12,42 @@ sys.path.append(root_path)
 from UML_CORE.UML_FIELD.uml_field import UMLField  # noqa: E402
 
 ###############################################################################
-class TestUMLField(unittest.TestCase):
 
-    def setUp(self):
-        # Set up an instance of UMLField for testing
-        self.test_field = UMLField("test_field")
+@pytest.fixture
+def uml_field():
+    # Fixture to set up an instance of UMLField for testing
+    return UMLField(type="int", field_name="test_field")
 
-    def test_get_name(self):
-        # Test that the field name is returned correctly
-        self.assertEqual(self.test_field._get_name(), "test_field")
+def test_get_name(uml_field):
+    # Test that the field name is returned correctly
+    assert uml_field._get_name() == "test_field"
 
-    def test_set_name(self):
-        # Test setting a new field name
-        self.test_field._set_name("new_field_name")
-        self.assertEqual(self.test_field._get_name(), "new_field_name")
+def test_set_name(uml_field):
+    # Test setting a new field name
+    uml_field._set_name("new_field_name")
+    assert uml_field._get_name() == "new_field_name"
 
-    def test_str(self):
-        # Test the string representation of the field
-        self.assertEqual(str(self.test_field), "test_field")
+def test_get_type(uml_field):
+    # Test that the field type is returned correctly
+    assert uml_field._get_type() == "int"
 
-if __name__ == '__main__':
-    unittest.main()
+def test_set_type(uml_field):
+    # Test setting a new field type
+    uml_field._set_type("string")
+    assert uml_field._get_type() == "string"
+
+def test_str(uml_field):
+    # Test the string representation of the field
+    assert str(uml_field) == "int test_field"
+
+def test_convert_to_json_field(uml_field):
+    # Test conversion of UMLField to JSON format
+    json_data = uml_field._convert_to_json_field()
+    
+    expected_json = {
+        "name": "test_field",
+        "type": "int"
+    }
+    
+    assert json_data == expected_json
+
