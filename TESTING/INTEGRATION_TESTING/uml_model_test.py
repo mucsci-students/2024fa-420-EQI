@@ -18,6 +18,7 @@ from UML_CORE.UML_FIELD.uml_field import UMLField
 from UML_CORE.UML_METHOD.uml_method import UMLMethod
 from UML_CORE.UML_PARAMETER.uml_parameter import UMLParameter
 from UML_CORE.UML_RELATIONSHIP.uml_relationship import UMLRelationship
+from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager  # Corrected import
 
 ###############################################################################
 
@@ -49,6 +50,27 @@ def sample_observer():
             })
 
     return TestObserver()
+
+###############################################################################
+# Initialization
+###############################################################################
+def test_uml_model_init():
+    
+    view = UMLView()  
+    console = Console()  # Using Rich's Console
+    
+    # Create UMLModel instance
+    uml_model = UMLModel(view=view, console=console)
+    
+    # Verify attributes are correctly initialized
+    assert uml_model._UMLModel__user_view == view
+    assert uml_model._UMLModel__console == console
+    assert isinstance(uml_model._UMLModel__class_list, dict)
+    assert isinstance(uml_model._UMLModel__storage_manager, UMLStorageManager)  # Corrected to UMLStorageManager
+    assert isinstance(uml_model._UMLModel__relationship_list, list)
+    assert isinstance(uml_model._UMLModel__main_data, dict)
+    assert isinstance(uml_model._observers, list)
+
 
 ###############################################################################
 # Observer Pattern Tests
@@ -179,12 +201,90 @@ def test_add_field(uml_model, sample_class, sample_observer):
     assert len(sample_observer.events) == 2
     assert sample_observer.events[1]["event_type"] == "add_field"
 
+def test_delete_field(uml_model, sample_class, sample_field, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and field to the model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_field(class_name="TestClass", type="int", field_name="testField", is_loading=False)
+    
+    # Delete the field
+    result = uml_model._delete_field(class_name="TestClass", field_name="testField")
+    
+    # Check if field was successfully deleted
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    fields = class_data._get_class_field_list()
+    assert len(fields) == 0
+    
+    # Check that observers were notified
+    assert len(sample_observer.events) == 3  # Expecting three events now
+    assert sample_observer.events[0]["event_type"] == "add_class"
+    assert sample_observer.events[1]["event_type"] == "add_field"
+    assert sample_observer.events[2]["event_type"] == "delete_field"
+    assert sample_observer.events[2]["data"] == {"class_name": "TestClass", "field_name": "testField"}
+
+def test_rename_field(uml_model, sample_class, sample_field, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and field to the model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_field(class_name="TestClass", type="int", field_name="testField", is_loading=False)
+    
+    # Rename the field
+    result = uml_model._rename_field(class_name="TestClass", old_field_name="testField", new_field_name="renamedField")
+    
+    # Check if field was successfully renamed
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    fields = class_data._get_class_field_list()
+    assert len(fields) == 1
+    assert fields[0]._get_name() == "renamedField"
+    
+    # Check that observers were notified
+    assert len(sample_observer.events) == 3  # Expecting three events
+    assert sample_observer.events[0]["event_type"] == "add_class"
+    assert sample_observer.events[1]["event_type"] == "add_field"
+    assert sample_observer.events[2]["event_type"] == "rename_field"
+    assert sample_observer.events[2]["data"] == {
+        "class_name": "TestClass",
+        "old_field_name": "testField",
+        "new_field_name": "renamedField"
+    }
+###############################################################################
+# Method Management Tests
+###############################################################################
+
+def test_add_method(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class to the model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    
+    # Add method to the class
+    result = uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Check if method was successfully added
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    methods = class_data._get_method_and_parameters_list()
+    assert len(methods) == 1
+    assert list(methods[0].keys())[0]._get_name() == "testMethod"
+    
+    # Check that observers were notified
+    assert len(sample_observer.events) == 2  # Expecting add_class and add_method events
+    assert sample_observer.events[1]["event_type"] == "add_method"
+    assert sample_observer.events[1]["data"] == {
+        "class_name": "TestClass",
+        "type": "int",
+        "method_name": "testMethod"
+    }
+
 ###############################################################################
 # File Handling Tests (Mocking save/load)
 ###############################################################################
 
-def test_save_and_load_diagram(uml_model, tmp_path):
-    save_path = tmp_path / "test_diagram.json"
-    
-    # Save and load functionality would be implemented as needed
-    # You can test the file handling with real save/load methods here
+
