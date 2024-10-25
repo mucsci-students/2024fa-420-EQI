@@ -23,8 +23,8 @@ class UMLParameter:
     def _set_parameter_name(self, new_name: str):
         self.__parameter_name = new_name
         
-    def _get_type(self) -> str:
-        return self.__type
+    def _set_type(self, new_type: str) -> str:
+        self.__type = new_type
     
     #################################################################
     # Method to convert parameter to json format #
