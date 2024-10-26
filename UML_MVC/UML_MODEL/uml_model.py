@@ -86,6 +86,9 @@ class UMLModel:
     def _get_main_data(self) -> Dict:
         return self.__main_data
     
+    def _set_main_data(self, new_main_data) -> Dict:
+        self.__main_data = new_main_data
+    
     def _get_user_view(self):
         return self.__user_view
         
@@ -260,7 +263,7 @@ class UMLModel:
             return False
         # Remove the field from the class's field list
         field_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
-        chosen_field = self.__get_chosen_field_or_method(class_name, field_name, is_field=True)
+        chosen_field = self._get_chosen_field_or_method(class_name, field_name, is_field=True)
         field_list.remove(chosen_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
@@ -285,7 +288,7 @@ class UMLModel:
         if not is_able_to_rename:
             return False
         # Rename the field in the class
-        chosen_field = self.__get_chosen_field_or_method(class_name, old_field_name, is_field=True)
+        chosen_field = self._get_chosen_field_or_method(class_name, old_field_name, is_field=True)
         chosen_field._set_name(new_field_name)
         
         # Update main data and notify observers
@@ -1123,7 +1126,7 @@ class UMLModel:
         return True
     
     # Get the chosen field or method #
-    def __get_chosen_field_or_method(self, class_name: str, input_name: str, is_field: bool) -> Field | Method | None:
+    def _get_chosen_field_or_method(self, class_name: str, input_name: str, is_field: bool) -> Field | Method | None:
         """
         Retrieves the specified field or method from a class.
 
@@ -2036,7 +2039,7 @@ class UMLModel:
             is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=input_name, class_should_exist=True, field_should_exist=True)
             if not is_class_and_field_exist:
                 return False
-            chosen_field = self.__get_chosen_field_or_method(class_name, input_name, is_field=True)
+            chosen_field = self._get_chosen_field_or_method(class_name, input_name, is_field=True)
             chosen_field._set_type(new_type)
             self._notify_observers(event_type=InterfaceOptions.FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type})
             self._update_main_data_for_every_action()

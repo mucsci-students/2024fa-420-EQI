@@ -163,6 +163,10 @@ class UMLInterface:
         """
         return self.Model._get_main_data()
     
+    # Set main data interface #
+    def set_main_data(self, new_data):
+        self.Model._set_main_data(new_data)
+    
     # Get view #
     def get_user_view(self):
         """
@@ -257,7 +261,7 @@ class UMLInterface:
     ## FIELD RELATED ##
     
     # Add field interface #
-    def add_field(self, class_name: str, field_name: str):
+    def add_field(self, class_name: str, type: str, field_name: str):
         """
         Adds a field to a UML class by delegating the operation to the model.
 
@@ -265,7 +269,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be added.
         """
-        return self.Model._add_field(class_name, field_name, is_loading=False)
+        return self.Model._add_field(class_name, type, field_name, is_loading=False)
         
     # Delete field interface #
     def delete_field(self, class_name: str, field_name: str):
@@ -292,10 +296,14 @@ class UMLInterface:
             return self.Model._rename_field(class_name, current_field_name, new_field_name, current_type, new_type)
         return self.Model._rename_field(class_name, current_field_name, new_field_name)
         
+    # Get chosen field #
+    def get_chosen_field_or_method(self, class_name: str, field_name: str, is_field: bool):
+        return self.Model._get_chosen_field_or_method(class_name, field_name, is_field)
+    
     ## METHOD RELATED ##
     
     # Add method interface #
-    def add_method(self, class_name: str, method_name: str):
+    def add_method(self, class_name: str, type: str, method_name: str):
         """
         Adds a method to a UML class by delegating the operation to the model.
 
@@ -303,7 +311,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be added.
         """
-        return self.Model._add_method(class_name, method_name, is_loading=False)
+        return self.Model._add_method(class_name, type, method_name, is_loading=False)
     
     # Delete method interface #
     def delete_method(self, class_name: str, method_name: str):
