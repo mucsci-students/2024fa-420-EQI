@@ -6,6 +6,7 @@ from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 # from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_arrow_line import Arrow
 from UML_ENUM_CLASS.uml_enum import RelationshipType
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_custom_dialog import CustomInputDialog as Dialog
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_arrow_line import UMLArrow as ArrowLine
 
 ###################################################################################################
 
@@ -33,7 +34,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         self.interface = interface  
         
         # Class name list
-        self.class_name_list = []
+        self.class_name_list = {}
         
         # Relationship pair list
         self.relationship_track_list = {}
@@ -42,7 +43,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         self.is_dark_mode = False  # Flag for light/dark mode
 
         # Set initial view properties
-        self.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.setRenderHint(QtGui.QPainter.Antialiasing, True)
         self.setSceneRect(-5000, -5000, 10000, 10000)  # Large scene size
         self.setScene(self.scene())
 
@@ -89,7 +90,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             is_class_added = self.interface.add_class(loaded_class_name)
             if is_class_added:
                 class_box = UMLClassBox(self.interface, class_name=loaded_class_name)
-                self.class_name_list.append(loaded_class_name)
+                self.class_name_list[loaded_class_name] = class_box
                 self.scene().addItem(class_box)
         else:
             # Display a dialog asking the user for the new class name
@@ -101,8 +102,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     return
                 is_class_added = self.interface.add_class(input_class_name)
                 if is_class_added:
-                    self.class_name_list.append(input_class_name)
                     class_box = UMLClassBox(self.interface, class_name=input_class_name)
+                    self.class_name_list[input_class_name] = class_box
                     self.scene().addItem(class_box)
                 else:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
@@ -110,20 +111,36 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
     def delete_class(self):
         """
         Delete the selected class or arrow from the scene.
-        """  
+        """
         if self.selected_class:
             # Remove the class box
             input_class_name = self.selected_class.class_name_text.toPlainText()
             is_class_deleted = self.interface.delete_class(input_class_name)
             if is_class_deleted:
-                self.class_name_list.remove(input_class_name)
+                # Create a copy of the arrow_line_list to avoid modifying the list while iterating
+                arrow_lines = list(self.selected_class.arrow_line_list)
+                for arrow_line in arrow_lines:
+                    # Remove the arrow from the scene
+                    self.scene().removeItem(arrow_line)
+                    # Remove the arrow from the source class's arrow_line_list if it's not the selected class
+                    if arrow_line.source_class != self.selected_class:
+                        if arrow_line in arrow_line.source_class.arrow_line_list:
+                            arrow_line.source_class.arrow_line_list.remove(arrow_line)
+                    # Remove the arrow from the destination class's arrow_line_list if it's not the selected class
+                    if arrow_line.dest_class != self.selected_class:
+                        if arrow_line in arrow_line.dest_class.arrow_line_list:
+                            arrow_line.dest_class.arrow_line_list.remove(arrow_line)
+                    # Remove the arrow from the selected class's arrow_line_list
+                    self.selected_class.arrow_line_list.remove(arrow_line)
+                # Remove the class from the class_name_list and scene
+                self.class_name_list.pop(input_class_name, None)
                 self.scene().removeItem(self.selected_class)
                 self.selected_class = None
             else:
-                QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
+                QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' does not exist!")
         else:
             QtWidgets.QMessageBox.warning(None, "Warning", "No class selected!")
-        
+
     def rename_class(self):
         """
         Rename the class displayed in the UML box.
@@ -144,24 +161,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 is_class_renamed = self.interface.rename_class(old_class_name, new_class_name)
                 if is_class_renamed:
                     self.change_name_in_relationship_after_rename_class(old_class_name, new_class_name)
-                    self.class_name_list[self.class_name_list.index(old_class_name)] = new_class_name
+                    self.class_name_list[new_class_name] = self.class_name_list.pop(old_class_name)
                     self.selected_class.class_name_text.setPlainText(new_class_name)
                     self.selected_class.update_box()
                 else:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"New class name'{new_class_name}' has already existed!")
-    
-    def change_name_in_relationship_after_rename_class(self, old_class_name, new_class_name):
-        for item in self.scene().items():
-            if isinstance(item, UMLClassBox):
-                if item.relationship_list:
-                    for each_relationship in item.relationship_list:
-                        if each_relationship["source"].toPlainText() == old_class_name:
-                            self.scene().removeItem(each_relationship["source"])
-                            each_relationship["source"] = item.create_text_item(new_class_name, selectable=False, color=item.text_color)
-                        if each_relationship["dest"].toPlainText() == old_class_name:
-                            self.scene().removeItem(each_relationship["dest"])
-                            each_relationship["dest"] = item.create_text_item(new_class_name, selectable=False, color=item.text_color)
-                    item.update_box()
             
     def add_field(self, loaded_class_name=None, loaded_field_name=None, is_loading=False):
         """
@@ -604,25 +608,36 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Add the selected relationship to the UML class and update the display.
         """
         if is_loading:
-            # Find the UML class box by the loaded class name in the scene
+            # Initialize variables to hold the source and destination class boxes
+            source_class_obj = None
+            dest_class_obj = None
+
+            # Loop through the scene items to find the source and destination classes
             for item in self.scene().items():
-                if isinstance(item, UMLClassBox) and item.class_name_text.toPlainText() == loaded_class_name:
-                    selected_class_box = item  # Found the class box
-                    # Add the relationship via the interface
-                    is_rel_added = self.interface.add_relationship_gui(source_class_name=loaded_source_class, destination_class_name=loaded_dest_class, type=loaded_type)
-                    if is_rel_added:
-                        # Create text items for the source, destination, and type
-                        source_text = selected_class_box.create_text_item(loaded_source_class, selectable=False, color=selected_class_box.text_color)
-                        dest_text = selected_class_box.create_text_item(loaded_dest_class, selectable=False, color=selected_class_box.text_color)
-                        type_text = selected_class_box.create_text_item(loaded_type, selectable=False, color=selected_class_box.text_color)
-                        # Append the relationship data to the class's relationship list
-                        selected_class_box.relationship_list.append({"source": source_text, "dest": dest_text, "type": type_text})
-                        self.track_relationship(loaded_source_class, loaded_dest_class)
-                        if len(selected_class_box.relationship_list) == 1:
-                            # If this is the first relationship, create a separator
-                            selected_class_box.create_separator(is_first=False, is_second=False)
-                        # Update the class box
-                        selected_class_box.update_box()
+                if isinstance(item, UMLClassBox):
+                    class_name = item.class_name_text.toPlainText()
+                    if class_name == loaded_source_class:
+                        source_class_obj = item
+                    elif class_name == loaded_dest_class:
+                        dest_class_obj = item
+                # If both classes are found, no need to continue looping
+                if source_class_obj and dest_class_obj:
+                    break
+
+            if source_class_obj and dest_class_obj:
+                # Add the relationship via the interface
+                is_rel_added = self.interface.add_relationship_gui(
+                    source_class_name=loaded_source_class,
+                    destination_class_name=loaded_dest_class,
+                    type=loaded_type
+                )
+                if is_rel_added:
+                    self.track_relationship(loaded_source_class, loaded_dest_class)
+                    arrow_line = ArrowLine(source_class_obj, dest_class_obj, loaded_type)
+                    self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
+                    # Update the class boxes
+                    source_class_obj.update_box()
+                    dest_class_obj.update_box()
         else:
             if self.selected_class:
                 # Initialize the dialog
@@ -640,17 +655,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Add the relationship via the interface
                     is_rel_added = self.interface.add_relationship_gui(source_class_name=source_class, destination_class_name=dest_class, type=type)
                     if is_rel_added:
-                        # Create text items for the source, destination, and type
-                        source_text = self.selected_class.create_text_item(source_class, selectable=False, color=self.selected_class.text_color)
-                        dest_text = self.selected_class.create_text_item(dest_class, selectable=False, color=self.selected_class.text_color)
-                        type_text = self.selected_class.create_text_item(type, selectable=False, color=self.selected_class.text_color)
-                        # Append the relationship data to the class's relationship list
-                        self.selected_class.relationship_list.append({"source": source_text, "dest": dest_text, "type": type_text})
                         self.track_relationship(source_class, dest_class)
-                        if len(self.selected_class.relationship_list) == 1:
-                            # If this is the first relationship, create a separator
-                            self.selected_class.create_separator(is_first=False, is_second=False)
-                        # Update the class box
+                        source_class_obj = self.selected_class
+                        dest_class_obj = self.class_name_list[dest_class]
+                        arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
+                        self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
+                        # # Update the class box
                         self.selected_class.update_box()
                     else:
                         QtWidgets.QMessageBox.warning(None, "Warning", "Relationship has already existed!")
@@ -668,7 +678,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Update the UML class box display.
         """
         if self.selected_class:
-            if self.selected_class.relationship_list:
+            if self.selected_class.arrow_line_list:
                 source_class = self.selected_class.class_name_text.toPlainText()
                 delete_rel_dialog = Dialog("Delete Relationship")
                 delete_rel_dialog.delete_relationship_popup(source_class, self.relationship_track_list)
@@ -681,15 +691,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Delete the relationship if found
                     is_rel_deleted = self.interface.delete_relationship(source_class, dest_class)
                     if is_rel_deleted:
-                        self.find_and_remove_relationship_helper(source_class, dest_class)
-                            
-    def track_relationship(self, source_class, dest_class):
+                        self.relationship_track_list[source_class].remove(dest_class)
+                        
+    def track_relationship(self, source_class, dest_class, arrow_line):
         """
         Keep track of relationships between source class and destination class.
         """
         # If the source class is not in the dictionary, add it with an empty list
-        if source_class not in self.relationship_track_list:
-            self.relationship_track_list[source_class] = []
+        if source_class not in self.relationship_track_list[arrow_line]:
+            self.relationship_track_list[arrow_line] = {source_class : []}
 
         # Append the destination class to the source class's list if it's not already there
         if dest_class not in self.relationship_track_list[source_class]:
@@ -711,7 +721,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Update the UML class box with the new relationship type.
         """
         if self.selected_class:
-            if self.selected_class.relationship_list:
+            if self.selected_class.arrow_line_list:
                 type_list = [enum.value for enum in RelationshipType]
                 source_class = self.selected_class.class_name_text.toPlainText()
                 change_rel_type_dialog = Dialog("Change Relationship Type")
@@ -746,36 +756,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 self.scene().removeItem(each_relationship["type"])
                 each_relationship["type"] = self.selected_class.create_text_item(new_type, selectable=False, color=self.selected_class.text_color)
                 break
-        self.selected_class.update_box()
-
-    def find_and_remove_relationship_helper(self, source_class, dest_class):
-        """
-        Helper function to find and remove a relationship between two UML classes.
-
-        This function removes the source, destination, and type text items from the scene and updates the UML class box.
-
-        Parameters:
-            source_class (str): The source class for the relationship.
-            dest_class (str): The destination class for the relationship.
-        """
-        for each_relationship in self.selected_class.relationship_list:
-            # Find the relationship that matches the source and destination classes
-            if (each_relationship["source"].toPlainText() == source_class and 
-                each_relationship["dest"].toPlainText() == dest_class):
-                # Remove the text items for source, destination, and type from the scene
-                self.scene().removeItem(each_relationship["source"])
-                self.scene().removeItem(each_relationship["dest"])
-                self.scene().removeItem(each_relationship["type"])
-                # Also remove any associated labels
-                self.scene().removeItem(each_relationship["source_label"])
-                self.scene().removeItem(each_relationship["dest_label"])
-                self.scene().removeItem(each_relationship["type_label"])
-                # Remove the relationship from the list
-                self.selected_class.relationship_list.remove(each_relationship)
-                break
-        self.relationship_track_list[source_class].remove(dest_class)
-        # This is for checking the list in the terminal
-        print(f"Current relationship tracking: {self.relationship_track_list}")
         self.selected_class.update_box()
 
     #################################################################
@@ -917,7 +897,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
             # RELATIONSHIP OPTIONS
             self.add_context_menu_action(contextMenu, "Add Relationship", self.add_relationship, enabled=True)
-            if self.selected_class.relationship_list:
+            if self.selected_class.arrow_line_list:
                 self.add_context_menu_action(contextMenu, "Delete Relationship", self.delete_relationship, enabled=True)
                 self.add_context_menu_action(contextMenu, "Change Type", self.change_relationship_type, enabled=True)
             else:
@@ -1087,7 +1067,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if reply == QtWidgets.QMessageBox.Yes:
             self.clear_current_scene()
             self.set_light_mode()
-            self.class_name_list = []
+            self.class_name_list = {}
             self.interface.new_file()
         elif reply == QtWidgets.QMessageBox.Save:
             self.save_gui()

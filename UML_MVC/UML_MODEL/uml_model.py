@@ -1602,15 +1602,20 @@ class UMLModel:
         extracted_class_data = self._extract_class_data(class_data)
         for each_pair in extracted_class_data:
             for class_name, data in each_pair.items():
-                field_list = data['fields']
-                method_param_list = data['methods_params']
+                field_list = data["fields"]
+                method_list = data["method_list"]
                 # Add classes, fields, methods, and parameters to the program state
                 graphical_view.add_class(class_name, is_loading=True)
                 for each_field in field_list:
-                    graphical_view.add_field(class_name, each_field, is_loading=True)
-                for method_name, param_list in method_param_list.items():
-                    graphical_view.add_method(class_name, method_name, is_loading=True)
-                    for param_name in param_list:
+                    field_name = each_field["name"]
+                    field_type = each_field["type"]
+                    graphical_view.add_field(class_name, field_type, field_name, is_loading=True)
+                for each_element in method_list:
+                    method_name = each_element["name"]
+                    return_type = each_element["return_type"]
+                    parameter_list = each_element["params"]
+                    graphical_view.add_method(class_name, return_type, method_name, is_loading=True)
+                    for param_name in parameter_list:
                         graphical_view.add_param(class_name, method_name, param_name, is_loading=True)
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:

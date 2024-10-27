@@ -120,8 +120,9 @@ class CustomInputDialog(QtWidgets.QDialog):
         """
         Creates a dialog for adding a relationship.
         """
+        name_list = [class_name for class_name in class_name_list.keys()]
         # Create combo box for class names
-        destination_class = self.__add_input("Select Destination Class To Set Relationship:", widget_type="combo", options=class_name_list)
+        destination_class = self.__add_input("Select Destination Class To Set Relationship:", widget_type="combo", options=name_list)
         
         # Create combo box for type
         type = self.__add_input("Select A Type For The Relationship:", widget_type="combo", options=type_list)
