@@ -617,6 +617,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     class_name = item.class_name_text.toPlainText()
                     if class_name == loaded_source_class:
                         source_class_obj = item
+                        source_class_obj.is_source_class = True
                     elif class_name == loaded_dest_class:
                         dest_class_obj = item
                 # If both classes are found, no need to continue looping

@@ -1620,7 +1620,6 @@ class UMLModel:
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:
             graphical_view.add_relationship(
-                loaded_class_name=each_dictionary["source"],
                 loaded_source_class=each_dictionary["source"],
                 loaded_dest_class=each_dictionary["destination"],
                 loaded_type=each_dictionary["type"],
