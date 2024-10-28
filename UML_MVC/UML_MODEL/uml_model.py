@@ -329,7 +329,7 @@ class UMLModel:
 
         # If not loading, check if a method with the same signature already exists #
         if not is_loading:
-            is_new_method_valid = self._check_method_param_list(new_method, method_and_parameter_list, method_and_pram_list_element)
+            is_new_method_valid = self._check_method_param_list(class_name, method_and_pram_list_element)
             if not is_new_method_valid:
                 return False
 
@@ -342,30 +342,33 @@ class UMLModel:
                                data={"class_name": class_name, "type": type, "method_name": method_name}, is_loading=is_loading)
         return True
 
-    def _check_method_param_list(self, new_method_object: Method, method_and_parameter_list: list, method_and_pram_list_element: dict):
+    def _check_method_param_list(self, class_name: str, new_method_and_params: dict):
         """
         Checks if a method with the same signature (name and parameter types) already exists in the class.
 
         Parameters:
-            new_method_object (Method): The new method being added.
-            method_and_parameter_list (list): The list of existing methods and their parameters for the class.
-            method_and_pram_list_element (dict): A dictionary representing the new method and its (empty) parameter list.
+            class_name (str) : class which the method is being added to
+            new_method_and_params (dict): A dictionary representing the new method and its parameter list.
 
         Returns:
             bool: True if no method with the same signature exists, False otherwise.
         """
         # Loop through each method in the existing method list #
-        for each_element in method_and_parameter_list:
-            for each_method, param_list in each_element.items():
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+
+        for method_and_parameter in method_and_parameter_list:
+            for method, param_list in method_and_parameter.items():
+                new_method = next(iter(new_method_and_params))
                 # Compare method names #
-                if each_method._get_name() == new_method_object._get_name():
+                if method._get_name() == new_method._get_name():
                     # Retrieve parameter types for both methods (existing and new) #
                     first_param_type_list = [param._get_type() for param in param_list]
-                    second_param_type_list = [param._get_type() for param in method_and_pram_list_element[new_method_object]]
+                    second_param_type_list = [param._get_type() for param in new_method_and_params[new_method]]
+
                     
                     # If parameter lists match, the new method is a duplicate #
                     if first_param_type_list == second_param_type_list:
-                        self.__console.print(f"\n[bold red]New method [bold white]'{new_method_object._get_name()}'[/bold white] "
+                        self.__console.print(f"\n[bold red]New method [bold white]'{new_method._get_name()}'[/bold white] "
                                              f"has the same parameter list signature![bold red]")
                         return False
         return True
@@ -566,9 +569,18 @@ class UMLModel:
             )
             if not is_param_exist:
                 return False
+            
+            new_param = self.create_parameter(param_type, param_name)
+            new_param_list = param_list.copy()
+            new_param_list.append(new_param)
+            method_with_new_param = {method: new_param_list}
+
+            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
+            if not is_method_valid_with_param:
+                return False
 
             # Create a new parameter and add it to the method's parameter list #
-            new_param = self.create_parameter(param_type, param_name)
+            
             param_list.append(new_param)
 
             # Update main data and notify observers #
@@ -1347,16 +1359,31 @@ class UMLModel:
                 method_json_format = each_method._convert_to_json_method()
                 # Get the parameters of the current method
                 parameter_list = each_element[each_method]
+                parameter_json_list = []
+                for parameter in parameter_list:
+                    parameter_json_list.append(parameter._convert_to_json_parameter())
+                method_json_format["params"] = parameter_json_list
                 # Convert each parameter to JSON format
                 parameter_format_list: List[Dict] = []
                 for each_parameter in parameter_list:
                     parameter_format_list.append(each_parameter._convert_to_json_parameter())
                 # Add method format to the method list format
                 method_list_format.append(method_json_format)
-                # Add the parameters to the method format
-                for each_method_format in method_list_format:
-                    if each_method_format["name"] == each_method._get_name():
-                        each_method_format["params"].extend(parameter_format_list)
+                
+                # # Add the parameters to the method format
+                # for each_method_format in method_list_format:
+                #     self.__console.print("method_list_format" , method_list_format)
+
+                #     current_method_param_type_list: List[str] = []
+                #     for parameter in each_method_format["params"]:
+                #         current_method_param_type_list.append(parameter["type"])
+                #     self.__console.print("parameter_type_list" , parameter_type_list)
+                #     self.__console.print("current_method_param_type_list" , current_method_param_type_list)
+                #     if each_method_format["name"] == each_method._get_name() and each_method_format["return_type"] == each_method._get_type() and current_method_param_type_list == parameter_type_list:
+                #         self.__console.print("each_method_format PARAMS" , each_method_format["params"])
+                #         self.__console.print("parameter_type_list" , parameter_type_list)
+                #         each_method_format["params"].extend(parameter_format_list)
+                        
         return method_list_format
     
     # Get relationship format list #
@@ -1580,7 +1607,7 @@ class UMLModel:
                     parameter_list = each_element["params"]
                     self._add_method(class_name, return_type, method_name, is_loading=True)
                     for param_name in parameter_list:
-                        self._add_param(class_name, method_name, param_name, is_loading=True)
+                        self._add_parameter(class_name, method_name, param_name, is_loading=True)
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:
             self._add_relationship(each_dictionary["source"], each_dictionary["destination"], each_dictionary["type"], is_loading=True, is_gui=False)
