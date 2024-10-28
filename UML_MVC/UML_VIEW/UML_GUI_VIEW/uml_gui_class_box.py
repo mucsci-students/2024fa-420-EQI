@@ -71,7 +71,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         # Initialize resizing and connection properties
         self.is_box_dragged = False
         # self.is_resizing = False
-        self.is_selected = False
+        self.is_source_class= False
         self.current_handle = None
         
         #################################

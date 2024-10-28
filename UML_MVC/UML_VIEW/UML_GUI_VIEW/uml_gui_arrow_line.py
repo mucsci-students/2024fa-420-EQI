@@ -15,6 +15,7 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         self.dest_class = dest_class
         self.relationship_type = relationship_type
         self.arrow_size = 10  # Size of the arrowhead
+        self.arrow_type = relationship_type
 
         # Set pen for drawing the line
         pen = QtGui.QPen(QtCore.Qt.black)
@@ -25,7 +26,7 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
 
         # Add this arrow to the connected boxes
         self.source_class.arrow_line_list.append(self)
-        # self.dest_class.arrow_line_list.append(self)
+        self.dest_class.arrow_line_list.append(self)
         
         # Ensure arrow is drawn on top
         self.setZValue(1)

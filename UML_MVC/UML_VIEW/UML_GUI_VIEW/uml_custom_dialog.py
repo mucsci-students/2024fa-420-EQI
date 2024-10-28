@@ -138,10 +138,12 @@ class CustomInputDialog(QtWidgets.QDialog):
         """
         Creates a dialog for deleting a relationship.
         """
+        # Extract all dest_class names from the list of tuples
+        dest_classes = [dest_class for dest_class, arrow_line in relationship_track_list[source_class_name]]
+        
         # Create combo box for source class names
         destination_class_list_of_current_source_class = self.__add_input("Select Destination Class To Delete Relationship:", 
-                                                                          widget_type="combo", 
-                                                                          options=relationship_track_list[source_class_name])
+                                                                          widget_type="combo", options=dest_classes)
         self.input_widgets["destination_class_list_of_current_source_class"] = destination_class_list_of_current_source_class
         # Add buttons (OK/Cancel)
         self.__add_buttons()
@@ -150,10 +152,12 @@ class CustomInputDialog(QtWidgets.QDialog):
         """
         Creates a dialog for deleting a relationship.
         """
+        # Extract all dest_class names from the list of tuples
+        dest_classes = [dest_class for dest_class, arrow_line in relationship_track_list[source_class_name]]
         # Create combo box for source class names
         destination_class_list_of_current_source_class = self.__add_input("Select Destination Class To Change Relationship Type:", 
                                                                           widget_type="combo", 
-                                                                          options=relationship_track_list[source_class_name])
+                                                                          options=dest_classes)
          # Create combo box for type
         type = self.__add_input("Select A New Type For The Relationship:", widget_type="combo", options=type_list)
         
