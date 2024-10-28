@@ -52,10 +52,9 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         
         self.parameter_name_list: List = []
         
-        self.relationship_list: Dict = relationship_list if relationship_list is not None else []
-        
         self.handles_list: List = []
-        self.connection_points_list: List = []
+        self.connection_points_list: Dict = {}
+        self.arrow_line_list: List = []
 
         #################################################################
         ### UML CLASS BOX DEFAULT SETUP ###
@@ -72,7 +71,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         # Initialize resizing and connection properties
         self.is_box_dragged = False
         # self.is_resizing = False
-        self.is_selected = False
+        self.is_source_class= False
         self.current_handle = None
         
         #################################
@@ -140,7 +139,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
 
         # Align the fields within the UML box
         self.update_field_alignment()
-        self.update_relationship_alignment()
 
         # # Update the position of the resize handles at the corners of the UML box
         # self.update_handle_positions()
@@ -150,6 +148,16 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
 
         # Update the separators between the class name, fields, and methods
         self.update_separators()
+        
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.ItemPositionChange:
+            # Update arrow positions when the position of the box changes
+            self.update_arrow_lines()
+        return super().itemChange(change, value)
+    
+    def update_arrow_lines(self):
+        for arrow_line in self.arrow_line_list:
+            arrow_line.update_position()
 
     def update_box_dimension(self):
         """
@@ -249,20 +257,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             else:
                 self.scene().removeItem(self.separator_line2)
                 
-        if hasattr(self, 'separator_line3') and self.separator_line3.scene() == self.scene():
-            if len(self.relationship_list) > 0:
-                class_name_height = self.class_name_text.boundingRect().height()
-                field_section_height = self.get_field_text_height()
-                method_section_height = self.get_method_text_height()
-                y_pos = self.rect().topLeft().y() + class_name_height + field_section_height + method_section_height + self.default_margin
-                self.separator_line3.setLine(
-                self.rect().topLeft().x(), y_pos, 
-                self.rect().topRight().x(), y_pos
-                )
-                self.separator_line3.setPen(QtGui.QPen(QtGui.QColor(30,144,255)))  
-            else:
-                self.scene().removeItem(self.separator_line3)
-                
     # def update_handle_positions(self):
     #     """
     #     Update the positions of the resize handles based on the current size of the UML box.
@@ -280,10 +274,10 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         Connection points are positioned at the center of the edges (top, bottom, left, right).
         """
         rect = self.rect()
-        self.connection_points_list['top'].setPos(rect.center().x(), rect.top())
+        self.connection_points_list['top'].setPos(rect.center().x(), rect.top() - 1)
         self.connection_points_list['bottom'].setPos(rect.center().x(), rect.bottom() + 5)
-        self.connection_points_list['left'].setPos(rect.left(), rect.center().y())
-        self.connection_points_list['right'].setPos(rect.right(), rect.center().y() + 5)
+        self.connection_points_list['left'].setPos(rect.left() - 1, rect.center().y())
+        self.connection_points_list['right'].setPos(rect.right() + 5, rect.center().y() + 2)
         
     def update_field_alignment(self):
         """
@@ -338,70 +332,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
                 method_text.setPlainText(method_with_params)
                 # Update y_offset for the next method or parameter (incremented by the height of this method)
                 y_offset += method_text.boundingRect().height()
-
-    
-    def update_relationship_alignment(self):
-        """
-        Aligns the relationship text items (source, dest, type) in the UML class box, 
-        explicitly using labels for "Source: ", "Dest: ", and "Type: ".
-        """
-        # Starting y-position for the first relationship (below the class name, fields, and methods)
-        y_offset = (self.class_name_text.boundingRect().height() 
-                    + self.get_field_text_height() 
-                    + self.get_method_text_height() 
-                    + self.default_margin)
-
-        # Iterate over the relationships in the list and reposition them
-        for relationship in self.relationship_list:
-            source_text = relationship["source"]
-            dest_text = relationship["dest"]
-            type_text = relationship["type"]
-
-            # Calculate the x-position for the relationship text (aligned to the left of the box)
-            rel_x_pos = self.rect().topLeft().x() + self.default_margin
-
-            # Check if the labels already exist before creating them
-            if "source_label" not in relationship:
-                source_label = self.create_text_item("Source: ", selectable=False)
-                relationship["source_label"] = source_label
-                self.scene().addItem(source_label)
-            else:
-                source_label = relationship["source_label"]
-
-            if "dest_label" not in relationship:
-                dest_label = self.create_text_item("Dest: ", selectable=False)
-                relationship["dest_label"] = dest_label
-                self.scene().addItem(dest_label)
-            else:
-                dest_label = relationship["dest_label"]
-
-            if "type_label" not in relationship:
-                type_label = self.create_text_item("Type: ", selectable=False)
-                relationship["type_label"] = type_label
-                self.scene().addItem(type_label)
-            else:
-                type_label = relationship["type_label"]
-
-            # Set the position of Source label and text
-            source_label.setPos(rel_x_pos, self.rect().topLeft().y() + y_offset)
-            source_text.setPos(rel_x_pos + source_label.boundingRect().width(), self.rect().topLeft().y() + y_offset)
-
-            # Increment y_offset to display Dest below the Source
-            y_offset += source_text.boundingRect().height()
-
-            # Set the position of Dest label and text
-            dest_label.setPos(rel_x_pos, self.rect().topLeft().y() + y_offset)
-            dest_text.setPos(rel_x_pos + dest_label.boundingRect().width(), self.rect().topLeft().y() + y_offset)
-
-            # Increment y_offset to display Type below the Dest
-            y_offset += dest_text.boundingRect().height()
-
-            # Set the position of Type label and text
-            type_label.setPos(rel_x_pos, self.rect().topLeft().y() + y_offset)
-            type_text.setPos(rel_x_pos + type_label.boundingRect().width(), self.rect().topLeft().y() + y_offset)
-
-            # Increment y_offset for the next relationship
-            y_offset += type_text.boundingRect().height() + self.default_margin
 
     #################################
     
@@ -788,45 +718,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             param_tex_height += param_text.boundingRect().height()
         return param_tex_height
     
-    def get_relationship_height(self):
-        relationship_text_height = 0
-        for relationship in self.relationship_list:
-            relationship_text_height += (relationship["source"].boundingRect().height() 
-                                         + relationship["dest"].boundingRect().height() 
-                                         + relationship["type"].boundingRect().height())
-        return relationship_text_height
-    
-    def get_relationship_max_text_width(self):
-        """
-        Calculates the maximum width among the boundingRect().width() of the 'source', 'dest', and 'type' QGraphicsTextItems in the relationship list.
-
-        Args:
-            relationship_list (list): A list of dictionaries, each containing 'source', 'dest', and 'type' keys with QGraphicsTextItem values.
-
-        Returns:
-            float: The maximum width among the boundingRect().width() of the text items.
-        """
-        max_width = 0.0
-
-        # Iterate over the dictionaries in the relationship_list
-        for rel_dict in self.relationship_list:
-            source_text = rel_dict.get('source')
-            dest_text= rel_dict.get('dest')
-            type_text = rel_dict.get('type')
-
-            # Calculate the widths of the text items
-            source_width = source_text.boundingRect().width() if source_text is not None else 0
-            dest_width = dest_text.boundingRect().width() if dest_text is not None else 0
-            type_width = type_text.boundingRect().width() if type_text is not None else 0
-
-            # Find the maximum width among the three
-            max_width_in_dict = max(source_width, dest_width, type_width)
-
-            # Update the overall maximum width if necessary
-            if max_width_in_dict > max_width:
-                max_width = max_width_in_dict
-
-        return max_width
 
     def get_maximum_width(self):
         """
@@ -855,14 +746,12 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         #         max_param_width = max(max_param_width, max(param_widths, default=0))
         
         # Get maximum width of relationship text items
-        max_rel_width = self.get_relationship_max_text_width()
         
         # Determine the largest width among all components
         content_max_width = max(
             max_class_name_width,
             max_field_width,
-            max_method_width,
-            max_rel_width
+            max_method_width
         )
         
         # Return the largest width between fields, methods, and parameters
@@ -880,15 +769,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
 
         # Get the total height of the methods section
         method_text_height = self.get_method_text_height()
-        
-        # Get the total height of the relationship section
-        relationship_text_height = self.get_relationship_height()
 
         # Calculate the total height required for the box, including margins
         total_height = (class_name_height 
                         + fields_text_height 
                         + method_text_height 
-                        + relationship_text_height 
                         + default_height)
         
         return total_height
