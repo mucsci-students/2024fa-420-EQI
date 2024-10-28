@@ -820,10 +820,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         # Iterate through all items in the scene
         for item in self.scene().items():
             # Check if the item is a UMLClassBox
-            if isinstance(item, UMLClassBox):
+            if isinstance(item, UMLClassBox) or isinstance(item, ArrowLine):
                 # Remove the UMLClassBox from the scene
                 self.scene().removeItem(item)
-                
+                     
     #################################################################
     ## CONTEXT MENU ACTIONS ##
             
