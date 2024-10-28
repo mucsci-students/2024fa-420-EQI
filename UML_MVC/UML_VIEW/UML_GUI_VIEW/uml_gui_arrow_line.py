@@ -226,13 +226,3 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         path.moveTo(self.line().p1())
         path.lineTo(self.line().p2())
         return path
-
-    def itemChange(self, change, value):
-        """
-        Responds to changes in the item's state, such as position changes.
-
-        Ensures the arrow updates correctly when boxes are moved.
-        """
-        if change == QtWidgets.QGraphicsItem.ItemPositionChange:
-            self.update_position()
-        return super().itemChange(change, value)
