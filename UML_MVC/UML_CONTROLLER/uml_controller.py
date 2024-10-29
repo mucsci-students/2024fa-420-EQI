@@ -142,22 +142,27 @@ class UMLController:
         elif (
             command == InterfaceOptions.DELETE_METHOD.value
             and first_param
+            and second_param
         ):
-            self.__model._delete_method(class_name=first_param)
+            self.__model._delete_method(class_name=first_param, method_num=second_param)
         
         # Rename method in class
         elif (
             command == InterfaceOptions.RENAME_METHOD.value
             and first_param
+            and second_param
+            and third_param
         ):
-            self.__model._rename_method(class_name=first_param)
+            self.__model._rename_method(class_name=first_param, method_num=second_param, new_name=third_param)
         
         # Change method type in class
         elif (
-            command == InterfaceOptions.METHOD_TYPE.value
+            command == InterfaceOptions.EDIT_METHOD_TYPE.value
             and first_param
+            and second_param
+            and third_param
         ):
-            self.__model._change_data_type(class_name=first_param, is_method=True)
+            self.__model._change_data_type(class_name=first_param, method_num=second_param, new_type=third_param, is_method=True)
 
         #######################################################
         
