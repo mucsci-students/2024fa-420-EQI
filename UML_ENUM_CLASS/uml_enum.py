@@ -21,6 +21,7 @@ class InterfaceOptions(Enum):
     ADD_PARAM = "add_param"
     DELETE_PARAM = "delete_param"
     RENAME_PARAM = "rename_param"
+    EDIT_PARAM_TYPE = "edit_param_type"
     REPLACE_PARAM = "replace_param"
     PARAM_TYPE = "param_type"
     ADD_REL = "add_rel"
