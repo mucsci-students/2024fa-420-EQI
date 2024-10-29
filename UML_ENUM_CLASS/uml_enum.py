@@ -17,7 +17,7 @@ class InterfaceOptions(Enum):
     ADD_METHOD = "add_method"
     DELETE_METHOD = "delete_method"
     RENAME_METHOD = "rename_method"
-    METHOD_TYPE = "method_type"
+    EDIT_METHOD_TYPE = "edit_method_type"
     ADD_PARAM = "add_param"
     DELETE_PARAM = "delete_param"
     RENAME_PARAM = "rename_param"

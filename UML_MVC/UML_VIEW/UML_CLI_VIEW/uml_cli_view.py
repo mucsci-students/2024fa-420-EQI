@@ -110,7 +110,7 @@ class UMLView(Observer):
             self.console.print(f"\n[bold green]Successfully renamed method [bold white]'{old_method_name}'[/bold white] to method [bold white]'{new_method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Change method type
-        elif event_type == InterfaceOptions.METHOD_TYPE.value:
+        elif event_type == InterfaceOptions.EDIT_METHOD_TYPE.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
             new_type = data["new_type"]
@@ -193,10 +193,10 @@ class UMLView(Observer):
             ["field_type [bright_white]<class_name> <field_name> <new_data_type>[bright_white]", "Change field data type"],
                 
             ["[bold yellow]Method Commands[/bold yellow]", ""],
-            ["add_method [bright_white]<class_name> <method_name>[bright_white]", "Add a method to a class"],
-            ["delete_method [bright_white]<class_name>[bright_white]", "Delete a method from a class"],
-            ["rename_method [bright_white]<class_name>[bright_white]", "Rename a method"],
-            ["method_type [bright_white]<class_name>[bright_white]", "Change method data type"],
+            ["add_method [bright_white]<class_name> <return_type> <method_name>[bright_white]", "Add a method to a class"],
+            ["delete_method [bright_white]<class_name> <method_num>[bright_white]", "Delete a method from a class"],
+            ["rename_method [bright_white]<class_name> <method_num> <new_method_name>[bright_white]", "Rename a method"],
+            ["edit_method_type [bright_white]<class_name> <method_num> <new_return_type>[bright_white]", "Change method data type"],
 
             ["[bold yellow]Parameter Commands[/bold yellow]", ""],
             ["add_param [bright_white]<class_name> <method_name> <param_name>[bright_white]", "Add a parameter to a method"],
@@ -296,9 +296,11 @@ class UMLView(Observer):
             fields_branch.add(f'[bold italic cyan]{field["type"]}[/bold italic cyan] : [bold dark_slate_gray2]{field["name"]}[/bold dark_slate_gray2]')
 
         methods_branch = class_branch.add("[bold yellow]Methods[/bold yellow]")
+        i : int = 1
         for method in cls["methods"]:
             params = ', '.join(f'[bold italic cyan]{param["type"]}[/bold italic cyan] {param["name"]}' for param in method["params"])
-            methods_branch.add(f'[bold dark_orange][bold italic cyan]{method["return_type"]}[/bold italic cyan] : {method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
+            methods_branch.add(f'{i} -- [bold dark_orange][bold italic cyan]{method["return_type"]}[/bold italic cyan] : {method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
+            i = i + 1
     
     def _display_class_names(self, main_data: Dict):
         """
