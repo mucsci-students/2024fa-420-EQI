@@ -129,7 +129,7 @@ class UMLView(Observer):
         elif event_type == InterfaceOptions.DELETE_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
-            param_type = data["param_type"]
+            param_type = data["param_type"] + " "
             param_name = data["param_name"]
             self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'[bold italic cyan]{param_type}[/bold italic cyan]{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
@@ -137,10 +137,10 @@ class UMLView(Observer):
         elif event_type == InterfaceOptions.EDIT_PARAM_TYPE.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
-            old_param_type = data["old_param_type"]
+            old_param_type = data["old_param_type"] + " "
             param_name = data["param_name"]
             new_param_type = data["new_param_type"]
-            self.console.print(f"\n[bold green]Successfully changed parameter type of [bold white]'[bold italic cyan]{old_param_type}[/bold italic cyan] {param_name}'[/bold white] to '[bold italic cyan]{new_param_type}[/bold italic cyan]' in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            self.console.print(f"\n[bold green]Successfully changed parameter type of [bold white]'[bold italic cyan]{old_param_type}[/bold italic cyan]{param_name}'[/bold white] to '[bold italic cyan]{new_param_type}[/bold italic cyan]' in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
     
         # Rename parameter
         elif event_type == InterfaceOptions.RENAME_PARAM.value:

@@ -101,22 +101,55 @@ class AddMethodCommand(Command):
         self.class_name = class_name
         self.type = type
         self.method_name = method_name
-        self.method_num = 0
 
     def execute(self):
-        self.method_num = self.method_num + 1
         return self.uml_interface.add_method(self.class_name, self.type, self.method_name)
 
     def undo(self):
-        if self.method_num > 0:
-            self.method_num = self.method_num - 1
-            return self.uml_interface.delete_method(self.class_name, self.method_num)
+        return self.uml_interface.delete_method(self.class_name, str(self.uml_interface.Model._current_number_of_method))
+    
+class DeleteMethodCommand(Command):
+    def __init__(self, uml_interface, class_name, method_num):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+        self.method_name = None
+        self.type = None
+
+    def execute(self):
+        # Capture the field type before deleting the method
+        chosen_method = self.uml_interface.get_method_based_on_index(self.class_name, self.method_num)
+        if chosen_method is None:
+            return False
+        self.type = chosen_method._get_type()
+        self.method_name = chosen_method._get_name()
+        return self.uml_interface.delete_method(self.class_name, self.method_num)
+        
+    def undo(self):
+        if self.type and self.method_name:
+            return self.uml_interface.add_method(self.class_name, self.type, self.method_name)
+        return False
+    
+class AddParameterCommand(Command):
+    def __init__(self, uml_interface, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+        self.param_type = param_type
+        self.param_name = param_name
+
+    def execute(self):
+        return self.uml_interface.add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name)
+
+    def undo(self):
+        return self.uml_interface.delete_parameter(self.class_name, str(self.method_num), self.param_name)
     
 class ChangeTypeCommand(Command):
-    def __init__(self, uml_interface, class_name: str, input_name: str, new_type: str, 
+    def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
                  is_field: bool=False, is_method: bool=False, is_param: bool=False):
         self.uml_interface = uml_interface
         self.class_name = class_name
+        self.method_num = method_num
         self.input_name = input_name
         self.new_type = new_type
         self.is_field = is_field
@@ -130,25 +163,21 @@ class ChangeTypeCommand(Command):
             chosen_field = self.uml_interface.get_chosen_field_or_method(self.class_name, self.input_name, is_field=True)
             if chosen_field is not None:
                 self.original_type = chosen_field._get_type()
-                return self.uml_interface.change_data_type(self.class_name, self.input_name, self.new_type,
-                                                           is_field=True, is_method=False, is_param=self.is_param)
+                return self.uml_interface.change_data_type(class_name=self.class_name, input_name=self.input_name, new_type=self.new_type, is_field=True)
 
         elif self.is_method:
-            chosen_method = self.uml_interface.get_chosen_field_or_method(self.class_name, self.input_name, is_field=False)
-            if chosen_method is not None:
-                self.original_type = chosen_method._get_type()
-                return self.uml_interface.change_data_type(self.class_name, self.input_name, self.new_type,
-                                                           is_field=False, is_method=True, is_param=self.is_param)
-        return False
+            chosen_method = self.uml_interface.get_method_based_on_index(self.class_name, self.method_num)
+            if chosen_method is None:
+                return False
+            self.original_type = chosen_method._get_type()
+            return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.new_type, is_method=True)
 
     def undo(self):
         # Restore the original type
         if self.is_field and self.original_type:
-            return self.uml_interface.change_data_type(self.class_name, self.input_name, self.original_type,
-                                                       is_field=True, is_method=False, is_param=self.is_param)
+            return self.uml_interface.change_data_type(class_name=self.class_name, input_name=self.input_name, new_type=self.original_type, is_field=True)
         elif self.is_method and self.original_type:
-            return self.uml_interface.change_data_type(self.class_name, self.input_name, self.original_type,
-                                                       is_field=False, is_method=True, is_param=self.is_param)
+            return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.original_type, is_method=True)
         return False
 
 class InputHandler:
@@ -190,12 +219,33 @@ def main():
     
     add_method_command_1 = AddMethodCommand(interface, "Human", "void", "attack")
     command_manager.execute_command(add_method_command_1)
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "run")
+    command_manager.execute_command(add_method_command_1)
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "walk")
+    command_manager.execute_command(add_method_command_1)
+    
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="int", param_name="dmg")
+    command_manager.execute_command(add_param_command)
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="string", param_name="stats")
+    command_manager.execute_command(add_param_command)
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="2", param_type="int", param_name="stamina")
+    command_manager.execute_command(add_param_command)
     
     cli_view._display_uml_data(interface.get_main_data())
     
     command_manager.undo()
     
-    # command_manager.redo()
+    command_manager.undo()
+    
+    command_manager.undo()
+    
+    cli_view._display_uml_data(interface.get_main_data())
+    
+    command_manager.redo()
+    
+    command_manager.redo()
+    
+    command_manager.redo()
     
     cli_view._display_uml_data(interface.get_main_data())
     

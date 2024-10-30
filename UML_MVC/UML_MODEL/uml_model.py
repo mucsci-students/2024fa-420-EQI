@@ -54,6 +54,7 @@ class UMLModel:
         self.__relationship_list: List[Relationship] = []
         self.__main_data: Dict = {"classes":[], "relationships":[]}
         self._observers = [] # For observer design pattern
+        self._current_number_of_method = 0
                     
     #################################################################
       
@@ -332,17 +333,30 @@ class UMLModel:
             is_new_method_valid = self._check_method_param_list(class_name, method_and_pram_list_element)
             if not is_new_method_valid:
                 return False
-
+            
         # Add the new method and its empty parameter list to the method_and_parameter_list #
         method_and_parameter_list.append(method_and_pram_list_element)
-
+        self._current_number_of_method = self._current_number_of_method + 1
         # Notify observers and update internal data #
         self._update_main_data_for_every_action()
         self._notify_observers(event_type=InterfaceOptions.ADD_METHOD.value,
                                data={"class_name": class_name, "type": type, "method_name": method_name}, is_loading=is_loading)
         return True
     
-     
+    def _get_method_based_on_index(self, class_name: str, method_num: str):
+        is_method_num_valid = self._check_method_num(method_num)
+        if not is_method_num_valid:
+            return None
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        selected_index = int(method_num) - 1  # Convert to zero-based index
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            method = next(iter(chosen_pair))  # Extract the method object
+            return method
+        else:
+            self.__console.print("\n[bold red]Method number out of range! Please enter a valid number.[/bold red]")
+            return None
+
     def _check_method_param_list(self, class_name: str, new_method_and_params: dict):
         """
         Checks if a method with the same signature (name and parameter types) already exists in the class.
@@ -436,6 +450,7 @@ class UMLModel:
             self._update_main_data_for_every_action()
             self._notify_observers(event_type=InterfaceOptions.DELETE_METHOD.value,
                                    data={"class_name": class_name, "method_name": method._get_name()})
+            self._current_number_of_method = self._current_number_of_method - 1
             return True
         else:
             # If the number is not in the range of [1, num of methods] then return error
@@ -2226,7 +2241,7 @@ class UMLModel:
         return True
     
     # Change data type #
-    def _change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None, method_num:int = None):
+    def _change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None, method_num:str = None):
         if is_field:
             # Check valid input #
             if not self._is_valid_input(class_name=class_name, field_name=input_name, new_type=None):

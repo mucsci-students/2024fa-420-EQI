@@ -224,6 +224,9 @@ class UMLInterface:
             class_should_exist, field_should_exist, 
             method_should_exist, parameter_should_exist
         )
+        
+    def get_method_based_on_index(self,class_name: str, method_num: str):
+        return self.Model._get_method_based_on_index(class_name, method_num)
     
     ## CLASS RELATED ##
     
@@ -434,8 +437,8 @@ class UMLInterface:
         """
         return self.Model._change_type(source_class_name, destination_class_name, new_type)
     
-    def change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None):
-        return self.Model._change_data_type(class_name, input_name, new_type, is_field, is_method, is_param)
+    def change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None, method_num: str = None):
+        return self.Model._change_data_type(class_name, input_name, new_type, is_field, is_method, is_param, method_num)
     
     ## SAVE/LOAD RELATED ##
     
