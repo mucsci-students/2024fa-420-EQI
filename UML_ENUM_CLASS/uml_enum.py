@@ -35,7 +35,7 @@ class InterfaceOptions(Enum):
     LOAD = "load"
     DELETE_SAVED = "delete_saved"
     CLEAR_DATA = "clear_data"
-    DEFAULT = "default"
+    NEW = "new"
     SORT = "sort"
     HELP = "help"
     EXIT = "exit"    

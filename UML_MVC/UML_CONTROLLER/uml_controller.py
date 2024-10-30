@@ -272,7 +272,7 @@ class UMLController:
             self.__model._clear_current_active_data()
         
         # Reset to a blank program
-        elif command == InterfaceOptions.DEFAULT.value:
+        elif command == InterfaceOptions.NEW.value:
             self.__model._new_file()
         
         # Sort the list of classes alphabetically

@@ -231,7 +231,7 @@ class UMLView(Observer):
             ["load", "Load data from a saved file"],
             ["delete_saved", "Delete a saved file"],
             ["clear_data", "Clear all data from current storage"],
-            ["default", "Reset to a blank program"],
+            ["new", "Open new file"],
 
             ["[bold yellow]Other Commands[/bold yellow]", ""],
             ["sort", "Sort the class list alphabetically"],

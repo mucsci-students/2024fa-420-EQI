@@ -1947,7 +1947,7 @@ class UMLModel:
         self.__set_all_file_off()
         self._set_all_file_off_gui()
         self._reset_storage()
-        self.__console.print("\n[bold green]Successfully back to default program![/bold green]")
+        self.__console.print("\n[bold green]Successfully create new file![/bold green]")
     
     # Get active file #
     def _get_active_file(self) -> str:
