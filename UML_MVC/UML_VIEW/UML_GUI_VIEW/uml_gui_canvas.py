@@ -640,7 +640,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     dest_class_obj.update_box()
         else:
             if self.selected_class:
-                self.selected_class.is_source_class = True
                 # Initialize the dialog
                 type_list = [enum.value for enum in RelationshipType]
                 add_rel_dialog = Dialog("Add Relationship")
@@ -656,6 +655,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Add the relationship via the interface
                     is_rel_added = self.interface.add_relationship_gui(source_class_name=source_class, destination_class_name=dest_class, type=type)
                     if is_rel_added:
+                        self.selected_class.is_source_class = True
                         source_class_obj = self.selected_class
                         dest_class_obj = self.class_name_list[dest_class]
                         arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
