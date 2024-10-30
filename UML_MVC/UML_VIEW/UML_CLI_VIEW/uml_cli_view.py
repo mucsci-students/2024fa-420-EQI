@@ -129,16 +129,26 @@ class UMLView(Observer):
         elif event_type == InterfaceOptions.DELETE_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
+            param_type = data["param_type"]
             param_name = data["param_name"]
-            self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'[bold italic cyan]{param_type}[/bold italic cyan]{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
+        # Edit Parameter Type
+        elif event_type == InterfaceOptions.EDIT_PARAM_TYPE.value:
+            class_name = data["class_name"]
+            method_name = data["method_name"]
+            old_param_type = data["old_param_type"]
+            param_name = data["param_name"]
+            new_param_type = data["new_param_type"]
+            self.console.print(f"\n[bold green]Successfully changed parameter type of [bold white]'[bold italic cyan]{old_param_type}[/bold italic cyan] {param_name}'[/bold white] to '[bold italic cyan]{new_param_type}[/bold italic cyan]' in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+    
         # Rename parameter
         elif event_type == InterfaceOptions.RENAME_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
             old_param_name = data["old_param_name"]
             new_param_name = data["new_param_name"]
-            self.console.print(f"\n[bold green]Successfully renamed parameter [bold white]'{old_param_name}'[/bold white] to [bold white]'{new_param_name}'[/bold white]![/bold green]")
+            self.console.print(f"\n[bold green]Successfully renamed parameter [bold white]'{old_param_name}'[/bold white] to [bold white]'{new_param_name}'[/bold white] in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Replace parameter list
         elif event_type == InterfaceOptions.REPLACE_PARAM.value:
@@ -199,10 +209,11 @@ class UMLView(Observer):
             ["edit_method_type [bright_white]<class_name> <method_num> <new_return_type>[bright_white]", "Change method data type"],
 
             ["[bold yellow]Parameter Commands[/bold yellow]", ""],
-            ["add_param [bright_white]<class_name> <method_name> <param_name>[bright_white]", "Add a parameter to a method"],
-            ["delete_param [bright_white]<class_name> <method_name> <param_name>[bright_white]", "Delete a parameter from a method"],
-            ["rename_param [bright_white]<class_name> <method_name> <current_param_name> <new_name>[bright_white]", "Rename a parameter"],
-            ["replace_param [bright_white]<class_name> <method_name>[bright_white]", "Replace a method's parameter list"],
+            ["add_param [bright_white]<class_name> <method_num> <param_type> <param_name>[bright_white]", "Add a parameter to a method"],
+            ["delete_param [bright_white]<class_name> <method_num> <param_name>[bright_white]", "Delete a parameter from a method"],
+            ["edit_param_type [bright_white]<class_name> <method_num> <param_name> <new_param_type>[bright_white]","Edit the type of a parameter from a method"],
+            ["rename_param [bright_white]<class_name> <method_num> <current_param_name> <new_param_name>[bright_white]", "Rename a parameter"],
+            ["replace_param [bright_white]<class_name> <method_num>[bright_white]", "Replace a method's parameter list"],
 
             ["[bold yellow]Relationship Commands[/bold yellow]", ""],
             ["add_rel [bright_white]<source_class> <destination_class> <relationship_type>[bright_white]", "Add a relationship between two classes"],
@@ -299,7 +310,7 @@ class UMLView(Observer):
         i : int = 1
         for method in cls["methods"]:
             params = ', '.join(f'[bold italic cyan]{param["type"]}[/bold italic cyan] {param["name"]}' for param in method["params"])
-            methods_branch.add(f'{i} -- [bold dark_orange][bold italic cyan]{method["return_type"]}[/bold italic cyan] : {method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
+            methods_branch.add(f'[bold white]{i} -- [/bold white][bold dark_orange][bold italic cyan]{method["return_type"]}[/bold italic cyan] : {method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
             i = i + 1
     
     def _display_class_names(self, main_data: Dict):
