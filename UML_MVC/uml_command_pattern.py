@@ -95,19 +95,22 @@ class RenameFieldCommand(Command):
     def undo(self):
         return self.uml_interface.rename_field(self.class_name, self.new_name, self.old_name)
 
-# NOT AVAILABLE #
-# class AddMethodCommand(Command):
-#     def __init__(self, uml_interface, class_name, type, method_name):
-#         self.uml_interface = uml_interface
-#         self.class_name = class_name
-#         self.type = type
-#         self.method_name = method_name
+class AddMethodCommand(Command):
+    def __init__(self, uml_interface, class_name, type, method_name):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.type = type
+        self.method_name = method_name
+        self.method_num = 0
 
-#     def execute(self):
-#         return self.uml_interface.add_method(self.class_name, self.type, self.method_name)
+    def execute(self):
+        self.method_num = self.method_num + 1
+        return self.uml_interface.add_method(self.class_name, self.type, self.method_name)
 
-#     def undo(self):
-#         return self.uml_interface.delete_method(self.class_name, self.method_name)
+    def undo(self):
+        if self.method_num > 0:
+            self.method_num = self.method_num - 1
+            return self.uml_interface.delete_method(self.class_name, self.method_num)
     
 class ChangeTypeCommand(Command):
     def __init__(self, uml_interface, class_name: str, input_name: str, new_type: str, 
@@ -185,11 +188,10 @@ def main():
     add_class_command_1 = AddClassCommand(interface, "Human")
     command_manager.execute_command(add_class_command_1)
     
-    add_method_command_1 = AddFieldCommand(interface, "Human", "int", "health")
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "attack")
     command_manager.execute_command(add_method_command_1)
     
-    # change_field_type_command_1 = ChangeTypeCommand(interface, "Human", "health", "float", is_field=True)
-    # command_manager.execute_command(change_field_type_command_1)
+    cli_view._display_uml_data(interface.get_main_data())
     
     command_manager.undo()
     

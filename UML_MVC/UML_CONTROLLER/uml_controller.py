@@ -167,16 +167,6 @@ class UMLController:
         #######################################################
         
         # Handle parameter-related commands
-
-        # Add parameter to method
-        # elif (
-        #     command == InterfaceOptions.ADD_PARAM.value
-        #     and first_param
-        #     and second_param
-        #     and third_param
-        #     and fourth_param
-        # ):
-        #     self.__model._add_parameter(class_name=first_param, method_name=second_param, type=third_param, parameter_name=fourth_param, is_loading=False)
         elif (
             command == InterfaceOptions.ADD_PARAM.value
             and first_param
@@ -201,7 +191,7 @@ class UMLController:
             and third_param
             and fourth_param
         ):
-            self.__model._edit_parameter_type(class_name=first_param, method_num=second_param, param_name=third_param, new_type=fourth_param)
+            self.__model._change_data_type(class_name=first_param, method_num=second_param, input_name=third_param, new_type=fourth_param, is_param=True)
         
         # Rename parameter in method
         elif (

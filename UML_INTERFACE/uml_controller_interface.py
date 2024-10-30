@@ -314,7 +314,7 @@ class UMLInterface:
         return self.Model._add_method(class_name, type, method_name, is_loading=False)
     
     # Delete method interface #
-    def delete_method(self, class_name: str, method_name: str):
+    def delete_method(self, class_name: str, method_num: int):
         """
         Deletes a method from a UML class by delegating the operation to the model.
 
@@ -322,10 +322,10 @@ class UMLInterface:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be deleted.
         """
-        return self.Model._delete_method(class_name, method_name)
+        return self.Model._delete_method(class_name, method_num)
         
     # Rename method interface #
-    def rename_method(self, class_name: str, current_method_name: str, new_method_name: str):
+    def rename_method(self, class_name: str, method_num: int, new_name: str):
         """
         Renames a method in a UML class by delegating the operation to the model.
 
@@ -334,12 +334,12 @@ class UMLInterface:
             current_method_name (str): The current name of the method.
             new_method_name (str): The new name for the method.
         """
-        return self.Model._rename_method(class_name, current_method_name, new_method_name)
+        return self.Model._rename_method(class_name, method_num, new_name)
         
     ## PARAMETER RELATED ##
     
     # Add parameter interface #
-    def add_parameter(self, class_name: str, method_name: str, parameter_name: str):
+    def add_parameter(self, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None):
         """
         Adds a parameter to a UML method by delegating the operation to the model.
 
@@ -348,10 +348,10 @@ class UMLInterface:
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be added.
         """
-        return self.Model._add_parameter(class_name, method_name, parameter_name, is_loading=False)
+        return self.Model._add_parameter(class_name, method_num, param_type, param_name, is_loading=False)
         
     # Delete parameter interface #
-    def delete_parameter(self, class_name: str, method_name: str, parameter_name: str):
+    def delete_parameter(self, class_name: str,  method_num: str, param_name: str):
         """
         Deletes a parameter from a UML method by delegating the operation to the model.
 
@@ -360,10 +360,10 @@ class UMLInterface:
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be deleted.
         """
-        return self.Model._delete_parameter(class_name, method_name, parameter_name)
+        return self.Model._delete_parameter(class_name, method_num, param_name)
         
     # Rename parameter interface #
-    def rename_parameter(self, class_name: str, method_name: str, current_parameter_name: str, new_parameter_name: str):
+    def rename_parameter(self, class_name: str,  method_num: int, current_param_name: str, new_param_name: str):
         """
         Renames a parameter in a UML method by delegating the operation to the model.
 
@@ -373,10 +373,10 @@ class UMLInterface:
             current_parameter_name (str): The current name of the parameter.
             new_parameter_name (str): The new name for the parameter.
         """
-        return self.Model._rename_parameter(class_name, method_name, current_parameter_name, new_parameter_name)
+        return self.Model._rename_parameter(class_name, method_num, current_param_name, new_param_name)
         
     # Replace parameter list interface #
-    def replace_param_list(self, class_name: str, method_name: str):
+    def replace_param_list(self, class_name: str, method_num: str):
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
@@ -384,7 +384,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
-        return self.Model._replace_param_list(class_name, method_name)
+        return self.Model._replace_param_list(class_name, method_num)
     
     # Replace parameter list interface for GUI #
     def replace_param_list_gui(self, class_name: str, method_name: str, new_param_list: List):

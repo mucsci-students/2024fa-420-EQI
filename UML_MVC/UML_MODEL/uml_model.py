@@ -587,47 +587,7 @@ class UMLModel:
             # If the number is in the range of [1, num of methods], if not then return error
             self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
             return False
-        
-    # def _param_signature_check_for_method_duplicate(self, method_with_new_added_param: Method, method_and_parameter_list: List, method_and_pram_list_element: dict):
-    #     for each_element in method_and_parameter_list:
-    #         for method, param_list in each_element.items():
-    #             if method._get_name() == method_with_new_added_param._get_name():
-    #                 first_param_type_list = [param._get_type() for param in param_list]
-    #                 second_param_type_list = [param._get_type() for param in method_and_pram_list_element[method_with_new_added_param]]
-                    
-    # # Add parameter #
-    # def _add_parameter(self, class_name: str=None, method_name: str=None, type: str=None, parameter_name: str=None, method_and_parameter_list=None, is_loading: bool=None):
-    #     """
-    #     Adds a new parameter to a method in a UML class. Notifies observers of the parameter addition event.
-
-    #     Parameters:
-    #         class_name (str): The name of the class containing the method.
-    #         method_name (str): The name of the method to which the parameter will be added.
-    #         parameter_name (str): The name of the parameter to be added.
-    #         is_loading (bool): Flag indicating whether the operation is part of loading saved data.
-    #     """
-    #     # Check valid input #
-    #     if not self._is_valid_input(class_name=class_name, method_name=method_name, parameter_name=parameter_name, type=type):
-    #         return False
-    #     # Check if the class, method, and parameter do not already exist
-    #     is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=parameter_name, 
-    #                                                                       class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
-    #     if not is_class_and_method_and_parameter_exist:
-    #         return False
-    #     # Add the new parameter to the method's parameter list
-    #     method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
-    #     new_parameter = self.create_parameter(type, parameter_name)
-    #     for each_element in method_and_parameter_list:
-    #         for each_method in each_element:
-    #             if each_method._get_name() == method_name:
-    #                 each_element[each_method].append(new_parameter)
-    #     # Update main data and notify observers
-    #     self._update_main_data_for_every_action()
-    #     self._notify_observers(event_type=InterfaceOptions.ADD_PARAM.value, 
-    #                             data={"class_name": class_name, "method_name": method_name, 
-    #                             "param_name": parameter_name, "type": type}, is_loading=is_loading)
-    #     return True
-        
+          
     # Delete parameter #
     def _delete_parameter(self, class_name: str,  method_num: str, param_name: str):
         """
@@ -838,23 +798,6 @@ class UMLModel:
             self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
             return False
         
-    
-
-        # # Validate that the class, method, and current parameter exist, and that the new parameter does not already exist
-        # is_class_and_method_and_current_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=current_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True)
-        # is_new_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=new_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
-        # if not is_class_and_method_and_current_parameter_exist or not is_new_parameter_exist:
-        #     return False
-        # # Rename the parameter
-        # chosen_parameter = self.__get_chosen_parameter(class_name, method_name, current_parameter_name)
-        # chosen_parameter._set_parameter_name(new_parameter_name)
-        # # Update main data and notify observers
-        # self._update_main_data_for_every_action()
-        # self._notify_observers(event_type=InterfaceOptions.RENAME_PARAM.value, data={"class_name": class_name, "method_name": method_name, "old_param_name": current_parameter_name, "new_param_name": new_parameter_name})
-        # return True
-        
-   
-
     # Replace parameter list #
     def _replace_param_list(self, class_name: str, method_num: str):
         """
@@ -940,21 +883,21 @@ class UMLModel:
             return False
         
         
-        def _replace_param_list_gui(self, class_name: str, method_name: str, new_param_name_list: List):
-            # Check if the class and method exist
-            is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
-            if not is_class_and_method_exist:
-                return False
-            new_param_list: List[Parameter] = []
-            for param_name in new_param_name_list:
-                new_param = self.create_parameter(param_name)
-                new_param_list.append(new_param)
-            method_and_parameter_list = self._get_method_and_parameter_list_of_chosen_class(class_name)
-            method_and_parameter_list[method_name] = new_param_list
-            # Update main data and notify observers
-            self._update_main_data_for_every_action()
-            self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "new_list": new_param_list})
-            return True
+    def _replace_param_list_gui(self, class_name: str, method_name: str, new_param_name_list: List):
+        # Check if the class and method exist
+        is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
+        if not is_class_and_method_exist:
+            return False
+        new_param_list: List[Parameter] = []
+        for param_name in new_param_name_list:
+            new_param = self.create_parameter(param_name)
+            new_param_list.append(new_param)
+        method_and_parameter_list = self._get_method_and_parameter_list_of_chosen_class(class_name)
+        method_and_parameter_list[method_name] = new_param_list
+        # Update main data and notify observers
+        self._update_main_data_for_every_action()
+        self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "new_list": new_param_list})
+        return True
         
 
     ## RELATIONSHIP RELATED ##
@@ -2329,6 +2272,6 @@ class UMLModel:
                 self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
                 return False
         elif is_param:
-            pass
+            return self._edit_parameter_type(class_name, method_num, input_name, new_type)
                            
 ###################################################################################################
