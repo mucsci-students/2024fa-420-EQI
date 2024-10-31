@@ -27,6 +27,8 @@ class InterfaceOptions(Enum):
     ADD_REL = "add_rel"
     DELETE_REL = "delete_rel"
     EDIT_REL_TYPE = "edit_rel_type"
+    UNDO = "undo"
+    REDO = "redo"
     LIST_CLASS = "list_class"
     CLASS_DETAIL = "class_detail"
     CLASS_REL = "class_rel"

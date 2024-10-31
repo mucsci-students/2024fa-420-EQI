@@ -67,9 +67,9 @@ class UMLModel:
         if observer in self._observers:
             self._observers.remove(observer)
     
-    def _notify_observers (self, event_type=None, data=None, is_loading=None):
+    def _notify_observers (self, event_type=None, data=None, is_loading=None, is_undo_or_redo: bool = None):
         for observer in self._observers:
-            observer._update(event_type, data, is_loading)
+            observer._update(event_type, data, is_loading, is_undo_or_redo)
     
     #################################################################
         
@@ -136,7 +136,7 @@ class UMLModel:
     ## CLASS RELATED ##
     
     # Add class #
-    def _add_class(self, class_name: str, is_loading: bool = False) -> bool:
+    def _add_class(self, class_name: str, is_loading: bool = False, is_undo_or_redo: bool = False) -> bool:
         """
         Adds a new UML class to the class list. If the class already exists, no action is taken.
         Notifies observers of the addition event.
@@ -158,11 +158,11 @@ class UMLModel:
         self.__class_list[class_name] = new_class
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_CLASS.value, data={"class_name": class_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_CLASS.value, data={"class_name": class_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
     
     # Delete class #
-    def _delete_class(self, class_name: str):
+    def _delete_class(self, class_name: str, is_undo_or_redo: bool = False):
         """
         Deletes a UML class from the class list. Also removes any relationships involving the class.
         Notifies observers of the deletion event.
@@ -184,11 +184,11 @@ class UMLModel:
         self.__clean_up_relationship(class_name)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_CLASS.value, data={"class_name": class_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_CLASS.value, data={"class_name": class_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Rename class #
-    def _rename_class(self, current_name: str, new_name: str):
+    def _rename_class(self, current_name: str, new_name: str, is_undo_or_redo: bool = False):
         """
         Renames an existing UML class. Updates any associated relationships and notifies observers
         of the renaming event.
@@ -213,13 +213,13 @@ class UMLModel:
         self.__update_name_in_relationship(current_name, new_name)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_CLASS.value, data={"old_name": current_name, "new_name": new_name})
+        self._notify_observers(event_type=InterfaceOptions.RENAME_CLASS.value, data={"old_name": current_name, "new_name": new_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     ## FIELD RELATED ##
     
     # Add field #
-    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool = False):
+    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a new field to a UML class. Notifies observers of the field addition event.
 
@@ -243,11 +243,12 @@ class UMLModel:
         field_list.append(new_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "type": field_type, "field_name": field_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "type": field_type, 
+                                                                                  "field_name": field_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Delete field #
-    def _delete_field(self, class_name: str, field_name: str):
+    def _delete_field(self, class_name: str, field_name: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing field from a UML class. Notifies observers of the field deletion event.
 
@@ -268,11 +269,11 @@ class UMLModel:
         field_list.remove(chosen_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_FIELD.value, data={"class_name": class_name, "field_name": field_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_FIELD.value, data={"class_name": class_name, "field_name": field_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Rename field #
-    def _rename_field(self, class_name: str, old_field_name: str=None, new_field_name: str=None):
+    def _rename_field(self, class_name: str, old_field_name: str=None, new_field_name: str=None, is_undo_or_redo: bool = False):
         """
         Renames an existing field in a UML class. Notifies observers of the field renaming event.
 
@@ -294,13 +295,14 @@ class UMLModel:
         
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_FIELD.value, data={"class_name": class_name, "old_field_name": old_field_name, "new_field_name": new_field_name})
+        self._notify_observers(event_type=InterfaceOptions.RENAME_FIELD.value, data={"class_name": class_name, "old_field_name": old_field_name, 
+                                                                                     "new_field_name": new_field_name}, is_undo_or_redo=is_undo_or_redo)
         return True
     
     ## METHOD RELATED ##
 
     # Add method #
-    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = False):
+    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a new method to a UML class and notifies observers.
 
@@ -340,7 +342,7 @@ class UMLModel:
         # Notify observers and update internal data #
         self._update_main_data_for_every_action()
         self._notify_observers(event_type=InterfaceOptions.ADD_METHOD.value,
-                               data={"class_name": class_name, "type": method_type, "method_name": method_name}, is_loading=is_loading)
+                               data={"class_name": class_name, "type": method_type, "method_name": method_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
     
     def _get_method_based_on_index(self, class_name: str, method_num: str):
@@ -424,7 +426,7 @@ class UMLModel:
         return True
 
     # Delete method #
-    def _delete_method(self, class_name: str, method_num: int):
+    def _delete_method(self, class_name: str, method_num: int, is_undo_or_redo: bool = False):
         """
         Deletes an existing method from a UML class and notifies observers.
 
@@ -465,7 +467,7 @@ class UMLModel:
             # Update observers and main data
             self._update_main_data_for_every_action()
             self._notify_observers(event_type=InterfaceOptions.DELETE_METHOD.value,
-                                   data={"class_name": class_name, "method_name": method._get_name()})
+                                   data={"class_name": class_name, "method_name": method._get_name()}, is_undo_or_redo=is_undo_or_redo)
             self._current_number_of_method = self._current_number_of_method - 1
             return True
         else:
@@ -474,7 +476,7 @@ class UMLModel:
             return False
 
     # Rename method #
-    def _rename_method(self, class_name: str, method_num: str, new_name: str):
+    def _rename_method(self, class_name: str, method_num: str, new_name: str, is_undo_or_redo: bool = False):
         """
         Renames an existing method in a UML class and notifies observers.
 
@@ -524,7 +526,7 @@ class UMLModel:
             method._set_name(new_name)
             self._update_main_data_for_every_action()
             self._notify_observers(event_type=InterfaceOptions.RENAME_METHOD.value,
-                                   data={"class_name": class_name, "old_method_name": old_method_name, "new_method_name": new_name})
+                                   data={"class_name": class_name, "old_method_name": old_method_name, "new_method_name": new_name}, is_undo_or_redo=is_undo_or_redo)
             return True
         else:
             # If the number is not in the range of [1, num of methods] then return error
@@ -535,7 +537,7 @@ class UMLModel:
     ## PARAMETER RELATED ##
     
     # Add parameter wrapper #
-    def _add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None, is_loading: bool = False):
+    def _add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a parameter to a chosen method of a UML class. Notifies observers of the parameter addition event.
 
@@ -611,7 +613,7 @@ class UMLModel:
             self._update_main_data_for_every_action()
             if not is_loading:
                 self._notify_observers(event_type=InterfaceOptions.ADD_PARAM.value,
-                                   data={"class_name": class_name, "method_name": method._get_name(), "param_name": param_name, "type": param_type})
+                                   data={"class_name": class_name, "method_name": method._get_name(), "param_name": param_name, "type": param_type}, is_undo_or_redo=is_undo_or_redo)
 
             return True
         else:
@@ -620,7 +622,7 @@ class UMLModel:
             return False
           
     # Delete parameter #
-    def _delete_parameter(self, class_name: str,  method_num: str, param_name: str):
+    def _delete_parameter(self, class_name: str,  method_num: str, param_name: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing parameter from a method in a UML class. Notifies observers of the parameter deletion event.
 
@@ -681,7 +683,8 @@ class UMLModel:
             # Update main data and notify observers #
             self._update_main_data_for_every_action()
             self._notify_observers(event_type=InterfaceOptions.DELETE_PARAM.value,
-                                   data={"class_name": class_name, "method_name": method._get_name(), "param_type": chosen_parameter._get_type() , "param_name": param_name})
+                                   data={"class_name": class_name, "method_name": method._get_name(), 
+                                         "param_type": chosen_parameter._get_type() , "param_name": param_name}, is_undo_or_redo=is_undo_or_redo)
 
             return True
         else:
@@ -690,7 +693,7 @@ class UMLModel:
             return False
 
     # Edit parameter type #
-    def _edit_parameter_type(self, class_name: str, method_num: int, param_name: str, new_type: str):
+    def _edit_parameter_type(self, class_name: str, method_num: int, param_name: str, new_type: str, is_undo_or_redo: bool = False):
         """
         Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
 
@@ -758,7 +761,8 @@ class UMLModel:
             # Update main data and notify observers #
             self._update_main_data_for_every_action()
             self._notify_observers(event_type=InterfaceOptions.EDIT_PARAM_TYPE.value,
-                                   data={"class_name": class_name, "method_name": method._get_name(), "old_param_type": old_param_type , "param_name": param_name, "new_param_type": new_type})
+                                   data={"class_name": class_name, "method_name": method._get_name(), "old_param_type": old_param_type , 
+                                         "param_name": param_name, "new_param_type": new_type}, is_undo_or_redo=is_undo_or_redo)
 
             return True
         else:
@@ -767,7 +771,7 @@ class UMLModel:
             return False
 
     # Rename parameter #
-    def _rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str):
+    def _rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str, is_undo_or_redo: bool = False):
         """
         Renames an existing parameter in a method of a UML class. Notifies observers of the parameter renaming event.
 
@@ -822,14 +826,15 @@ class UMLModel:
             chosen_parameter._set_parameter_name(new_param_name)
             # Update main data and notify observers
             self._update_main_data_for_every_action()
-            self._notify_observers(event_type=InterfaceOptions.RENAME_PARAM.value, data={"class_name": class_name, "method_name": method_name, "old_param_name": current_param_name, "new_param_name": new_param_name})
+            self._notify_observers(event_type=InterfaceOptions.RENAME_PARAM.value, data={"class_name": class_name, "method_name": method_name, 
+                                                                                         "old_param_name": current_param_name, "new_param_name": new_param_name}, is_undo_or_redo=is_undo_or_redo)
             return True
         else:
             # If the number is in the range of [1, num of methods], if not then return error
             self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
             return False
         
-    def _replace_param_list(self, class_name: str, method_num: str, new_param_name_list: List[str]):
+    def _replace_param_list(self, class_name: str, method_num: str, new_param_name_list: List[str], is_undo_or_redo: bool = False):
         # Check valid input for class_name and method_num
         if not self._is_valid_input(class_name=class_name):
             return False
@@ -876,7 +881,7 @@ class UMLModel:
             self._update_main_data_for_every_action()
             self._notify_observers(
                 event_type=InterfaceOptions.REPLACE_PARAM.value,
-                data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_params_obj_list}
+                data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_params_obj_list}, is_undo_or_redo=is_undo_or_redo
             )
             return True
         else:
@@ -932,7 +937,7 @@ class UMLModel:
     ## RELATIONSHIP RELATED ##
             
     # Add relationship #
-    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool = False, is_gui: bool = False):
+    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool = False, is_gui: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a new relationship between two UML classes. Notifies observers of the relationship addition event.
 
@@ -980,7 +985,8 @@ class UMLModel:
         self.__relationship_list.append(new_relationship)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_REL.value, data={"source": source_class_name, "dest": destination_class_name, "type": rel_type}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_REL.value, data={"source": source_class_name, "dest": destination_class_name, 
+                                                                                "type": rel_type}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
     
     def _get_rel_type(self, source_class_name: str, destination_class_name: str):
@@ -991,7 +997,7 @@ class UMLModel:
         return None
         
     # Delete relationship #
-    def _delete_relationship(self, source_class_name: str, destination_class_name: str) -> bool | str:
+    def _delete_relationship(self, source_class_name: str, destination_class_name: str, is_undo_or_redo: bool = False) -> bool | str:
         """
         Deletes an existing relationship between two UML classes. Notifies observers of the relationship deletion event.
 
@@ -1018,7 +1024,7 @@ class UMLModel:
         self.__relationship_list.remove(current_relationship)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_REL.value, data={"source": source_class_name, "dest": destination_class_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_REL.value, data={"source": source_class_name, "dest": destination_class_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Change type #
@@ -2224,7 +2230,7 @@ class UMLModel:
                           source_class: str=None, dest_class: str=None, 
                           new_type=None, is_field: bool=None, 
                           is_method: bool=None, is_param: bool=None, 
-                          method_num:str = None, is_rel: bool=None):
+                          method_num:str = None, is_rel: bool=None, is_undo_or_redo: bool = False):
         if is_field:
             # Check valid input #
             if not self._is_valid_input(class_name=class_name, field_name=input_name, new_type=None):
@@ -2234,7 +2240,7 @@ class UMLModel:
                 return False
             chosen_field = self._get_chosen_field_or_method(class_name, input_name, is_field=True)
             chosen_field._set_type(new_type)
-            self._notify_observers(event_type=InterfaceOptions.EDIT_FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type})
+            self._notify_observers(event_type=InterfaceOptions.EDIT_FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
             self._update_main_data_for_every_action()
             return True
         elif is_method:
@@ -2264,7 +2270,7 @@ class UMLModel:
                 
                 self._update_main_data_for_every_action()
                 self._notify_observers(event_type=InterfaceOptions.EDIT_METHOD_TYPE.value,
-                                    data={"class_name": class_name, "method_name": method._get_name(), "new_type": new_type})
+                                    data={"class_name": class_name, "method_name": method._get_name(), "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
                 return True
             else:
                 self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")

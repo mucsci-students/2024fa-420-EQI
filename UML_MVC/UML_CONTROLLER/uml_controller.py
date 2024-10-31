@@ -269,6 +269,16 @@ class UMLController:
         ):
             edit_rel_type_command = Command.ChangeTypeCommand(self.__model, source_class=first_param, dest_class=second_param, new_type=third_param, is_rel=True)
             self.__input_handler.execute_command(edit_rel_type_command)
+            
+        #######################################################
+        
+        # Undo #
+        elif command == InterfaceOptions.UNDO.value:
+            self.__input_handler.undo()
+        
+        # Redo #
+        elif command == InterfaceOptions.REDO.value:
+            self.__input_handler.redo()
         
         #######################################################
         
