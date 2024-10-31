@@ -2,6 +2,35 @@ import sys
 import os
 import pytest
 from rich.console import Console
+from unittest.mock import patch
+
+def test_delete_method(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Use patch to simulate user input for method selection
+    with patch("builtins.input", return_value="1"):  # Simulates selecting the first method
+        # Delete the method from the class
+        result = uml_model._delete_method(class_name="TestClass")
+    
+    # Check if method was successfully deleted
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    methods = class_data._get_method_and_parameters_list()
+    assert len(methods) == 0  # Ensure method list is now empty
+    
+    # Check that observers were notified
+    assert len(sample_observer.events) == 3  # Expecting add_class, add_method, delete_method events
+    assert sample_observer.events[2]["event_type"] == "delete_method"
+    assert sample_observer.events[2]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod"
+    }
+
 
 # ADD ROOT PATH #
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -283,8 +312,285 @@ def test_add_method(uml_model, sample_class, sample_observer):
         "method_name": "testMethod"
     }
 
+def test_check_method_param_list(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="void", method_name="existingMethod", is_loading=False)
+    
+    # Prepare a new method with the same name and parameter list to check for duplicates
+    existing_methods = uml_model._get_class_list()["TestClass"]._get_method_and_parameters_list()
+    duplicate_method = uml_model.create_method(type="void", method_name="existingMethod")
+    
+    # Attempt to add a duplicate method
+    result = uml_model._check_method_param_list(duplicate_method, existing_methods, {duplicate_method: []})
+    assert result is False  # Should return False due to duplicate
+    
+    # Verify observer notifications
+    assert len(sample_observer.events) == 2  # add_class and add_method events
+    assert sample_observer.events[1]["event_type"] == "add_method"
+    assert sample_observer.events[1]["data"]["method_name"] == "existingMethod"
+
+def test_delete_method(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Use patch to simulate user input for method selection
+    with patch("builtins.input", return_value="1"):  # Simulates selecting the first method
+        # Delete the method from the class
+        result = uml_model._delete_method(class_name="TestClass")
+    
+    # Check if method was successfully deleted
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    methods = class_data._get_method_and_parameters_list()
+    assert len(methods) == 0  # Ensure method list is now empty
+    
+    # Check that observers were notified
+    assert len(sample_observer.events) == 3  # Expecting add_class, add_method, delete_method events
+    assert sample_observer.events[2]["event_type"] == "delete_method"
+    assert sample_observer.events[2]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod"
+    }
+
+def test_rename_method(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="oldMethod", is_loading=False)
+    
+    # Mock user inputs for selecting the method and entering the new name
+    with patch('builtins.input', side_effect=['1', 'newMethod']):
+        # Rename the method and verify the renaming
+        result = uml_model._rename_method(class_name="TestClass")
+        
+    # Check if renaming was successful
+    assert result is True  # Should return True if renaming is successful
+    
+    # Check if the method name has been updated
+    class_data = uml_model._get_class_list()["TestClass"]
+    renamed_method = list(class_data._get_method_and_parameters_list()[0].keys())[0]
+    assert renamed_method._get_name() == "newMethod"  # Should reflect the new name
+    
+    # Verify observer notifications
+    assert len(sample_observer.events) == 3  # add_class, add_method, and rename_method events
+    assert sample_observer.events[2]["event_type"] == "rename_method"
+    assert sample_observer.events[2]["data"] == {
+        "class_name": "TestClass",
+        "old_method_name": "oldMethod",
+        "new_method_name": "newMethod"
+    }
+
 ###############################################################################
-# File Handling Tests (Mocking save/load)
+# Parameter
 ###############################################################################
 
+def test_add_parameter(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Mock user input for selecting method and parameter details
+    with patch("builtins.input", side_effect=["1", "int param1"]):
+        result = uml_model._add_parameter(class_name="TestClass")
+    
+    # Check if parameter was added successfully
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
+    assert len(method_params) == 1
+    assert method_params[0]._get_parameter_name() == "param1"
+    assert method_params[0]._get_type() == "int"
+    
+    # Verify observer notification
+    assert len(sample_observer.events) == 3  # add_class, add_method, add_param
+    assert sample_observer.events[2]["event_type"] == "add_param"
+    assert sample_observer.events[2]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod",
+        "param_name": "param1",
+        "type": "int"
+    }
 
+def test_delete_parameter(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Mock the input for selecting the method and entering parameter details
+    with patch("builtins.input", side_effect=["1", "int param1"]):
+        uml_model._add_parameter(class_name="TestClass")
+    
+    # Mock the input for deleting the parameter
+    with patch("builtins.input", return_value="param1"):
+        result = uml_model._delete_parameter(class_name="TestClass", method_name="testMethod", parameter_name="param1")
+    
+    # Ensure parameter deletion succeeded
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
+    assert len(method_params) == 0  # parameter list should be empty after deletion
+    
+    # Verify observer notification
+    assert len(sample_observer.events) == 4  # add_class, add_method, add_param, delete_param
+    assert sample_observer.events[3]["event_type"] == "delete_param"
+    assert sample_observer.events[3]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod",
+        "param_name": "param1"
+    }
+
+def test_rename_parameter(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass")
+    
+    # Mock user input for renaming the parameter
+    with patch("builtins.input", side_effect=["param1", "newParam"]):
+        result = uml_model._rename_parameter(class_name="TestClass", method_name="testMethod", current_parameter_name="param1", new_parameter_name="newParam")
+    
+    # Check if renaming was successful
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    renamed_param = list(class_data._get_method_and_parameters_list()[0].values())[0][0]
+    assert renamed_param._get_name() == "newParam"
+    
+    # Verify observer notification
+    assert len(sample_observer.events) == 5  # add_class, add_method, add_param, delete_param, rename_param
+    assert sample_observer.events[4]["event_type"] == "rename_param"
+    assert sample_observer.events[4]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod",
+        "old_param_name": "param1",
+        "new_param_name": "newParam"
+    }
+
+def test_replace_param_list(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class and a method
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", type="int", method_name="testMethod", is_loading=False)
+    
+    # Mock user input to replace the parameter list with new parameters
+    with patch("builtins.input", return_value="newParam1 newParam2"):
+        result = uml_model._replace_param_list(class_name="TestClass", method_name="testMethod")
+    
+    # Ensure replacement was successful
+    assert result is True
+    class_data = uml_model._get_class_list()["TestClass"]
+    new_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
+    assert len(new_params) == 2
+    assert new_params[0]._get_name() == "newParam1"
+    assert new_params[1]._get_name() == "newParam2"
+    
+    # Verify observer notification
+    assert len(sample_observer.events) == 4  # add_class, add_method, replace_param
+    assert sample_observer.events[3]["event_type"] == "replace_param"
+    assert sample_observer.events[3]["data"] == {
+        "class_name": "TestClass",
+        "method_name": "testMethod",
+        "new_list": new_params
+    }
+
+###############################################################################
+# RELATIONSHIP
+###############################################################################
+
+def test_add_relationship(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add two classes to create a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    
+    
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Verify that the relationship was added
+    relationships = uml_model._get_relationship_list()
+    assert len(relationships) == 1
+    assert relationships[0]._get_source_class() == "ClassA"
+    assert relationships[0]._get_destination_class() == "ClassB"
+    assert relationships[0]._get_type() == "Aggregation"
+    
+    # Verify observer notifications
+    assert len(sample_observer.events) == 3  # add_class x2 and add_relationship
+    assert sample_observer.events[2]["event_type"] == "add_rel"
+    assert sample_observer.events[2]["data"] == {
+        "source": "ClassA",
+        "dest": "ClassB",
+        "type": "Aggregation"
+    }
+
+def test_delete_relationship(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Delete the relationship
+    result = uml_model._delete_relationship("ClassA", "ClassB")
+    assert result is True  # Relationship deletion successful
+    
+    # Verify the relationship list is empty
+    relationships = uml_model._get_relationship_list()
+    assert len(relationships) == 0
+    
+    # Verify observer notifications
+    assert len(sample_observer.events) == 4  # add_class x2, add_relationship, delete_relationship
+    assert sample_observer.events[3]["event_type"] == "delete_rel"
+    assert sample_observer.events[3]["data"] == {
+        "source": "ClassA",
+        "dest": "ClassB"
+    }
+
+def test_change_relationship_type(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("ClassA", "ClassB", "Composition")
+    assert result is True  # Type change successful
+    
+    # Verify the relationship type was updated
+    relationships = uml_model._get_relationship_list()
+    assert relationships[0]._get_type() == "Composition"
+    
+    # Verify observer notifications
+    assert len(sample_observer.events) == 4  # add_class x2, add_relationship, type_mod
+    assert sample_observer.events[3]["event_type"] == "type_mod"
+    assert sample_observer.events[3]["data"] == {
+        "source": "ClassA",
+        "dest": "ClassB",
+        "new_type": "Composition"
+    }

@@ -411,9 +411,10 @@ class UMLModel:
         # Convert the input to an index and validate the selection #
         selected_index = int(user_input) - 1
         if 0 <= selected_index < len(method_and_parameter_list):
-            method_and_parameter_list.pop(selected_index)  # Remove the selected method
             # Update data and notify observers #
             chosen_pair = method_and_parameter_list[selected_index]
+            
+            method_and_parameter_list.pop(selected_index)  # Remove the selected method
             # Extract method and param_list (key and value) from the dictionary
             method, param_list = next(iter(chosen_pair.items()))
             self._update_main_data_for_every_action()
