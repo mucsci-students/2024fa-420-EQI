@@ -19,5 +19,8 @@
     },
     {
         "NEW_TEST": "off"
+    },
+    {
+        "test03": "off"
     }
 ]
