@@ -1,4 +1,7 @@
-import readline
+try:
+    import readline
+except ImportError:
+    import pyreadline as readline
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions
 
 def completer(text, state):
@@ -13,15 +16,18 @@ def completer(text, state):
         # No completion for arguments or additional words
         options = []
 
-    # Return the state-th option from the list of matches 1
+    # Return the state-th option from the list of matches
     if state < len(options):
         return options[state]
     return None
 
 def setup_tab_completion():
-    # Set the completer function for readline and bind tab completion
+    # Set the completer function for readline
     readline.set_completer(completer)
-
-    # Re-bind tab to complete in case the default binding isn't working
-    readline.parse_and_bind("bind ^I rl_complete")
+    
+    # Re-bind tab to complete, adjusted for Windows compatibility
+    try:
+        readline.parse_and_bind("bind ^I rl_complete")
+    except AttributeError:
+        readline.parse_and_bind("tab: complete")
 
