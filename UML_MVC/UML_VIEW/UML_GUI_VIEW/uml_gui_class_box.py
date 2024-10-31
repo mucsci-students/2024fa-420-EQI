@@ -45,7 +45,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         ### FIELD, METHOD, PARAMETER, HANDLE AND CONNECT POINT LIST ###
         # Initialize lists for fields, methods, parameters, and resize handles.
         self.field_list: Dict = field_list if field_list is not None else {}
-        self.field_name_list: List = []
+        self.field_key_list: List = []
         
         self.method_list: Dict = method_list if method_list is not None else {}
         self.method_name_list: Dict = {}
@@ -288,7 +288,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         # Starting y-position for the first field (below the class name)
         y_offset = self.class_name_text.boundingRect().height() + self.default_margin
 
-        for field_name in self.field_name_list:
+        for field_name in self.field_key_list:
             # Get the text item for the field
             field_text = self.field_list[field_name]
         
@@ -682,8 +682,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         field_tex_height = 0
         # Sum the heights of all field text items
-        for field_name in self.field_name_list:
-            field_text = self.field_list[field_name]  # Get the text item for each field
+        for field_text in self.field_list.values():
             field_tex_height += field_text.boundingRect().height()
         return field_tex_height
 
@@ -732,7 +731,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         max_class_name_width = self.class_name_text.boundingRect().width()
         
         # Get the maximum width of all field text items
-        max_field_width = max([self.field_list[field_name].boundingRect().width() for field_name in self.field_name_list], default=0)
+        max_field_width = max([self.field_list[field_key].boundingRect().width() for field_key in self.field_key_list], default=0)
         
         # Get the maximum width of all method text items
         max_method_width = max([self.method_list[method_name].boundingRect().width() for method_name in self.method_name_list], default=0)

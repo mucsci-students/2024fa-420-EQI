@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 
 class Command(ABC):
     @abstractmethod
@@ -11,7 +10,7 @@ class Command(ABC):
         pass
 
 class AddClassCommand(Command):
-    def __init__(self, uml_model: Model, class_name):
+    def __init__(self, uml_model, class_name):
         self.uml_model = uml_model
         self.class_name = class_name
 
@@ -22,7 +21,7 @@ class AddClassCommand(Command):
         self.uml_model._delete_class(self.class_name, is_undo_or_redo=True)
 
 class DeleteClassCommand(Command):
-    def __init__(self, uml_model: Model, class_name):
+    def __init__(self, uml_model, class_name):
         self.uml_model = uml_model
         self.class_name = class_name
 
@@ -33,7 +32,7 @@ class DeleteClassCommand(Command):
         self.uml_model._add_class(self.class_name , is_undo_or_redo=True)
         
 class RenameClassCommand(Command):
-    def __init__(self, uml_model: Model, class_name, new_name):
+    def __init__(self, uml_model, class_name, new_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.new_name = new_name
@@ -45,7 +44,7 @@ class RenameClassCommand(Command):
         return self.uml_model._rename_class(self.new_name, self.class_name, is_undo_or_redo=True)
         
 class AddFieldCommand(Command):
-    def __init__(self, uml_model: Model, class_name, type, field_name):
+    def __init__(self, uml_model, class_name, type, field_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.type = type
@@ -58,7 +57,7 @@ class AddFieldCommand(Command):
         return self.uml_model._delete_field(self.class_name, self.field_name, is_undo_or_redo=True)
 
 class DeleteFieldCommand(Command):
-    def __init__(self, uml_model: Model, class_name, field_name):
+    def __init__(self, uml_model, class_name, field_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.field_name = field_name
@@ -75,7 +74,7 @@ class DeleteFieldCommand(Command):
         return self.uml_model._add_field(self.class_name, self.field_type, self.field_name, is_undo_or_redo=True)
     
 class RenameFieldCommand(Command):
-    def __init__(self, uml_model: Model, class_name, old_field_name, new_field_name):
+    def __init__(self, uml_model, class_name, old_field_name, new_field_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.old_name = old_field_name
@@ -88,7 +87,7 @@ class RenameFieldCommand(Command):
         return self.uml_model._rename_field(self.class_name, self.new_name, self.old_name, is_undo_or_redo=True)
 
 class AddMethodCommand(Command):
-    def __init__(self, uml_model: Model, class_name, type, method_name):
+    def __init__(self, uml_model, class_name, type, method_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.type = type
@@ -101,7 +100,7 @@ class AddMethodCommand(Command):
         return self.uml_model._delete_method(self.class_name, str(self.uml_model._current_number_of_method), is_undo_or_redo=True)
     
 class DeleteMethodCommand(Command):
-    def __init__(self, uml_model: Model, class_name, method_num):
+    def __init__(self, uml_model, class_name, method_num):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -123,7 +122,7 @@ class DeleteMethodCommand(Command):
         return False
     
 class RenameMethodCommand(Command):
-    def __init__(self, uml_model: Model, class_name, method_num, new_name):
+    def __init__(self, uml_model, class_name, method_num, new_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -142,7 +141,7 @@ class RenameMethodCommand(Command):
             return self.uml_model._rename_method(self.class_name, self.method_num, self.old_name, is_undo_or_redo=True)
     
 class AddParameterCommand(Command):
-    def __init__(self, uml_model: Model, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
+    def __init__(self, uml_model, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -156,7 +155,7 @@ class AddParameterCommand(Command):
         return self.uml_model._delete_parameter(self.class_name, str(self.method_num), self.param_name, is_undo_or_redo=True)
     
 class DeleteParameterCommand(Command):
-    def __init__(self, uml_model: Model, class_name, method_num, param_name):
+    def __init__(self, uml_model, class_name, method_num, param_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -175,7 +174,7 @@ class DeleteParameterCommand(Command):
             return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=True)
         
 class RenameParameterCommand(Command):
-    def __init__(self, uml_model: Model, class_name, method_num, old_param_name, new_param_name):
+    def __init__(self, uml_model, class_name, method_num, old_param_name, new_param_name):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -189,7 +188,7 @@ class RenameParameterCommand(Command):
         return self.uml_model._rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name, is_undo_or_redo=True)
     
 class ReplaceParameterListCommand(Command):
-    def __init__(self, uml_model: Model, class_name, method_num, new_param_list):
+    def __init__(self, uml_model, class_name, method_num, new_param_list):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -205,7 +204,7 @@ class ReplaceParameterListCommand(Command):
             return self.uml_model._replace_param_list(self.class_name, self.method_num, self.old_param_list, is_undo_or_redo=True)
 
 class AddRelationshipCommand(Command):
-    def __init__(self, uml_model: Model, source_class, dest_class, rel_type):
+    def __init__(self, uml_model, source_class, dest_class, rel_type):
         self.uml_model = uml_model
         self.source_class = source_class
         self.dest_class = dest_class
@@ -218,7 +217,7 @@ class AddRelationshipCommand(Command):
         return self.uml_model._delete_relationship(self.source_class, self.dest_class, is_undo_or_redo=True)
     
 class DeleteRelationshipCommand(Command):
-    def __init__(self, uml_model: Model, source_class, dest_class):
+    def __init__(self, uml_model, source_class, dest_class):
         self.uml_model = uml_model
         self.source_class = source_class
         self.dest_class = dest_class
@@ -233,7 +232,7 @@ class DeleteRelationshipCommand(Command):
             return self.uml_model._add_relationship(self.source_class, self.dest_class, self.rel_type, is_gui=False, is_undo_or_redo=True)
 
 class ChangeTypeCommand(Command):
-    def __init__(self, uml_model: Model, 
+    def __init__(self, uml_model, 
                  class_name: str=None, method_num:int = None, 
                  input_name: str=None, source_class: str=None,
                  dest_class: str=None, new_type: str=None, 
@@ -301,9 +300,10 @@ class InputHandler:
         # Execute the new command and add it to the list
         is_command_valid = command.execute()
         if not is_command_valid:
-            return
+            return False
         self.command_list.append(command)
         self.pointer += 1
+        return True
 
     def undo(self):
         if self.pointer >= 0:

@@ -7,17 +7,31 @@ class CustomInputDialog(QtWidgets.QDialog):
         self.input_widgets = {}  # Store all input widgets for retrieval
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
+        
+    def add_field_popup(self):
+        """
+        Creates a dialog for renaming a field.
+        """
+        # Create input for the new parameter name
+        field_type = self.__add_input("Enter field type:", widget_type="line")
+        field_name = self.__add_input("Enter field name:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets["field_type"] = field_type
+        self.input_widgets["field_name"] = field_name
+        self.__add_buttons()
 
     def rename_field_popup(self, selected_class):
         """
         Creates a dialog for renaming a field.
         """
-        old_field_name = self.__add_input("Select Field To Rename:", widget_type="combo", options=selected_class.field_name_list)
+        field_name_list = [field_key[1] for field_key in selected_class.field_key_list]
+        old_field_name = self.__add_input("Select Field To Rename:", widget_type="combo", options=field_name_list)
         new_field_name = self.__add_input("Enter New Field Name:", widget_type="line")
         
         # Store the widgets for later use
-        self.input_widgets['old_field_name'] = old_field_name
-        self.input_widgets['new_field_name'] = new_field_name
+        self.input_widgets["old_field_name"] = old_field_name
+        self.input_widgets["new_field_name"] = new_field_name
         self.__add_buttons()
         
     def rename_method_popup(self, selected_class):
@@ -29,8 +43,8 @@ class CustomInputDialog(QtWidgets.QDialog):
         new_method_name = self.__add_input("Enter New Method Name:", widget_type="line")
         
         # Store the widgets for later use
-        self.input_widgets['old_method_name'] = old_method_name
-        self.input_widgets['new_method_name'] = new_method_name
+        self.input_widgets["old_method_name"] = old_method_name
+        self.input_widgets["new_method_name"] = new_method_name
         self.__add_buttons()
         
     def add_param_popup(self, selected_class):
@@ -46,8 +60,8 @@ class CustomInputDialog(QtWidgets.QDialog):
         new_param_name = self.__add_input("Enter New Parameter Name:", widget_type="line")
         
         # Store the widgets for later use
-        self.input_widgets['new_param_name'] = new_param_name
-        self.input_widgets['current_method'] = method_name
+        self.input_widgets["new_param_name"] = new_param_name
+        self.input_widgets["current_method"] = method_name
         
         # Add buttons (OK/Cancel)
         self.__add_buttons()
