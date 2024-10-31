@@ -953,7 +953,7 @@ class UMLModel:
             # Extract the selected method and its parameter list #
             method, params_list = next(iter(chosen_pair.items()))
             params_list.clear()
-            
+        
             for param in new_params_obj_list:
                 params_list.append(param)
                 
@@ -968,6 +968,36 @@ class UMLModel:
         else:
             self.__console.print(f"\n[bold red]Error: Method number '{method_num}' is out of range.[/bold red]")
             return False
+        
+    def _get_param_list(self, class_name: str, method_num: str):
+        # Check valid input for class_name and method_num
+        if not self._is_valid_input(class_name=class_name):
+            return False
+        
+        # Validate class and method existence
+        is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_and_method_exist:
+            return False
+        
+        # Check if method_num is numeric
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+        
+        # Get the method and parameter list
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+    
+        selected_index = int(method_num) - 1
+
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract the selected method and its parameter list #
+            method, params_list = next(iter(chosen_pair.items()))
+            param_string_list = []
+            for param in params_list:
+                param_format = param._get_type() + " " + param._get_parameter_name()
+                param_string_list.append(param_format)
+            return param_string_list
 
     def _replace_param_list_gui(self, class_name: str, method_name: str, new_param_name_list: List):
         # Check if the class and method exist
@@ -985,7 +1015,6 @@ class UMLModel:
         self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "new_list": new_param_list})
         return True
         
-
     ## RELATIONSHIP RELATED ##
     
     # Add relationship wrapper #

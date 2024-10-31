@@ -197,16 +197,20 @@ class RenameParameterCommand(Command):
         return self.uml_interface.rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name)
     
 class ReplaceParameterListCommand(Command):
-    def __init__(self, uml_interface, class_name, method_num):
+    def __init__(self, uml_interface, class_name, method_num, new_param_list):
         self.uml_interface = uml_interface
         self.class_name = class_name
         self.method_num = method_num
+        self.old_param_list = None
+        self.new_param_list = new_param_list
     
     def execute(self):
-        return self.uml_interface.replace_param_list(self.class_name, self.method_num)
+        self.old_param_list = self.uml_interface.get_param_list(self.class_name, self.method_num)
+        return self.uml_interface.replace_param_list(self.class_name, self.method_num, self.new_param_list)
 
     def undo(self):
-        return self.uml_interface.replace_param_list(self.class_name, self.method_num)
+        if self.old_param_list:
+            return self.uml_interface.replace_param_list(self.class_name, self.method_num, self.old_param_list)
         
 class ChangeTypeCommand(Command):
     def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
@@ -303,14 +307,22 @@ def main():
     add_param_command = AddParameterCommand(interface, class_name="Human", method_num="2", param_type="int", param_name="stamina")
     command_manager.execute_command(add_param_command)
     
-    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="dmg", new_param_name="critical")
-    command_manager.execute_command(rename_param_command)
+    cli_view._display_uml_data(interface.get_main_data())
     
-    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="stats", new_param_name="human_name")
-    command_manager.execute_command(rename_param_command)
+    replace_param_list_command = ReplaceParameterListCommand(interface, class_name="Human", method_num="1", new_param_list=["int health", "int mana", "string name"])
+    command_manager.execute_command(replace_param_list_command)
     
-    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="2", old_param_name="stamina", new_param_name="attack_rate")
-    command_manager.execute_command(rename_param_command)
+    replace_param_list_command = ReplaceParameterListCommand(interface, class_name="Human", method_num="2", new_param_list=["int bruh", "string hell_yeah", "double wtf"])
+    command_manager.execute_command(replace_param_list_command)
+    
+    # rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="dmg", new_param_name="critical")
+    # command_manager.execute_command(rename_param_command)
+    
+    # rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="stats", new_param_name="human_name")
+    # command_manager.execute_command(rename_param_command)
+    
+    # rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="2", old_param_name="stamina", new_param_name="attack_rate")
+    # command_manager.execute_command(rename_param_command)
     
     # cli_view._display_uml_data(interface.get_main_data())
     
@@ -326,17 +338,17 @@ def main():
     
     command_manager.undo()
     
-    command_manager.undo()
+    # command_manager.undo()
     
     cli_view._display_uml_data(interface.get_main_data())
     
-    command_manager.redo()
+    # command_manager.redo()
     
-    command_manager.redo()
+    # command_manager.redo()
     
-    command_manager.redo()
+    # command_manager.redo()
     
-    cli_view._display_uml_data(interface.get_main_data())
+    # cli_view._display_uml_data(interface.get_main_data())
     
 if __name__ == "__main__":
     main()

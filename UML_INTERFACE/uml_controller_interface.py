@@ -119,6 +119,9 @@ class UMLInterface:
     def get_chosen_relationship_type(self, source_class_name: str, destination_class_name: str):
         return self.Model._get_chosen_relationship_type(source_class_name, destination_class_name)
     
+    def get_param_list(self, class_name: str, method_num: str):
+        return self.Model._get_param_list(class_name, method_num)
+    
     # Check if relationship exist or not #
     def relationship_exist(self, source_class_name: str, destination_class_name: str):
         return self.Model._relationship_exist(source_class_name, destination_class_name)
@@ -382,7 +385,7 @@ class UMLInterface:
         return self.Model._rename_parameter(class_name, method_num, current_param_name, new_param_name)
         
     # Replace parameter list interface #
-    def replace_param_list(self, class_name: str, method_num: str):
+    def replace_param_list(self, class_name: str, method_num: str, new_param_list: list):
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
@@ -390,7 +393,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
-        return self.Model._replace_param_list(class_name, method_num)
+        return self.Model._replace_param_list(class_name, method_num, new_param_list)
     
     # Replace parameter list interface for GUI #
     def replace_param_list_gui(self, class_name: str, method_name: str, new_param_list: List):
