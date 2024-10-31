@@ -136,7 +136,7 @@ class UMLModel:
     ## CLASS RELATED ##
     
     # Add class #
-    def _add_class(self, class_name: str, is_loading: bool) -> bool:
+    def _add_class(self, class_name: str, is_loading: bool = False) -> bool:
         """
         Adds a new UML class to the class list. If the class already exists, no action is taken.
         Notifies observers of the addition event.
@@ -219,7 +219,7 @@ class UMLModel:
     ## FIELD RELATED ##
     
     # Add field #
-    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool=None):
+    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool = False):
         """
         Adds a new field to a UML class. Notifies observers of the field addition event.
 
@@ -300,7 +300,7 @@ class UMLModel:
     ## METHOD RELATED ##
 
     # Add method #
-    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = None):
+    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = False):
         """
         Adds a new method to a UML class and notifies observers.
 
@@ -535,7 +535,7 @@ class UMLModel:
     ## PARAMETER RELATED ##
     
     # Add parameter wrapper #
-    def _add_parameter(self, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None, is_loading: bool = False):
+    def _add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None, is_loading: bool = False):
         """
         Adds a parameter to a chosen method of a UML class. Notifies observers of the parameter addition event.
 
@@ -932,7 +932,7 @@ class UMLModel:
     ## RELATIONSHIP RELATED ##
             
     # Add relationship #
-    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool, is_gui: bool=None):
+    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool = False, is_gui: bool = False):
         """
         Adds a new relationship between two UML classes. Notifies observers of the relationship addition event.
 
@@ -2234,7 +2234,7 @@ class UMLModel:
                 return False
             chosen_field = self._get_chosen_field_or_method(class_name, input_name, is_field=True)
             chosen_field._set_type(new_type)
-            self._notify_observers(event_type=InterfaceOptions.FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type})
+            self._notify_observers(event_type=InterfaceOptions.EDIT_FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type})
             self._update_main_data_for_every_action()
             return True
         elif is_method:

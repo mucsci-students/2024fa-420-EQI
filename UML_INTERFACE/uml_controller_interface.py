@@ -246,7 +246,7 @@ class UMLInterface:
         Parameters:
             class_name (str): The name of the class to be added.
         """
-        return self.Model._add_class(class_name, is_loading=False)
+        return self.Model._add_class(class_name)
         
     # Delete class interface #
     def delete_class(self, class_name: str):
@@ -280,7 +280,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be added.
         """
-        return self.Model._add_field(class_name, type, field_name, is_loading=False)
+        return self.Model._add_field(class_name, type, field_name)
         
     # Delete field interface #
     def delete_field(self, class_name: str, field_name: str):
@@ -322,7 +322,7 @@ class UMLInterface:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be added.
         """
-        return self.Model._add_method(class_name, type, method_name, is_loading=False)
+        return self.Model._add_method(class_name, type, method_name)
     
     # Delete method interface #
     def delete_method(self, class_name: str, method_num: int):
@@ -359,7 +359,7 @@ class UMLInterface:
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be added.
         """
-        return self.Model._add_parameter(class_name, method_num, param_type, param_name, is_loading=False)
+        return self.Model._add_parameter(class_name, method_num, param_type, param_name)
         
     # Delete parameter interface #
     def delete_parameter(self, class_name: str,  method_num: str, param_name: str):
@@ -420,7 +420,7 @@ class UMLInterface:
             destination_class_name (str): The name of the destination class.
             type (str): The type of relationship.
         """
-        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=rel_type, is_loading=False, is_gui=False)
+        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=rel_type, is_gui=False)
     
     # Add relationship interface for GUI#
     def add_relationship_gui(self, source_class_name: str, destination_class_name: str, type: str):
@@ -432,7 +432,7 @@ class UMLInterface:
             destination_class_name (str): The name of the destination class.
             type (str): The type of relationship.
         """
-        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=type, is_loading=False, is_gui=True)
+        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=type, is_gui=True)
     
     # Delete relationship interface #
     def delete_relationship(self, source_class_name: str, destination_class_name: str):

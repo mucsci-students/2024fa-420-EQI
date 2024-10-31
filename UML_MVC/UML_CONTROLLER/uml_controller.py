@@ -14,6 +14,7 @@ from typing import List
 from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager as Storage
 from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions
+from UML_MVC import uml_command_pattern as Command
 
 ###################################################################################################
    
@@ -34,6 +35,7 @@ class UMLController:
             view: The view class responsible for displaying output to the user.
             console (Console): A rich console instance used to print messages to the terminal.
         """
+        self.__input_handler = Command.InputHandler()
         self.__model = model  # Reference to the UML model
         self.__user_view = view  # Reference to the view for displaying data
         self.__console = console  # Console for printing messages
@@ -72,11 +74,13 @@ class UMLController:
 
         # Add class
         if command == InterfaceOptions.ADD_CLASS.value and first_param:
-            self.__model._add_class(first_param, is_loading=False)
+            add_class_command = Command.AddClassCommand(self.__model, class_name=first_param)
+            self.__input_handler.execute_command(add_class_command)
         
         # Delete class
         elif command == InterfaceOptions.DELETE_CLASS.value and first_param:
-            self.__model._delete_class(first_param)
+            delete_class_command = Command.DeleteClassCommand(self.__model, class_name=first_param)
+            self.__input_handler.execute_command(delete_class_command)
         
         # Rename class
         elif (
@@ -84,7 +88,8 @@ class UMLController:
             and first_param
             and second_param
         ):
-            self.__model._rename_class(first_param, second_param)
+            rename_class_command = Command.RenameClassCommand(self.__model, class_name=first_param, new_name=second_param)
+            self.__input_handler.execute_command(rename_class_command)
 
         #######################################################
         
@@ -97,7 +102,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._add_field(class_name=first_param, type=second_param, field_name=third_param, is_loading=False)
+            add_field_command = Command.AddFieldCommand(self.__model, class_name=first_param, type=second_param, field_name=third_param)
+            self.__input_handler.execute_command(add_field_command)
         
         # Delete field from class
         elif (
@@ -105,7 +111,8 @@ class UMLController:
             and first_param
             and second_param
         ):
-            self.__model._delete_field(class_name=first_param, field_name=second_param)
+            delete_field_command = Command.DeleteFieldCommand(self.__model, class_name=first_param, field_name=second_param)
+            self.__input_handler.execute_command(delete_field_command)
         
         # Rename field in class
         elif (
@@ -114,16 +121,18 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._rename_field(class_name=first_param, old_field_name=second_param, new_field_name=third_param)
+            rename_field_command = Command.RenameFieldCommand(self.__model, class_name=first_param, old_field_name=second_param, new_field_name=third_param)
+            self.__input_handler.execute_command(rename_field_command)
         
         # Change field type in class
         elif (
-            command == InterfaceOptions.FIELD_TYPE.value
+            command == InterfaceOptions.EDIT_FIELD_TYPE.value
             and first_param
             and second_param
             and third_param
         ):
-            self.__model._change_data_type(class_name=first_param, input_name=second_param, new_type=third_param, is_field=True)
+            edit_field_type_command = Command.ChangeTypeCommand(self.__model, class_name=first_param, input_name=second_param, new_type=third_param, is_field=True)
+            self.__input_handler.execute_command(edit_field_type_command)
 
         #######################################################
         
@@ -136,7 +145,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._add_method(class_name=first_param, type=second_param, method_name=third_param, is_loading=False)
+            add_method_command = Command.AddMethodCommand(self.__model, class_name=first_param, type=second_param, method_name=third_param)
+            self.__input_handler.execute_command(add_method_command)
         
         # Delete method from class
         elif (
@@ -144,7 +154,8 @@ class UMLController:
             and first_param
             and second_param
         ):
-            self.__model._delete_method(class_name=first_param, method_num=second_param)
+            delete_method_command = Command.DeleteMethodCommand(self.__model, class_name=first_param, method_num=second_param)
+            self.__input_handler.execute_command(delete_method_command)
         
         # Rename method in class
         elif (
@@ -153,7 +164,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._rename_method(class_name=first_param, method_num=second_param, new_name=third_param)
+            rename_method_command = Command.RenameMethodCommand(self.__model, class_name=first_param, method_num=second_param, new_name=third_param)
+            self.__input_handler.execute_command(rename_method_command)
         
         # Change method type in class
         elif (
@@ -162,7 +174,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._change_data_type(class_name=first_param, method_num=second_param, new_type=third_param, is_method=True)
+            edit_method_type_command = Command.ChangeTypeCommand(self.__model, class_name=first_param, method_num=second_param, new_type=third_param, is_method=True)
+            self.__input_handler.execute_command(edit_method_type_command)
 
         #######################################################
         
@@ -174,7 +187,8 @@ class UMLController:
             and third_param
             and fourth_param
         ):
-            self.__model._add_parameter(class_name=first_param, method_num=second_param, param_type=third_param, param_name=fourth_param)
+            add_method_command = Command.AddParameterCommand(self.__model, class_name=first_param, method_num=second_param, param_type=third_param, param_name=fourth_param)
+            self.__input_handler.execute_command(add_method_command)
         # Delete parameter from method
         elif (
             command == InterfaceOptions.DELETE_PARAM.value
@@ -182,7 +196,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._delete_parameter(class_name=first_param, method_num=second_param, param_name=third_param)
+            delete_param_command = Command.DeleteParameterCommand(self.__model, class_name=first_param, method_num=second_param, param_name=third_param)
+            self.__input_handler.execute_command(delete_param_command)
 
         elif(
             command == InterfaceOptions.EDIT_PARAM_TYPE.value
@@ -191,7 +206,8 @@ class UMLController:
             and third_param
             and fourth_param
         ):
-            self.__model._change_data_type(class_name=first_param, method_num=second_param, input_name=third_param, new_type=fourth_param, is_param=True)
+            edit_param_type_command = Command.ChangeTypeCommand(self.__model, class_name=first_param, method_num=second_param, input_name=third_param, new_type=fourth_param, is_param=True)
+            self.__input_handler.execute_command(edit_param_type_command)
         
         # Rename parameter in method
         elif (
@@ -201,7 +217,8 @@ class UMLController:
             and third_param
             and fourth_param
         ):
-            self.__model._rename_parameter(class_name=first_param, method_num=second_param, current_param_name=third_param, new_param_name=fourth_param)
+            rename_param_command = Command.RenameParameterCommand(self.__model, class_name=first_param, method_num=second_param, old_param_name=third_param, new_param_name=fourth_param)
+            self.__input_handler.execute_command(rename_param_command)
         
         # Replace parameter list in method
         elif (
@@ -214,7 +231,8 @@ class UMLController:
             if param_list_str:
                 # Split param_list_str by commas to get individual parameters
                 new_param_list = [item.strip() for item in param_list_str.split(",")]
-                self.__model._replace_param_list(first_param, second_param, new_param_list)
+                rename_param_command = Command.ReplaceParameterListCommand(self.__model, class_name=first_param, method_num=second_param, new_param_list=new_param_list)
+                self.__input_handler.execute_command(rename_param_command)
             else:
                 self.__console.print("\n[bold red]Error: Parameter list is missing.[/bold red]")
 
@@ -229,8 +247,9 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._add_relationship(source_class_name=first_param, destination_class_name=second_param, 
-                                           rel_type=third_param,is_loading=False, is_gui=False)
+            add_rel_command = Command.AddRelationshipCommand(self.__model, source_class=first_param, dest_class=second_param, 
+                                           rel_type=third_param)
+            self.__input_handler.execute_command(add_rel_command)
         
         # Delete relationship between classes
         elif (
@@ -238,7 +257,8 @@ class UMLController:
             and first_param
             and second_param
         ):
-            self.__model._delete_relationship(first_param, second_param)
+            delete_rel_command = Command.DeleteRelationshipCommand(self.__model, source_class=first_param, dest_class=second_param)
+            self.__input_handler.execute_command(delete_rel_command)
         
         # Change relationship type between classes
         elif (
@@ -247,7 +267,8 @@ class UMLController:
             and second_param
             and third_param
         ):
-            self.__model._change_data_type(source_class=first_param, dest_class=second_param, new_type=third_param, is_rel=True)
+            edit_rel_type_command = Command.ChangeTypeCommand(self.__model, source_class=first_param, dest_class=second_param, new_type=third_param, is_rel=True)
+            self.__input_handler.execute_command(edit_rel_type_command)
         
         #######################################################
         

@@ -82,7 +82,7 @@ class UMLView(Observer):
             self.console.print(f"\n[bold green]Field [bold white]'{old_field_name}'[/bold white] in class [bold white]'{class_name}'[/bold white] has been renamed to [bold white]'{new_field_name}'[/bold white].[/bold green]")
         
         # Change field type
-        elif event_type == InterfaceOptions.FIELD_TYPE.value:
+        elif event_type == InterfaceOptions.EDIT_FIELD_TYPE.value:
             class_name = data["class_name"]
             field_name = data["field_name"]
             new_type = data["new_type"] + " "

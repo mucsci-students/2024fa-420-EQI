@@ -13,7 +13,7 @@ class InterfaceOptions(Enum):
     ADD_FIELD = "add_field"
     DELETE_FIELD = "delete_field"
     RENAME_FIELD = "rename_field"
-    FIELD_TYPE = "field_type"
+    EDIT_FIELD_TYPE = "edit_field_type"
     ADD_METHOD = "add_method"
     DELETE_METHOD = "delete_method"
     RENAME_METHOD = "rename_method"
