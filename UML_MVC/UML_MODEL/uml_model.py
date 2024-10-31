@@ -356,6 +356,22 @@ class UMLModel:
         else:
             self.__console.print("\n[bold red]Method number out of range! Please enter a valid number.[/bold red]")
             return None
+        
+    def _get_param_based_on_index(self, class_name: str, method_num: str, parameter_name: str):
+        is_method_num_valid = self._check_method_num(method_num)
+        if not is_method_num_valid:
+            return None
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        selected_index = int(method_num) - 1  # Convert to zero-based index
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract the selected method and its parameter list #
+            param_list = next(iter(chosen_pair.values()))
+
+            for each_parameter in param_list:
+                if each_parameter._get_parameter_name() == parameter_name:
+                    return each_parameter
+        return None
 
     def _check_method_param_list(self, class_name: str, new_method_and_params: dict):
         """
@@ -458,7 +474,7 @@ class UMLModel:
             return False
 
     # Rename method #
-    def _rename_method(self, class_name: str, method_num: int, new_name: str):
+    def _rename_method(self, class_name: str, method_num: str, new_name: str):
         """
         Renames an existing method in a UML class and notifies observers.
 
@@ -751,7 +767,7 @@ class UMLModel:
             return False
 
     # Rename parameter #
-    def _rename_parameter(self, class_name: str,  method_num: int, current_param_name: str, new_param_name: str):
+    def _rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str):
         """
         Renames an existing parameter in a method of a UML class. Notifies observers of the parameter renaming event.
 

@@ -130,6 +130,25 @@ class DeleteMethodCommand(Command):
             return self.uml_interface.add_method(self.class_name, self.type, self.method_name)
         return False
     
+class RenameMethodCommand(Command):
+    def __init__(self, uml_interface, class_name, method_num, new_name):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+        self.old_name = None
+        self.new_name = new_name
+
+    def execute(self):
+        chosen_method = self.uml_interface.get_method_based_on_index(self.class_name, self.method_num)
+        if chosen_method is None:
+            return False
+        self.old_name = chosen_method._get_name()
+        return self.uml_interface.rename_method(self.class_name, self.method_num, self.new_name)
+
+    def undo(self):
+        if self.old_name:
+            return self.uml_interface.rename_method(self.class_name, self.method_num, self.old_name)
+    
 class AddParameterCommand(Command):
     def __init__(self, uml_interface, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None):
         self.uml_interface = uml_interface
@@ -143,6 +162,39 @@ class AddParameterCommand(Command):
 
     def undo(self):
         return self.uml_interface.delete_parameter(self.class_name, str(self.method_num), self.param_name)
+    
+class DeleteParameterCommand(Command):
+    def __init__(self, uml_interface, class_name, method_num, param_name):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+        self.param_name = param_name
+        self.param_type = None
+
+    def execute(self):
+        chosen_param = self.uml_interface.get_param_based_on_index(self.class_name, self.method_num, self.param_name)
+        if chosen_param is None:
+            return False
+        self.param_type = chosen_param._get_type()
+        return self.uml_interface.delete_parameter(self.class_name, str(self.method_num), self.param_name)
+        
+    def undo(self):
+        if self.param_type:
+            return self.uml_interface.add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name)
+        
+class RenameParameterCommand(Command):
+    def __init__(self, uml_interface, class_name, method_num, old_param_name, new_param_name):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+        self.old_param_name = old_param_name
+        self.new_param_name = new_param_name
+
+    def execute(self):
+        return self.uml_interface.rename_parameter(self.class_name, self.method_num, self.old_param_name, self.new_param_name)
+
+    def undo(self):
+        return self.uml_interface.rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name)
     
 class ChangeTypeCommand(Command):
     def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
@@ -224,12 +276,37 @@ def main():
     add_method_command_1 = AddMethodCommand(interface, "Human", "void", "walk")
     command_manager.execute_command(add_method_command_1)
     
+    # cli_view._display_uml_data(interface.get_main_data())
+    
+    # change_method_name_command = RenameMethodCommand(interface, class_name="Human", method_num="1", new_name="sprint")
+    # command_manager.execute_command(change_method_name_command)
+    
+    # change_method_name_command = RenameMethodCommand(interface, class_name="Human", method_num="2", new_name="swim")
+    # command_manager.execute_command(change_method_name_command)
+    
     add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="int", param_name="dmg")
     command_manager.execute_command(add_param_command)
     add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="string", param_name="stats")
     command_manager.execute_command(add_param_command)
     add_param_command = AddParameterCommand(interface, class_name="Human", method_num="2", param_type="int", param_name="stamina")
     command_manager.execute_command(add_param_command)
+    
+    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="dmg", new_param_name="critical")
+    command_manager.execute_command(rename_param_command)
+    
+    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="1", old_param_name="stats", new_param_name="human_name")
+    command_manager.execute_command(rename_param_command)
+    
+    rename_param_command = RenameParameterCommand(interface, class_name="Human", method_num="2", old_param_name="stamina", new_param_name="attack_rate")
+    command_manager.execute_command(rename_param_command)
+    
+    # cli_view._display_uml_data(interface.get_main_data())
+    
+    # delete_param_command = DeleteParameterCommand(interface, class_name="Human", method_num="1", param_name="dmg")
+    # command_manager.execute_command(delete_param_command)
+    
+    # delete_param_command = DeleteParameterCommand(interface, class_name="Human", method_num="1", param_name="stats")
+    # command_manager.execute_command(delete_param_command)
     
     cli_view._display_uml_data(interface.get_main_data())
     

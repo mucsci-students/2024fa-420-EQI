@@ -228,6 +228,9 @@ class UMLInterface:
     def get_method_based_on_index(self,class_name: str, method_num: str):
         return self.Model._get_method_based_on_index(class_name, method_num)
     
+    def get_param_based_on_index(self, class_name: str, method_num: str, parameter_name: str):
+        return self.Model._get_param_based_on_index(class_name, method_num, parameter_name)
+    
     ## CLASS RELATED ##
     
     # Add class interface #
@@ -366,7 +369,7 @@ class UMLInterface:
         return self.Model._delete_parameter(class_name, method_num, param_name)
         
     # Rename parameter interface #
-    def rename_parameter(self, class_name: str,  method_num: int, current_param_name: str, new_param_name: str):
+    def rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str):
         """
         Renames a parameter in a UML method by delegating the operation to the model.
 
