@@ -19,5 +19,8 @@
     },
     {
         "NEW_TEST": "off"
+    },
+    {
+        "test_cli_command": "off"
     }
 ]

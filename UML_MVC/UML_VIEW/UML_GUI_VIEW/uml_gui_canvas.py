@@ -160,7 +160,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     return
                 is_class_renamed = self.interface.rename_class(old_class_name, new_class_name)
                 if is_class_renamed:
-                    self.change_name_in_relationship_after_rename_class(old_class_name, new_class_name)
                     self.class_name_list[new_class_name] = self.class_name_list.pop(old_class_name)
                     self.selected_class.class_name_text.setPlainText(new_class_name)
                     self.selected_class.update_box()
