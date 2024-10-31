@@ -103,18 +103,18 @@ class UMLModel:
     
     # Field creation method #
     @staticmethod
-    def create_field(type: str, field_name: str) -> Field:
-        return Field(type, field_name)
+    def create_field(field_type: str, field_name: str) -> Field:
+        return Field(field_type, field_name)
     
     # Method creation method #
     @staticmethod
-    def create_method(type: str, method_name: str) -> Method:
-        return Method(type, method_name)
+    def create_method(method_type: str, method_name: str) -> Method:
+        return Method(method_type, method_name)
     
     # Parameter creation method #
     @staticmethod
-    def create_parameter(type:str, parameter_name: str) -> Parameter:
-        return Parameter(type, parameter_name)
+    def create_parameter(param_type:str, parameter_name: str) -> Parameter:
+        return Parameter(param_type, parameter_name)
     
     # Relationship creation method #
     @staticmethod
@@ -219,7 +219,7 @@ class UMLModel:
     ## FIELD RELATED ##
     
     # Add field #
-    def _add_field(self, class_name: str=None, type: str=None, field_name: str=None, is_loading: bool=None):
+    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool=None):
         """
         Adds a new field to a UML class. Notifies observers of the field addition event.
 
@@ -231,7 +231,7 @@ class UMLModel:
             type: str
         """
         # Check valid input #
-        if not self._is_valid_input(class_name=class_name, field_name=field_name, type=type,):
+        if not self._is_valid_input(class_name=class_name, field_name=field_name, field_type=field_type,):
             return False
         # Check if both the class and the field do not already exist
         is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=field_name, class_should_exist=True, field_should_exist=False)
@@ -239,11 +239,11 @@ class UMLModel:
             return False
         # Retrieve the class and add the new field to its field list
         field_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
-        new_field = self.create_field(type, field_name)
+        new_field = self.create_field(field_type, field_name)
         field_list.append(new_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "type": type, "field_name": field_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "type": field_type, "field_name": field_name}, is_loading=is_loading)
         return True
         
     # Delete field #
@@ -300,7 +300,7 @@ class UMLModel:
     ## METHOD RELATED ##
 
     # Add method #
-    def _add_method(self, class_name: str = None, type: str = None, method_name: str = None, is_loading: bool = None):
+    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = None):
         """
         Adds a new method to a UML class and notifies observers.
 
@@ -314,7 +314,7 @@ class UMLModel:
             bool: True if the method was successfully added, False otherwise.
         """
         # Check if input values are valid (e.g., not None or empty strings) #
-        if not self._is_valid_input(class_name=class_name, method_name=method_name, type=type):
+        if not self._is_valid_input(class_name=class_name, method_name=method_name, method_type=method_type):
             return False
 
         # Ensure the class exists and the method does not already exist #
@@ -325,7 +325,7 @@ class UMLModel:
 
         # Retrieve the method list for the class and create the new method #
         method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
-        new_method = self.create_method(type=type, method_name=method_name)
+        new_method = self.create_method(method_type, method_name)
         method_and_pram_list_element = {new_method: []}  # Create a dictionary with method and an empty parameter list
 
         # If not loading, check if a method with the same signature already exists #
@@ -340,7 +340,7 @@ class UMLModel:
         # Notify observers and update internal data #
         self._update_main_data_for_every_action()
         self._notify_observers(event_type=InterfaceOptions.ADD_METHOD.value,
-                               data={"class_name": class_name, "type": type, "method_name": method_name}, is_loading=is_loading)
+                               data={"class_name": class_name, "type": method_type, "method_name": method_name}, is_loading=is_loading)
         return True
     
     def _get_method_based_on_index(self, class_name: str, method_num: str):
@@ -829,90 +829,6 @@ class UMLModel:
             self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
             return False
         
-    # # Replace parameter list #
-    # def _replace_param_list(self, class_name: str, method_num: str):
-    #     """
-    #     Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
-
-    #     Parameters:
-    #         class_name (str): The name of the class containing the method.
-    #         method_num (str): The number of the method whose parameter list will be replaced.
-    #     """
-    #     # Check valid input #
-    #     if not self._is_valid_input(class_name=class_name):
-    #         return False
-    #     # Check if the class and method exist
-    #     is_class_and_method_exist = self._validate_entities(class_name=class_name,class_should_exist=True)
-    #     if not is_class_and_method_exist:
-    #         return 
-    #     # Check if the method number is numeric
-    #     is_method_num_a_number = self._check_method_num(method_num)
-    #     if not is_method_num_a_number:
-    #         return False
-        
-    #     method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
-        
-    #     selected_index = int(method_num) - 1
-
-    #     if 0 <= selected_index < len(method_and_parameter_list):
-    #         # Prompt the user to input new parameter names
-    #         self.__console.print("\n[bold yellow]Form should be <param_type1> <param_name1>, <param_type2> <param_name2>, ...[/bold yellow]")
-    #         self.__console.print("\n[bold yellow]Enter the types and names for the new parameter list, each parameter must be separated by commas:[/bold yellow]\n\n[bold white]==>[/bold white] ")
-    #         user_input = input()
-    #         # Split the input into a list of the different parameters, where each parameter is a list with the type as the first element and name as the second
-    #         new_params_list = user_input.split(",")
-    #         real_param_list: List = []
-    #         for param in new_params_list:
-    #             type_and_name = param.split()
-    #             real_param_list.append(type_and_name)
-
-    #         new_param_name_list: List = []
-    #         # Get the names of each parameter to check for uniqueness, and check if each parameter has only 2 inputs
-    #         for single_param_type_and_name in real_param_list:
-    #             if len(single_param_type_and_name) != 2:
-    #                 self.__console.print("\n[bold red]Make sure each parameter is a type and a name with a space between, and each parameter is seperated by commas.[/bold red]")
-    #                 return False
-    #             new_param_name_list.append(single_param_type_and_name[1])
-
-    #         # Check that all input is valid
-    #         for param in real_param_list:
-    #             if not self._is_valid_input(parameter_name=param[1], parameter_type=param[0]):
-    #                 return
-                
-    #         # Check for duplicate parameter names
-    #         unique_param_names = list(set(new_param_name_list))
-    #         if len(unique_param_names) != len(new_param_name_list):
-    #             self.__console.print("\n[bold red]Duplicate parameters detected:[/bold red]")
-    #             duplicates = [param for param in new_param_name_list if new_param_name_list.count(param) > 1]
-    #             self.__console.print(f"\n[bold red]Duplicates: [bold white]{set(duplicates)}[/bold white][/bold red]")
-    #             self.__console.print("\n[bold red]Please modify the parameter list manually to ensure uniqueness.[/bold red]")
-    #             return 
-    #         # Create parameter objects for the new list and replace the old list
-    #         new_param_list: List[Parameter] = []
-    #         # Make new parameter list with actual parameter objects
-    #         for param in real_param_list:
-    #             new_param = self.create_parameter(param[0], param[1])
-    #             new_param_list.append(new_param)
-            
-    #         chosen_pair = method_and_parameter_list[selected_index]
-    #         # Extract the selected method and its parameter list #
-    #         method, params_list = next(iter(chosen_pair.items()))
-
-    #         method_with_new_param = {method: new_param_list}
-    #         is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
-    #         if not is_method_valid_with_param:
-    #             return False
-
-    #         chosen_pair[method] = new_param_list
-    #         # Update main data and notify observers
-    #         self._update_main_data_for_every_action()
-    #         self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_param_list})
-    #         return 
-    #     else:
-    #         # If the number is in the range of [1, num of methods], if not then return error
-    #         self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
-    #         return False
-        
     def _replace_param_list(self, class_name: str, method_num: str, new_param_name_list: List[str]):
         # Check valid input for class_name and method_num
         if not self._is_valid_input(class_name=class_name):
@@ -1014,56 +930,6 @@ class UMLModel:
         return True
         
     ## RELATIONSHIP RELATED ##
-    
-    # Add relationship wrapper #
-    def _add_relationship_wrapper(self, is_loading: bool):
-        """
-        Wrapper method for adding a new relationship between UML classes. Prompts the user to input 
-        the source class, destination class, and relationship type.
-
-        Parameters:
-            is_loading (bool): Flag indicating whether the operation is part of loading saved data.
-        """
-        if len(self.__class_list) == 0:
-            self.__console.print("\n[bold red]No class exists![/bold red]")
-            return
-        # Prompt the user for input
-        self.__console.print("\n[bold yellow]Type [bold white]'<source_class> <destination_class> <type>'[/bold white] or type [bold white]'quit'[/bold white] to return to main menu[/bold yellow]")
-        self.__user_view._display_type_enum()
-        self.__user_view._display_class_names(self.__main_data)
-        self.__user_view._display_relationships(self.__main_data)
-        self.__console.print("\n[bold yellow]==>[/bold yellow] ", end="")
-        user_input: str = input()
-        if user_input == "quit":
-            self.__console.print("\n[bold green]Canceled adding relationship[/bold green]")
-            return
-        # Parse user input and validate the relationship
-        user_input_component = user_input.split()
-        source_class_name = user_input_component[0]
-        destination_class_name = user_input_component[1] if len(user_input_component) > 1 else None
-        type = user_input_component[2] if len(user_input_component) > 2 else None
-        # Check valid input #
-        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, type=type):
-            return 
-        if source_class_name and destination_class_name and type:
-            # Validate class and relationship existence
-            is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
-            is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
-            if not is_source_class_exist or not is_destination_class_exist:
-                return
-            # Check if the relationship already exists
-            is_relationship_exist = self._relationship_exist(source_class_name, destination_class_name)
-            if is_relationship_exist:
-                self.__console.print(f"\n[bold red]Relationship between class [bold white]'{source_class_name}'[/bold white] and class [bold white]'{destination_class_name}'[/bold white] already exists![/bold red]")
-                return
-            # Validate relationship type
-            is_type_exist = self.__validate_type_existence(type, should_exist=True)
-            if not is_type_exist:
-                return
-            # Add the new relationship
-            self._add_relationship(source_class_name, destination_class_name, type, is_loading)
-        else:
-            self.__console.print("\n[bold red]Wrong format! Please try again![/bold red]")
             
     # Add relationship #
     def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool, is_gui: bool=None):
@@ -1090,6 +956,25 @@ class UMLModel:
             is_type_exist = self.__validate_type_existence(rel_type, should_exist=True)
             if not is_type_exist:
                 return False
+        else:
+            # Check valid input #
+            if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, rel_type=rel_type):
+                return 
+            if source_class_name and destination_class_name and rel_type:
+                # Validate class and relationship existence
+                is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
+                is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
+                if not is_source_class_exist or not is_destination_class_exist:
+                    return False
+                # Check if the relationship already exists
+                is_relationship_exist = self._relationship_exist(source_class_name, destination_class_name)
+                if is_relationship_exist:
+                    self.__console.print(f"\n[bold red]Relationship between class [bold white]'{source_class_name}'[/bold white] and class [bold white]'{destination_class_name}'[/bold white] already exists![/bold red]")
+                    return False
+                # Validate relationship type
+                is_type_exist = self.__validate_type_existence(rel_type, should_exist=True)
+                if not is_type_exist:
+                    return False
         # Create a new relationship and add it to the relationship list
         new_relationship = self.create_relationship(source_class_name, destination_class_name, rel_type)
         self.__relationship_list.append(new_relationship)
@@ -2297,7 +2182,7 @@ class UMLModel:
         # Display updated UML data
         self.__user_view._display_uml_data(self.__main_data)
         
-    def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
+    def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, field_type=None, method_type=None, rel_type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
         """
         Validates the user input to ensure it contains only allowed characters.
         """
@@ -2306,13 +2191,15 @@ class UMLModel:
         
         inputs = {
             "class_name": class_name,
-            "field_name": field_name, 
+            "field_name": field_name,
+            "field_type" : field_type, 
             "method_name": method_name, 
+            "method_type" : method_type,
             "parameter_name": parameter_name,
             "parameter_type": parameter_type, 
             "source_class": source_class,
             "destination_class": destination_class,
-            "type": type,
+            "rel_type": rel_type,
             "new_type": new_type,
             "new_name": new_name,
             "return_type": return_type

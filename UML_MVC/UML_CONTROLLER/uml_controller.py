@@ -225,8 +225,12 @@ class UMLController:
         # Add relationship between classes
         elif (
             command == InterfaceOptions.ADD_REL.value
+            and first_param
+            and second_param
+            and third_param
         ):
-            self.__model._add_relationship_wrapper(is_loading=False)
+            self.__model._add_relationship(source_class_name=first_param, destination_class_name=second_param, 
+                                           rel_type=third_param,is_loading=False, is_gui=False)
         
         # Delete relationship between classes
         elif (
