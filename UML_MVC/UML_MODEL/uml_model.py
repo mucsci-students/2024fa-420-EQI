@@ -982,6 +982,13 @@ class UMLModel:
         self._update_main_data_for_every_action()
         self._notify_observers(event_type=InterfaceOptions.ADD_REL.value, data={"source": source_class_name, "dest": destination_class_name, "type": rel_type}, is_loading=is_loading)
         return True
+    
+    def _get_rel_type(self, source_class_name: str, destination_class_name: str):
+        for relationship in self.__relationship_list:
+            if (relationship._get_source_class() == source_class_name and
+                relationship._get_dest_class() == destination_class_name):
+                return relationship._get_type()
+        return None
         
     # Delete relationship #
     def _delete_relationship(self, source_class_name: str, destination_class_name: str) -> bool | str:

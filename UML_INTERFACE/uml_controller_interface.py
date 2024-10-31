@@ -234,6 +234,8 @@ class UMLInterface:
     def get_param_based_on_index(self, class_name: str, method_num: str, parameter_name: str):
         return self.Model._get_param_based_on_index(class_name, method_num, parameter_name)
     
+    def get_rel_type(self, source_class_name: str, destination_class_name: str):
+        return self.Model._get_rel_type(source_class_name, destination_class_name)
     ## CLASS RELATED ##
     
     # Add class interface #
@@ -408,7 +410,19 @@ class UMLInterface:
         
     ## RELATIONSHIP RELATED ##
     
-    # Add relationship interface #
+    # Add relationship interface for CLI#
+    def add_relationship_cli(self, source_class_name: str, destination_class_name: str, rel_type: str):
+        """
+        Adds a relationship between two UML classes by delegating the operation to the model.
+
+        Parameters:
+            source_class_name (str): The name of the source class.
+            destination_class_name (str): The name of the destination class.
+            type (str): The type of relationship.
+        """
+        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=rel_type, is_loading=False, is_gui=False)
+    
+    # Add relationship interface for GUI#
     def add_relationship_gui(self, source_class_name: str, destination_class_name: str, type: str):
         """
         Adds a relationship between two UML classes by delegating the operation to the model.
