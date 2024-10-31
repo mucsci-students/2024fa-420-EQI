@@ -196,6 +196,18 @@ class RenameParameterCommand(Command):
     def undo(self):
         return self.uml_interface.rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name)
     
+class ReplaceParameterListCommand(Command):
+    def __init__(self, uml_interface, class_name, method_num):
+        self.uml_interface = uml_interface
+        self.class_name = class_name
+        self.method_num = method_num
+    
+    def execute(self):
+        return self.uml_interface.replace_param_list(self.class_name, self.method_num)
+
+    def undo(self):
+        return self.uml_interface.replace_param_list(self.class_name, self.method_num)
+        
 class ChangeTypeCommand(Command):
     def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
                  is_field: bool=False, is_method: bool=False, is_param: bool=False):

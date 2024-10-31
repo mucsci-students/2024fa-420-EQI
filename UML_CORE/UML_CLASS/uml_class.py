@@ -39,9 +39,9 @@ class UMLClass:
 
     def _set_class_field_list(self, new_field_list: List[Field]):
         self.__field_list = new_field_list
-
-    def _set_class_method_list(self, new_method_list: List[Method]):
-        self.__method_list = new_method_list
+        
+    def _set_parameter_list(self, new_params_list: List[Parameter]):
+        self.parameter_list = new_params_list
         
     #################################################################
     # Method to convert uml class to json format #

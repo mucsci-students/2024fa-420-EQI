@@ -829,91 +829,146 @@ class UMLModel:
             self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
             return False
         
-    # Replace parameter list #
-    def _replace_param_list(self, class_name: str, method_num: str):
-        """
-        Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
+    # # Replace parameter list #
+    # def _replace_param_list(self, class_name: str, method_num: str):
+    #     """
+    #     Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
 
-        Parameters:
-            class_name (str): The name of the class containing the method.
-            method_num (str): The number of the method whose parameter list will be replaced.
-        """
-        # Check valid input #
+    #     Parameters:
+    #         class_name (str): The name of the class containing the method.
+    #         method_num (str): The number of the method whose parameter list will be replaced.
+    #     """
+    #     # Check valid input #
+    #     if not self._is_valid_input(class_name=class_name):
+    #         return False
+    #     # Check if the class and method exist
+    #     is_class_and_method_exist = self._validate_entities(class_name=class_name,class_should_exist=True)
+    #     if not is_class_and_method_exist:
+    #         return 
+    #     # Check if the method number is numeric
+    #     is_method_num_a_number = self._check_method_num(method_num)
+    #     if not is_method_num_a_number:
+    #         return False
+        
+    #     method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        
+    #     selected_index = int(method_num) - 1
+
+    #     if 0 <= selected_index < len(method_and_parameter_list):
+    #         # Prompt the user to input new parameter names
+    #         self.__console.print("\n[bold yellow]Form should be <param_type1> <param_name1>, <param_type2> <param_name2>, ...[/bold yellow]")
+    #         self.__console.print("\n[bold yellow]Enter the types and names for the new parameter list, each parameter must be separated by commas:[/bold yellow]\n\n[bold white]==>[/bold white] ")
+    #         user_input = input()
+    #         # Split the input into a list of the different parameters, where each parameter is a list with the type as the first element and name as the second
+    #         new_params_list = user_input.split(",")
+    #         real_param_list: List = []
+    #         for param in new_params_list:
+    #             type_and_name = param.split()
+    #             real_param_list.append(type_and_name)
+
+    #         new_param_name_list: List = []
+    #         # Get the names of each parameter to check for uniqueness, and check if each parameter has only 2 inputs
+    #         for single_param_type_and_name in real_param_list:
+    #             if len(single_param_type_and_name) != 2:
+    #                 self.__console.print("\n[bold red]Make sure each parameter is a type and a name with a space between, and each parameter is seperated by commas.[/bold red]")
+    #                 return False
+    #             new_param_name_list.append(single_param_type_and_name[1])
+
+    #         # Check that all input is valid
+    #         for param in real_param_list:
+    #             if not self._is_valid_input(parameter_name=param[1], parameter_type=param[0]):
+    #                 return
+                
+    #         # Check for duplicate parameter names
+    #         unique_param_names = list(set(new_param_name_list))
+    #         if len(unique_param_names) != len(new_param_name_list):
+    #             self.__console.print("\n[bold red]Duplicate parameters detected:[/bold red]")
+    #             duplicates = [param for param in new_param_name_list if new_param_name_list.count(param) > 1]
+    #             self.__console.print(f"\n[bold red]Duplicates: [bold white]{set(duplicates)}[/bold white][/bold red]")
+    #             self.__console.print("\n[bold red]Please modify the parameter list manually to ensure uniqueness.[/bold red]")
+    #             return 
+    #         # Create parameter objects for the new list and replace the old list
+    #         new_param_list: List[Parameter] = []
+    #         # Make new parameter list with actual parameter objects
+    #         for param in real_param_list:
+    #             new_param = self.create_parameter(param[0], param[1])
+    #             new_param_list.append(new_param)
+            
+    #         chosen_pair = method_and_parameter_list[selected_index]
+    #         # Extract the selected method and its parameter list #
+    #         method, params_list = next(iter(chosen_pair.items()))
+
+    #         method_with_new_param = {method: new_param_list}
+    #         is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
+    #         if not is_method_valid_with_param:
+    #             return False
+
+    #         chosen_pair[method] = new_param_list
+    #         # Update main data and notify observers
+    #         self._update_main_data_for_every_action()
+    #         self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_param_list})
+    #         return 
+    #     else:
+    #         # If the number is in the range of [1, num of methods], if not then return error
+    #         self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+    #         return False
+        
+    def _replace_param_list(self, class_name: str, method_num: str, new_param_name_list: List[str]):
+        # Check valid input for class_name and method_num
         if not self._is_valid_input(class_name=class_name):
             return False
-        # Check if the class and method exist
-        is_class_and_method_exist = self._validate_entities(class_name=class_name,class_should_exist=True)
+        
+        # Validate class and method existence
+        is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         if not is_class_and_method_exist:
-            return 
-        # Check if the method number is numeric
+            return False
+        
+        # Check if method_num is numeric
         is_method_num_a_number = self._check_method_num(method_num)
         if not is_method_num_a_number:
             return False
         
+        # Get the method and parameter list
         method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
-        
+    
         selected_index = int(method_num) - 1
 
         if 0 <= selected_index < len(method_and_parameter_list):
-            # Prompt the user to input new parameter names
-            self.__console.print("\n[bold yellow]Form should be <param_type1> <param_name1>, <param_type2> <param_name2>, ...[/bold yellow]")
-            self.__console.print("\n[bold yellow]Enter the types and names for the new parameter list, each parameter must be separated by commas:[/bold yellow]\n\n[bold white]==>[/bold white] ")
-            user_input = input()
-            # Split the input into a list of the different parameters, where each parameter is a list with the type as the first element and name as the second
-            new_params_list = user_input.split(",")
-            real_param_list: List = []
-            for param in new_params_list:
-                type_and_name = param.split()
-                real_param_list.append(type_and_name)
-
-            new_param_name_list: List = []
-            # Get the names of each parameter to check for uniqueness, and check if each parameter has only 2 inputs
-            for single_param_type_and_name in real_param_list:
-                if len(single_param_type_and_name) != 2:
-                    self.__console.print("\n[bold red]Make sure each parameter is a type and a name with a space between, and each parameter is seperated by commas.[/bold red]")
+            # Prepare new parameter list
+            new_params_obj_list = []
+            for param in new_param_name_list:
+                # Split param into type and name
+                parts = param.strip().split()
+                if len(parts) != 2:
+                    self.__console.print(f"\n[bold red]Error: Invalid parameter format '{param}'. Expected format: 'type name'.[/bold red]")
                     return False
-                new_param_name_list.append(single_param_type_and_name[1])
-
-            # Check that all input is valid
-            for param in real_param_list:
-                if not self._is_valid_input(parameter_name=param[1], parameter_type=param[0]):
-                    return
+                param_type, param_name = parts
+                # Validate each component
+                if not self._is_valid_input(parameter_type=param_type, parameter_name=param_name):
+                    return False
+                new_param = self.create_parameter(param_type, param_name)
+                new_params_obj_list.append(new_param)
                 
-            # Check for duplicate parameter names
-            unique_param_names = list(set(new_param_name_list))
-            if len(unique_param_names) != len(new_param_name_list):
-                self.__console.print("\n[bold red]Duplicate parameters detected:[/bold red]")
-                duplicates = [param for param in new_param_name_list if new_param_name_list.count(param) > 1]
-                self.__console.print(f"\n[bold red]Duplicates: [bold white]{set(duplicates)}[/bold white][/bold red]")
-                self.__console.print("\n[bold red]Please modify the parameter list manually to ensure uniqueness.[/bold red]")
-                return 
-            # Create parameter objects for the new list and replace the old list
-            new_param_list: List[Parameter] = []
-            # Make new parameter list with actual parameter objects
-            for param in real_param_list:
-                new_param = self.create_parameter(param[0], param[1])
-                new_param_list.append(new_param)
-            
             chosen_pair = method_and_parameter_list[selected_index]
             # Extract the selected method and its parameter list #
             method, params_list = next(iter(chosen_pair.items()))
-
-            method_with_new_param = {method: new_param_list}
-            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
-            if not is_method_valid_with_param:
-                return False
-
-            chosen_pair[method] = new_param_list
-            # Update main data and notify observers
+            params_list.clear()
+            
+            for param in new_params_obj_list:
+                params_list.append(param)
+                
+            print(params_list)
+            
             self._update_main_data_for_every_action()
-            self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_param_list})
-            return 
+            self._notify_observers(
+                event_type=InterfaceOptions.REPLACE_PARAM.value,
+                data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_params_obj_list}
+            )
+            return True
         else:
-            # If the number is in the range of [1, num of methods], if not then return error
-            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            self.__console.print(f"\n[bold red]Error: Method number '{method_num}' is out of range.[/bold red]")
             return False
-        
-        
+
     def _replace_param_list_gui(self, class_name: str, method_name: str, new_param_name_list: List):
         # Check if the class and method exist
         is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
@@ -1187,7 +1242,7 @@ class UMLModel:
                 each_relationship._set_destination_class(new_name)
                 
     # Get method and parameter list of a chosen class #
-    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_list: bool=None, is_method_and_param_list: bool=None) -> Dict[str, List[Parameter]] | None:
+    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[str, List[Parameter]] | None:
         """
         Retrieves the method and parameter list of a specified class.
 
@@ -2217,20 +2272,7 @@ class UMLModel:
         
     def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
         """
-        Check if the user input contains only letters, numbers, and underscores for all provided parameters.
-
-        Parameters:
-            class_name (str, optional): The name of the class to validate.
-            field_name (str, optional): The name of the field to validate.
-            method_name (str, optional): The name of the method to validate.
-            parameter_name (str, optional): The name of the parameter to validate.
-            source_class (str, optional): The source class name to validate.
-            destination_class (str, optional): The destination class name to validate.
-            type (str, optional): The type of relationship.
-            new_name (str, optional): The new name to validate (e.g., for renaming a class).
-
-        Returns:
-            bool: True if all provided inputs are valid (contain only a-z, A-Z, 0-9, and _), False otherwise.
+        Validates the user input to ensure it contains only allowed characters.
         """
         # Regular expression pattern to allow only a-z, A-Z, 0-9, and _
         pattern = r'^[a-zA-Z0-9_]+$'
@@ -2239,20 +2281,19 @@ class UMLModel:
             "class_name": class_name,
             "field_name": field_name, 
             "method_name": method_name, 
-            "parameter_name": parameter_name, 
-            "source_class" : source_class,
-            "destination_class" : destination_class,
-            "type" : type,
-            "new_type" : new_type,
-            "new_name" : new_name,
-            "parameter_type": parameter_type,
-            "return_type" : return_type
+            "parameter_name": parameter_name,
+            "parameter_type": parameter_type, 
+            "source_class": source_class,
+            "destination_class": destination_class,
+            "type": type,
+            "new_type": new_type,
+            "new_name": new_name,
+            "return_type": return_type
         }
 
         for input_type, user_input in inputs.items():
             if user_input is not None and not re.match(pattern, user_input):
-                self.__console.print(f"\n[bold red]Input for {input_type} [bold white]'{user_input}'[/bold white] is invalid! "
-                                    "Only letters, numbers, and underscores are allowed![/bold red]")
+                self.__console.print(f"\n[bold red]Input for {input_type} [bold white]'{user_input}'[/bold white] is invalid! Only letters, numbers, and underscores are allowed![/bold red]")
                 return False
         return True
     

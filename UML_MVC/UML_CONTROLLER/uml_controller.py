@@ -63,8 +63,8 @@ class UMLController:
         first_param = parameters[0] if len(parameters) > 0 else None
         second_param = parameters[1] if len(parameters) > 1 else None
         third_param = parameters[2] if len(parameters) > 2 else None
+        param_list_str = ' '.join(parameters[2:]) if len(parameters) > 2 else None
         fourth_param = parameters[3] if len(parameters) > 3 else None
-        fifth_param = parameters[4] if len(parameters) > 4 else None
         
         #######################################################
         
@@ -204,8 +204,19 @@ class UMLController:
             self.__model._rename_parameter(class_name=first_param, method_num=second_param, current_param_name=third_param, new_param_name=fourth_param)
         
         # Replace parameter list in method
-        elif command == InterfaceOptions.REPLACE_PARAM.value and first_param and second_param:
-            self.__model._replace_param_list(first_param, second_param)
+        elif (
+            command == InterfaceOptions.REPLACE_PARAM.value 
+            and first_param 
+            and second_param
+        ):
+            # Collect all remaining parameters into one string
+            param_list_str = ' '.join(parameters[2:]) if len(parameters) > 2 else None
+            if param_list_str:
+                # Split param_list_str by commas to get individual parameters
+                new_param_list = [item.strip() for item in param_list_str.split(",")]
+                self.__model._replace_param_list(first_param, second_param, new_param_list)
+            else:
+                self.__console.print("\n[bold red]Error: Parameter list is missing.[/bold red]")
 
         #######################################################
         
