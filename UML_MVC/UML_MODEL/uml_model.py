@@ -956,8 +956,6 @@ class UMLModel:
         
             for param in new_params_obj_list:
                 params_list.append(param)
-                
-            print(params_list)
             
             self._update_main_data_for_every_action()
             self._notify_observers(
