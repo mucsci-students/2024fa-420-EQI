@@ -241,16 +241,23 @@ class DeleteRelationshipCommand(Command):
             return self.uml_interface.add_relationship_cli(self.source_class, self.dest_class, self.rel_type)
 
 class ChangeTypeCommand(Command):
-    def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
-                 is_field: bool=False, is_method: bool=False, is_param: bool=False):
+    def __init__(self, uml_interface, 
+                 class_name: str=None, method_num:int = None, 
+                 input_name: str=None, source_class: str=None,
+                 dest_class: str=None, new_type: str=None, 
+                 is_field: bool=None,is_method: bool=None, 
+                 is_param: bool=None, is_rel: bool=None):
         self.uml_interface = uml_interface
         self.class_name = class_name
         self.method_num = method_num
         self.input_name = input_name
+        self.source_class = source_class
+        self.dest_class = dest_class
         self.new_type = new_type
         self.is_field = is_field
         self.is_method = is_method
         self.is_param = is_param
+        self.is_rel = is_rel
         self.original_type = None  # To store the original type
 
     def execute(self):
@@ -267,6 +274,16 @@ class ChangeTypeCommand(Command):
                 return False
             self.original_type = chosen_method._get_type()
             return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.new_type, is_method=True)
+        
+        elif self.is_param:
+            chosen_param = self.uml_interface.get_param_based_on_index(self.class_name, self.method_num, self.input_name)
+            if chosen_param is None:
+                return False
+            self.original_type = chosen_param._get_type()
+            return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.new_type, is_param=True)
+        
+        elif self.is_rel:
+            pass
 
     def undo(self):
         # Restore the original type
@@ -274,6 +291,8 @@ class ChangeTypeCommand(Command):
             return self.uml_interface.change_data_type(class_name=self.class_name, input_name=self.input_name, new_type=self.original_type, is_field=True)
         elif self.is_method and self.original_type:
             return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.original_type, is_method=True)
+        elif self.is_param and self.original_type:
+            return self.uml_interface.change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.original_type, is_param=True)
         return False
 
 class InputHandler:
@@ -316,12 +335,12 @@ def main():
     add_class_command_2 = AddClassCommand(interface, "Animal")
     command_manager.execute_command(add_class_command_2)
     
-    # add_method_command_1 = AddMethodCommand(interface, "Human", "void", "attack")
-    # command_manager.execute_command(add_method_command_1)
-    # add_method_command_1 = AddMethodCommand(interface, "Human", "void", "run")
-    # command_manager.execute_command(add_method_command_1)
-    # add_method_command_1 = AddMethodCommand(interface, "Human", "void", "walk")
-    # command_manager.execute_command(add_method_command_1)
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "attack")
+    command_manager.execute_command(add_method_command_1)
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "run")
+    command_manager.execute_command(add_method_command_1)
+    add_method_command_1 = AddMethodCommand(interface, "Human", "void", "walk")
+    command_manager.execute_command(add_method_command_1)
     
     # cli_view._display_uml_data(interface.get_main_data())
     
@@ -331,14 +350,25 @@ def main():
     # change_method_name_command = RenameMethodCommand(interface, class_name="Human", method_num="2", new_name="swim")
     # command_manager.execute_command(change_method_name_command)
     
-    # add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="int", param_name="dmg")
-    # command_manager.execute_command(add_param_command)
-    # add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="string", param_name="stats")
-    # command_manager.execute_command(add_param_command)
-    # add_param_command = AddParameterCommand(interface, class_name="Human", method_num="2", param_type="int", param_name="stamina")
-    # command_manager.execute_command(add_param_command)
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="int", param_name="dmg")
+    command_manager.execute_command(add_param_command)
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="1", param_type="string", param_name="stats")
+    command_manager.execute_command(add_param_command)
+    add_param_command = AddParameterCommand(interface, class_name="Human", method_num="2", param_type="int", param_name="stamina")
+    command_manager.execute_command(add_param_command)
     
-    # cli_view._display_uml_data(interface.get_main_data())
+    cli_view._display_uml_data(interface.get_main_data())
+    
+    change_param_type_command = ChangeTypeCommand(interface, class_name="Human", method_num="1", input_name="dmg", new_type="double", is_param=True)
+    command_manager.execute_command(change_param_type_command)
+    
+    change_param_type_command = ChangeTypeCommand(interface, class_name="Human", method_num="1", input_name="stats", new_type="int", is_param=True)
+    command_manager.execute_command(change_param_type_command)
+    
+    change_param_type_command = ChangeTypeCommand(interface, class_name="Human", method_num="2", input_name="stamina", new_type="float", is_param=True)
+    command_manager.execute_command(change_param_type_command)
+    
+    cli_view._display_uml_data(interface.get_main_data())
     
     # replace_param_list_command = ReplaceParameterListCommand(interface, class_name="Human", method_num="1", new_param_list=["int health", "int mana", "string name"])
     # command_manager.execute_command(replace_param_list_command)
@@ -363,27 +393,27 @@ def main():
     # delete_param_command = DeleteParameterCommand(interface, class_name="Human", method_num="1", param_name="stats")
     # command_manager.execute_command(delete_param_command)
     
-    add_rel_command = AddRelationshipCommand(interface, "Human", "Animal", "Aggregation")
-    command_manager.execute_command(add_rel_command)
+    # add_rel_command = AddRelationshipCommand(interface, "Human", "Animal", "Aggregation")
+    # command_manager.execute_command(add_rel_command)
     
-    add_rel_command = AddRelationshipCommand(interface, "Animal", "Human", "Composition")
-    command_manager.execute_command(add_rel_command)
+    # add_rel_command = AddRelationshipCommand(interface, "Animal", "Human", "Composition")
+    # command_manager.execute_command(add_rel_command)
     
-    cli_view._display_uml_data(interface.get_main_data())
+    # cli_view._display_uml_data(interface.get_main_data())
     
-    delete_rel_command = DeleteRelationshipCommand(interface, "Human", "Animal")
-    command_manager.execute_command(delete_rel_command)
+    # delete_rel_command = DeleteRelationshipCommand(interface, "Human", "Animal")
+    # command_manager.execute_command(delete_rel_command)
     
-    delete_rel_command = DeleteRelationshipCommand(interface, "Animal", "Human")
-    command_manager.execute_command(delete_rel_command)
+    # delete_rel_command = DeleteRelationshipCommand(interface, "Animal", "Human")
+    # command_manager.execute_command(delete_rel_command)
     
-    cli_view._display_uml_data(interface.get_main_data())
+    # cli_view._display_uml_data(interface.get_main_data())
+    
+    command_manager.undo()
     
     command_manager.undo()
     
     command_manager.undo()
-    
-    # command_manager.undo()
     
     cli_view._display_uml_data(interface.get_main_data())
     
@@ -391,7 +421,7 @@ def main():
     
     command_manager.redo()
     
-    # command_manager.redo()
+    command_manager.redo()
     
     cli_view._display_uml_data(interface.get_main_data())
     

@@ -457,8 +457,16 @@ class UMLInterface:
         """
         return self.Model._change_type(source_class_name, destination_class_name, new_type)
     
-    def change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None, method_num: str = None):
-        return self.Model._change_data_type(class_name, input_name, new_type, is_field, is_method, is_param, method_num)
+    def change_data_type(self, 
+                    class_name: str=None, method_num:int = None, 
+                    input_name: str=None, source_class: str=None,
+                    dest_class: str=None, new_type: str=None, 
+                    is_field: bool=None,is_method: bool=None, 
+                    is_param: bool=None, is_rel: bool=None):
+        return self.Model._change_data_type(class_name=class_name, input_name=input_name, 
+                                            source_class=source_class, dest_class=dest_class, 
+                                            new_type=new_type, is_field=is_field, is_method=is_method, 
+                                            is_param=is_param, is_rel=is_rel, method_num=method_num)
     
     ## SAVE/LOAD RELATED ##
     

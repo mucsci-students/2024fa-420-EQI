@@ -1054,7 +1054,7 @@ class UMLModel:
         current_relationship._set_type(new_type)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.TYPE_MOD.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type})
+        self._notify_observers(event_type=InterfaceOptions.EDIT_REL_TYPE.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type})
         return True
          
     #################################################################    
@@ -2219,7 +2219,12 @@ class UMLModel:
         return True
     
     # Change data type #
-    def _change_data_type(self, class_name: str=None, input_name: str=None, new_type=None, is_field: bool=None, is_method: bool=None, is_param: bool=None, method_num:str = None):
+    def _change_data_type(self, 
+                          class_name: str=None, input_name: str=None,
+                          source_class: str=None, dest_class: str=None, 
+                          new_type=None, is_field: bool=None, 
+                          is_method: bool=None, is_param: bool=None, 
+                          method_num:str = None, is_rel: bool=None):
         if is_field:
             # Check valid input #
             if not self._is_valid_input(class_name=class_name, field_name=input_name, new_type=None):
@@ -2266,5 +2271,7 @@ class UMLModel:
                 return False
         elif is_param:
             return self._edit_parameter_type(class_name, method_num, input_name, new_type)
+        elif is_rel:
+            return self._change_type(source_class_name=source_class, destination_class_name=dest_class, new_type=new_type)
                            
 ###################################################################################################

@@ -242,12 +242,12 @@ class UMLController:
         
         # Change relationship type between classes
         elif (
-            command == InterfaceOptions.TYPE_MOD.value 
+            command == InterfaceOptions.EDIT_REL_TYPE.value 
             and first_param
             and second_param
             and third_param
         ):
-            self.__model._change_type(first_param, second_param, third_param)
+            self.__model._change_data_type(source_class=first_param, dest_class=second_param, new_type=third_param, is_rel=True)
         
         #######################################################
         

@@ -172,7 +172,7 @@ class UMLView(Observer):
             self.console.print(f"\n[bold green]Successfully removed relationship between class [bold white]'{source_class}'[/bold white] and class [bold white]'{destination_class}'[/bold green]!") 
         
         # Modify relationship type
-        elif event_type == InterfaceOptions.TYPE_MOD.value:
+        elif event_type == InterfaceOptions.EDIT_REL_TYPE.value:
             source_class = data["source"]
             destination_class = data["dest"]
             new_type = data["new_type"]

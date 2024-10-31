@@ -26,7 +26,7 @@ class InterfaceOptions(Enum):
     PARAM_TYPE = "param_type"
     ADD_REL = "add_rel"
     DELETE_REL = "delete_rel"
-    TYPE_MOD = "type_mod"
+    EDIT_REL_TYPE = "edit_rel_type"
     LIST_CLASS = "list_class"
     CLASS_DETAIL = "class_detail"
     CLASS_REL = "class_rel"
