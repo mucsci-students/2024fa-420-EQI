@@ -224,6 +224,21 @@ class AddRelationshipCommand(Command):
 
     def undo(self):
         return self.uml_interface.delete_relationship(self.source_class, self.dest_class)
+    
+class DeleteRelationshipCommand(Command):
+    def __init__(self, uml_interface, source_class, dest_class):
+        self.uml_interface = uml_interface
+        self.source_class = source_class
+        self.dest_class = dest_class
+        self.rel_type = None
+    
+    def execute(self):
+        self.rel_type = self.uml_interface.get_rel_type(self.source_class, self.dest_class)
+        return self.uml_interface.delete_relationship(self.source_class, self.dest_class)
+
+    def undo(self):
+        if self.rel_type:
+            return self.uml_interface.add_relationship_cli(self.source_class, self.dest_class, self.rel_type)
 
 class ChangeTypeCommand(Command):
     def __init__(self, uml_interface, class_name: str=None, method_num:int = None, input_name: str=None, new_type: str=None, 
@@ -353,6 +368,14 @@ def main():
     
     add_rel_command = AddRelationshipCommand(interface, "Animal", "Human", "Composition")
     command_manager.execute_command(add_rel_command)
+    
+    cli_view._display_uml_data(interface.get_main_data())
+    
+    delete_rel_command = DeleteRelationshipCommand(interface, "Human", "Animal")
+    command_manager.execute_command(delete_rel_command)
+    
+    delete_rel_command = DeleteRelationshipCommand(interface, "Animal", "Human")
+    command_manager.execute_command(delete_rel_command)
     
     cli_view._display_uml_data(interface.get_main_data())
     

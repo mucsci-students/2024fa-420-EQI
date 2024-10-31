@@ -986,7 +986,7 @@ class UMLModel:
     def _get_rel_type(self, source_class_name: str, destination_class_name: str):
         for relationship in self.__relationship_list:
             if (relationship._get_source_class() == source_class_name and
-                relationship._get_dest_class() == destination_class_name):
+                relationship._get_destination_class() == destination_class_name):
                 return relationship._get_type()
         return None
         
