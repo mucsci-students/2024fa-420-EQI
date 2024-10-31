@@ -12,6 +12,8 @@ from rich.console import Console
 from typing import List, Dict
 from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 from UML_MVC.UML_CONTROLLER.uml_controller import UMLController as Controller, InterfaceOptions
+from UML_MVC.UML_CONTROLLER.cli_completer import create_prompt_session
+from prompt_toolkit import HTML
 
 ###################################################################################################
 
@@ -37,6 +39,9 @@ class UMLInterface:
         self.Model = Model(self.View, self.Console)  # UML model instance
         self.Controller = Controller(self.Model, view, self.Console)  # UML controller instance
     
+        # Initialize prompt_toolkit session for autocompletion
+        self.session = create_prompt_session()
+        
     #################################################################
     ### INTERFACE FUNCTIONS THAT CONNECT WITH THE MANAGER ###
     
@@ -617,10 +622,10 @@ class UMLInterface:
             if current_active_file != "No active file!":
                 current_active_file = current_active_file + ".json"
             self.Console.print(f"\n[bold yellow](Current active file: [bold white]{current_active_file}[/bold white])[/bold yellow]")
-            self.Console. print("\n[bold yellow]==>[/bold yellow] ", end="")
+            # self.Console.print("\n[bold yellow]==>[/bold yellow] ", end="")
             
             # Collect input from the user
-            user_input: str = input()  # User provides the input
+            user_input: str = self.session.prompt(HTML("<b><style color='#fdca5b'>==></style></b> ")).strip()
             user_input_component = user_input.split()  # Split the input by space
 
             # Parse command and parameters

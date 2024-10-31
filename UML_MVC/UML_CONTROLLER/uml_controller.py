@@ -14,7 +14,6 @@ from typing import List
 from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager as Storage
 from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions
-from UML_MVC.UML_CONTROLLER.cli_completer import setup_tab_completion
 
 ###################################################################################################
    
@@ -40,9 +39,6 @@ class UMLController:
         self.__console = console  # Console for printing messages
         self.__storage_manager: Storage = self.__model._get_storage_manager()  # Storage manager to handle save/load functionality
     
-        # Set up tab-completion
-        setup_tab_completion()
-        
     #################################################################
     
     ## HANDLE USER INPUT FOR INTERFACE ##
