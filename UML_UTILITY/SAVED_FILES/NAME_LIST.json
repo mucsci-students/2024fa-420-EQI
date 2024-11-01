@@ -1,26 +1,5 @@
 [
     {
-        "TEST001": "off"
-    },
-    {
-        "rel_test": "off"
-    },
-    {
-        "gui_save": "off"
-    },
-    {
-        "data": "off"
-    },
-    {
-        "new_test": "off"
-    },
-    {
-        "hey": "off"
-    },
-    {
-        "NEW_TEST": "off"
-    },
-    {
-        "test03": "off"
+        "sample_file": "off"
     }
 ]
