@@ -34,6 +34,20 @@ class CustomInputDialog(QtWidgets.QDialog):
         self.input_widgets["new_field_name"] = new_field_name
         self.__add_buttons()
         
+    def add_method_popup(self):
+        """
+        Creates a dialog for renaming a field.
+        """
+        # Create input for the new parameter name
+        method_type = self.__add_input("Enter method type:", widget_type="line")
+        method_name = self.__add_input("Enter method name:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets["method_type"] = method_type
+        self.input_widgets["method_name"] = method_name
+        self.__add_buttons()
+        
+        
     def rename_method_popup(self, selected_class):
         """
         Creates a dialog for renaming a method.
@@ -230,3 +244,219 @@ class CustomInputDialog(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.layout.addWidget(buttons)
+        
+        
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # def change_data_type_popup(self, selected_class, class_name_list, relationship_list, type_list):
+    #     """
+    #     Creates a dialog for changing data types of fields, methods, parameters, or relationships.
+    #     """
+    #     # Step 1: Add Radio Buttons for Options
+    #     self.option_group = QtWidgets.QButtonGroup(self)
+    #     self.option_layout = QtWidgets.QHBoxLayout()
+        
+    #     self.field_radio = QtWidgets.QRadioButton("Field")
+    #     self.method_radio = QtWidgets.QRadioButton("Method")
+    #     self.param_radio = QtWidgets.QRadioButton("Parameter")
+    #     self.rel_radio = QtWidgets.QRadioButton("Relationship")
+        
+    #     self.option_group.addButton(self.field_radio)
+    #     self.option_group.addButton(self.method_radio)
+    #     self.option_group.addButton(self.param_radio)
+    #     self.option_group.addButton(self.rel_radio)
+        
+    #     self.option_layout.addWidget(self.field_radio)
+    #     self.option_layout.addWidget(self.method_radio)
+    #     self.option_layout.addWidget(self.param_radio)
+    #     self.option_layout.addWidget(self.rel_radio)
+        
+    #     self.layout.addLayout(self.option_layout)
+        
+    #     # Step 2: Create Stacked Widget to Hold Different Input Forms
+    #     self.stacked_widget = QtWidgets.QStackedWidget()
+    #     self.layout.addWidget(self.stacked_widget)
+        
+    #     # Step 3: Create Input Forms for Each Option
+    #     self.field_widget = self.__create_field_widget(selected_class)
+    #     self.method_widget = self.__create_method_widget(selected_class)
+    #     self.param_widget = self.__create_param_widget(selected_class)
+    #     self.rel_widget = self.__create_relationship_widget(selected_class, class_name_list, relationship_list, type_list)
+        
+    #     self.stacked_widget.addWidget(self.field_widget)
+    #     self.stacked_widget.addWidget(self.method_widget)
+    #     self.stacked_widget.addWidget(self.param_widget)
+    #     self.stacked_widget.addWidget(self.rel_widget)
+        
+    #     # Step 4: Connect Radio Buttons to Update the Stacked Widget
+    #     self.field_radio.toggled.connect(lambda: self.__update_stacked_widget())
+    #     self.method_radio.toggled.connect(lambda: self.__update_stacked_widget())
+    #     self.param_radio.toggled.connect(lambda: self.__update_stacked_widget())
+    #     self.rel_radio.toggled.connect(lambda: self.__update_stacked_widget())
+        
+    #     # Step 5: Add OK and Cancel Buttons
+    #     self.__add_buttons()
+        
+    #     # Step 6: Initialize by Selecting the First Option
+    #     self.field_radio.setChecked(True)
+    #     self.__update_stacked_widget()
+    
+    # def __update_stacked_widget(self):
+    #     """
+    #     Updates the stacked widget based on the selected radio button.
+    #     """
+    #     if self.field_radio.isChecked():
+    #         self.stacked_widget.setCurrentWidget(self.field_widget)
+    #     elif self.method_radio.isChecked():
+    #         self.stacked_widget.setCurrentWidget(self.method_widget)
+    #     elif self.param_radio.isChecked():
+    #         self.stacked_widget.setCurrentWidget(self.param_widget)
+    #     elif self.rel_radio.isChecked():
+    #         self.stacked_widget.setCurrentWidget(self.rel_widget)
+    
+    # def __create_field_widget(self, selected_class):
+    #     """
+    #     Creates the input form for changing the data type of a field.
+    #     """
+    #     widget = QtWidgets.QWidget()
+    #     layout = QtWidgets.QFormLayout()
+    #     widget.setLayout(layout)
+        
+    #     # Field selection
+    #     field_names = [field_key[1] for field_key in selected_class.field_key_list]
+    #     field_combo = QtWidgets.QComboBox()
+    #     field_combo.addItems(field_names)
+        
+    #     # New type input
+    #     new_type_line = QtWidgets.QLineEdit()
+        
+    #     layout.addRow("Select Field:", field_combo)
+    #     layout.addRow("New Type:", new_type_line)
+        
+    #     # Store widgets
+    #     self.input_widgets["field_name"] = field_combo
+    #     self.input_widgets["field_new_type"] = new_type_line
+    #     self.input_widgets["is_field"] = True  # Indicator for later use
+        
+    #     return widget
+    
+    # def __create_method_widget(self, selected_class):
+    #     """
+    #     Creates the input form for changing the return type of a method.
+    #     """
+    #     widget = QtWidgets.QWidget()
+    #     layout = QtWidgets.QFormLayout()
+    #     widget.setLayout(layout)
+        
+    #     # Method selection
+    #     method_names = list(selected_class.method_name_list.keys())
+    #     method_combo = QtWidgets.QComboBox()
+    #     method_combo.addItems(method_names)
+        
+    #     # New type input
+    #     new_type_line = QtWidgets.QLineEdit()
+        
+    #     layout.addRow("Select Method:", method_combo)
+    #     layout.addRow("New Return Type:", new_type_line)
+        
+    #     # Store widgets
+    #     self.input_widgets["method_name"] = method_combo
+    #     self.input_widgets["method_new_type"] = new_type_line
+    #     self.input_widgets["is_method"] = True  # Indicator for later use
+        
+    #     return widget
+    
+    # def __create_param_widget(self, selected_class):
+    #     """
+    #     Creates the input form for changing the data type of a parameter.
+    #     """
+    #     widget = QtWidgets.QWidget()
+    #     layout = QtWidgets.QFormLayout()
+    #     widget.setLayout(layout)
+        
+    #     # Method selection
+    #     method_names = list(selected_class.method_name_list.keys())
+    #     method_combo = QtWidgets.QComboBox()
+    #     method_combo.addItems(method_names)
+        
+    #     # Parameter selection (initially based on the first method)
+    #     first_method_params = selected_class.method_name_list.get(method_names[0], [])
+    #     param_combo = QtWidgets.QComboBox()
+    #     param_combo.addItems(first_method_params)
+        
+    #     # Update param_combo when method_combo changes
+    #     method_combo.currentIndexChanged.connect(lambda: self.__update_param_combo(selected_class, method_combo, param_combo))
+        
+    #     # New type input
+    #     new_type_line = QtWidgets.QLineEdit()
+        
+    #     layout.addRow("Select Method:", method_combo)
+    #     layout.addRow("Select Parameter:", param_combo)
+    #     layout.addRow("New Type:", new_type_line)
+        
+    #     # Store widgets
+    #     self.input_widgets["param_method_name"] = method_combo
+    #     self.input_widgets["param_name"] = param_combo
+    #     self.input_widgets["param_new_type"] = new_type_line
+    #     self.input_widgets["is_param"] = True  # Indicator for later use
+        
+    #     return widget
+    
+    # def __create_relationship_widget(self, selected_class, class_name_list, relationship_list, type_list):
+    #     """
+    #     Creates the input form for changing the type of a relationship.
+    #     """
+    #     widget = QtWidgets.QWidget()
+    #     layout = QtWidgets.QFormLayout()
+    #     widget.setLayout(layout)
+        
+    #     # Source class (current class)
+    #     source_class_line = QtWidgets.QLineEdit()
+    #     source_class_line.setText(selected_class.class_name_text.toPlainText())
+    #     source_class_line.setReadOnly(True)
+        
+    #     # Destination class selection
+    #     # Get relationships from the selected class
+    #     source_class_name = selected_class.class_name_text.toPlainText()
+    #     dest_classes = [rel.dest_class_name for rel in relationship_list if rel.source_class_name == source_class_name]
+    #     dest_combo = QtWidgets.QComboBox()
+    #     dest_combo.addItems(dest_classes)
+        
+    #     # New type selection
+    #     type_combo = QtWidgets.QComboBox()
+    #     type_combo.addItems(type_list)
+        
+    #     layout.addRow("Source Class:", source_class_line)
+    #     layout.addRow("Destination Class:", dest_combo)
+    #     layout.addRow("New Relationship Type:", type_combo)
+        
+    #     # Store widgets
+    #     self.input_widgets["rel_source_class"] = source_class_line
+    #     self.input_widgets["rel_dest_class"] = dest_combo
+    #     self.input_widgets["rel_new_type"] = type_combo
+    #     self.input_widgets["is_rel"] = True  # Indicator for later use
+        
+    #     return widget
+    
+    # def __update_param_combo(self, selected_class, method_combo, param_combo):
+    #     """
+    #     Updates the parameter combo box based on the selected method.
+    #     """
+    #     selected_method = method_combo.currentText()
+    #     params = selected_class.method_name_list.get(selected_method, [])
+    #     param_combo.clear()
+    #     param_combo.addItems(params)

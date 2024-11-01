@@ -48,7 +48,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         self.field_key_list: List = []
         
         self.method_list: Dict = method_list if method_list is not None else {}
-        self.method_name_list: Dict = {}
+        self.method_key_list: Dict = {}
         
         self.parameter_name_list: List = []
         
@@ -245,7 +245,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             self.separator_line1.setPen(QtGui.QPen(QtGui.QColor(30,144,255)))  
             
         if hasattr(self, 'separator_line2') and self.separator_line2.scene() == self.scene():
-            if len(self.method_name_list) > 0:
+            if len(self.method_key_list) > 0:
                 class_name_height = self.class_name_text.boundingRect().height()
                 field_section_height = self.get_field_text_height()
                 y_pos = self.rect().topLeft().y() + class_name_height + field_section_height + self.default_margin
@@ -311,7 +311,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         y_offset = self.class_name_text.boundingRect().height() + self.get_field_text_height() + self.default_margin
 
         # Iterate through each method and align them, along with their parameters
-        for method_name in self.method_name_list:
+        for method_name in self.method_key_list:
             # Get the method text item
             method_text = self.method_list[method_name]
             # Calculate the x-position for the method text (aligned to the left)
@@ -321,17 +321,17 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             
             temp_param_list = []
             # Align parameters under the current method
-            if method_name in self.method_name_list:
-                for param_name in self.method_name_list[method_name]:
-                    temp_param_list.append(param_name)            
-                # Combine method name with its parameters, separated by commas
-                param_text_str = ", ".join(temp_param_list)
-                method_with_params = f"{method_name}({param_text_str})"
-
-                # Update the method text to show the method name with parameters
-                method_text.setPlainText(method_with_params)
-                # Update y_offset for the next method or parameter (incremented by the height of this method)
-                y_offset += method_text.boundingRect().height()
+            for method_key, method_param in self.method_key_list.items():
+                for param_name in method_param:
+                    temp_param_list.append(param_name)   
+                    # Combine method name with its parameters, separated by commas
+                    param_text_str = ", ".join(temp_param_list)
+                    method_with_params = f"{method_key[0]} {method_key[1]}({param_text_str})"         
+                    # Update the method text to show the method name with parameters
+                    method_text.setPlainText(method_with_params)
+            # Update y_offset for the next method or parameter (incremented by the height of this method)
+            y_offset += method_text.boundingRect().height()
+                
 
     #################################
     
@@ -695,7 +695,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         method_tex_height = 0
         # Sum the heights of all method text items
-        for method_name in self.method_name_list:
+        for method_name in self.method_key_list:
             method_text = self.method_list[method_name]  # Get the text item for each method
             method_tex_height += method_text.boundingRect().height()
         return method_tex_height
@@ -712,7 +712,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         param_tex_height = 0
         # Sum the heights of all parameter text items for the specified method
-        for param_name in self.method_name_list[method_name]:
+        for param_name in self.method_key_list[method_name]:
             param_text = self.parameter_list[param_name]  # Get the text item for each parameter
             param_tex_height += param_text.boundingRect().height()
         return param_tex_height
@@ -734,17 +734,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         max_field_width = max([self.field_list[field_key].boundingRect().width() for field_key in self.field_key_list], default=0)
         
         # Get the maximum width of all method text items
-        max_method_width = max([self.method_list[method_name].boundingRect().width() for method_name in self.method_name_list], default=0)
-        
-        # Get the maximum width of all parameter text items
-        # max_param_width = 0
-        # for method_name in self.method_name_list:
-        #     # Check for parameters under the current method and calculate their widths
-        #     if method_name in self.method_name_list:
-        #         param_widths = [self.parameter_list[param_name].boundingRect().width() for param_name in self.method_name_list[method_name]]
-        #         max_param_width = max(max_param_width, max(param_widths, default=0))
-        
-        # Get maximum width of relationship text items
+        max_method_width = max([self.method_list[method_name].boundingRect().width() for method_name in self.method_key_list], default=0)
         
         # Determine the largest width among all components
         content_max_width = max(

@@ -236,6 +236,9 @@ class UMLInterface:
     
     def get_rel_type(self, source_class_name: str, destination_class_name: str):
         return self.Model._get_rel_type(source_class_name, destination_class_name)
+    
+    def get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None):
+        return self.Model._get_data_from_chosen_class(class_name, is_field_list, is_method_and_param_list)
     ## CLASS RELATED ##
     
     # Add class interface #
