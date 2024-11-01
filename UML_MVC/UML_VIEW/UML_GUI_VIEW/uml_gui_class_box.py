@@ -5,9 +5,9 @@ from functools import partial
 from typing import Dict, List
 
 ###################################################################################################
-# ADD ROOT PATH #
-root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.append(root_path)
+# # ADD ROOT PATH #
+# root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+# sys.path.append(root_path)
 
 from UML_ENUM_CLASS.uml_enum import BoxDefaultStat as Default
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_editable_text_item import UMLEditableTextItem as Text
@@ -46,10 +46,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         self.field_list: Dict = field_list if field_list is not None else {}
         self.field_key_list: List = []
         
-        self.method_list: Dict = method_list if method_list is not None else {}
+        self.method_list: List = []
         self.method_key_list: List = []
         
-        self.parameter_name_list: List = []
+          # Parameter track
+        self.param_num = 0
         
         self.handles_list: List = []
         self.connection_points_list: Dict = {}
@@ -310,28 +311,29 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         y_offset = self.class_name_text.boundingRect().height() + self.get_field_text_height() + self.default_margin
 
         # Iterate through each method and align them, along with their parameters
-        for each_pair in self.method_key_list:
-            for each_key, param_list in each_pair.items():
-                # Get the method text item
-                method_text = self.method_list[each_key]
-                # Calculate the x-position for the method text (aligned to the left)
-                method_x_pos = self.rect().topLeft().x() + self.default_margin
-                # Set the position of the method text item
-                method_text.setPos(method_x_pos, self.rect().topLeft().y() + y_offset)
+        for method_entry in self.method_list:
+            method_key = method_entry["method_key"]
+            method_text = method_entry["method_text"]
+            param_list = method_entry["parameters"]
+            
+            # Calculate the x-position for the method text (aligned to the left)
+            method_x_pos = self.rect().topLeft().x() + self.default_margin
+            # Set the position of the method text item
+            method_text.setPos(method_x_pos, self.rect().topLeft().y() + y_offset)
                 
-                temp_param_list = []
-                # Align parameters under the current method
-                for param_name in param_list:
-                    temp_param_list.append(param_name)   
-                    # Combine method name with its parameters, separated by commas
-                    param_text_str = ", ".join(temp_param_list)
-                    method_with_params = f"{each_key[0]} {each_key[1]}({param_text_str})"         
-                    # Update the method text to show the method name with parameters
-                    method_text.setPlainText(method_with_params)
-            # Update y_offset for the next method or parameter (incremented by the height of this method)
+            temp_param_list = []
+            # Align parameters under the current method
+            for param_type, param_name in param_list:
+                temp_param_list.append(f"{param_type} {param_name}")   
+                # Combine method name with its parameters, separated by commas
+                param_text_str = ", ".join(temp_param_list)
+                method_with_params = f"{method_key[0]} {method_key[1]}({param_text_str})"         
+                # Update the method text to show the method name with parameters
+                method_text.setPlainText(method_with_params)
+
+           # Update y_offset for the next method or parameter (incremented by the height of this method)
             y_offset += method_text.boundingRect().height()
                 
-
     #################################
     
     def create_separator(self, is_first=True, is_second=True):
@@ -694,11 +696,10 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         method_tex_height = 0
         # Sum the heights of all method text items
-        for each_pair in self.method_key_list:
-            for each_key in each_pair.keys():
-                # Get the method text item
-                method_text = self.method_list[each_key]
-                method_tex_height += method_text.boundingRect().height()
+        for each_pair in self.method_list:
+            # Get the method text item
+            method_text = each_pair["method_text"]
+            method_tex_height += method_text.boundingRect().height()
         return method_tex_height
 
     def get_param_text_height_of_single_method(self, method_name):
@@ -735,10 +736,16 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         max_field_width = max([self.field_list[field_key].boundingRect().width() for field_key in self.field_key_list], default=0)
         
         # Get the maximum width of all method text items
+        # Get the maximum width of all method text items, including parameters
         max_method_width = max(
-            [self.method_list[method_key].boundingRect().width() for method_key in self.method_key_list if isinstance(method_key, tuple)],
+            [
+                self.method_list[method_key].boundingRect().width() 
+                for method_dict in self.method_key_list
+                for method_key, param_list in method_dict.items() 
+            ],
             default=0
         )
+
         
         # Determine the largest width among all components
         content_max_width = max(

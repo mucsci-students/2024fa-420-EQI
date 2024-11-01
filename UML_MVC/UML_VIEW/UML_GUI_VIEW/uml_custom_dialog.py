@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets
+import re
 
 class CustomInputDialog(QtWidgets.QDialog):
     def __init__(self, title="Input Dialog"):
@@ -47,69 +48,150 @@ class CustomInputDialog(QtWidgets.QDialog):
         self.input_widgets["method_name"] = method_name
         self.__add_buttons()
         
+    def delete_method_popup(self, selected_class):
+        """
+        Creates a dialog for deleting a method.
+        """
+        method_display_list = []
+        method_keys_list = []
+        
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Convert parameter tuples to strings
+            param_str_list = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+            params_str = ', '.join(param_str_list)
+            # Build the display string
+            display_str = f"{i + 1}: {method_key[0]} {method_key[1]}({params_str})"
+            method_display_list.append(display_str)
+            method_keys_list.append(method_key)
+        # Show the dialog for selecting the method to remove
+        method_name_widget = self.__add_input("Select Method To Rename:", widget_type="combo", options=method_display_list)
+        match = re.search(r': (\w+) (\w+)\(', method_name_widget.currentText())
+        type_name_tuple = (match.group(1), match.group(2)) if match else (None, None)
+        
+        # Store the widgets for later use
+        self.input_widgets["method_type"] = type_name_tuple[0]
+        self.input_widgets["method_name"] = type_name_tuple[1]
+        self.input_widgets["raw_method_name"] = method_name_widget
+        self.__add_buttons()
+        
     def rename_method_popup(self, selected_class):
         """
         Creates a dialog for renaming a method.
         """
-        method_names = [
-            f"{i + 1}: {method_key[0]} {method_key[1]} ({', '.join(dictionary[method_key])})"
-            for i, dictionary in enumerate(selected_class.method_key_list)
-            for method_key in dictionary.keys() if isinstance(method_key, tuple) and len(method_key) > 1
-        ]
-        old_method_name = self.__add_input("Select Method To Rename:", widget_type="combo", options=method_names)
+        method_display_list = []
+        method_keys_list = []
+        
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Convert parameter tuples to strings
+            param_str_list = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+            params_str = ', '.join(param_str_list)
+            # Build the display string
+            display_str = f"{i + 1}: {method_key[0]} {method_key[1]}({params_str})"
+            method_display_list.append(display_str)
+            method_keys_list.append(method_key)
+            
+        old_method_name = self.__add_input("Select Method To Rename:", widget_type="combo", options=method_display_list)
+        match = re.search(r': (\w+) (\w+)\(', old_method_name.currentText())
+        type_name_tuple = (match.group(1), match.group(2)) if match else (None, None)
+        
         new_method_name = self.__add_input("Enter New Method Name:", widget_type="line")
-        selected_index = int(old_method_name.currentText().split(":")[0].strip()) - 1
-        selected_method_key = list(selected_class.method_key_list[selected_index].keys())[0]
-        method_type = selected_method_key[0]
         
         # Store the widgets for later use
-        self.input_widgets["old_method_name"] = old_method_name
+        self.input_widgets["raw_method_name"] = old_method_name
+        self.input_widgets["old_method_name"] = type_name_tuple[1]
         self.input_widgets["new_method_name"] = new_method_name
-        self.input_widgets["selected_index"] = selected_index
-        self.input_widgets["selected_method_key"] = selected_method_key
-        self.input_widgets["method_type"] = method_type
+        self.input_widgets["method_keys_list"] = method_keys_list
+        self.input_widgets["method_type"] = type_name_tuple[0]
         self.__add_buttons()
         
     def add_param_popup(self, selected_class):
         """
         Creates a dialog for adding a parameter.
         """
-        method_names_list = list(selected_class.method_name_list.keys())
-        
+        method_dictionaries = selected_class.method_key_list  # List of method dictionaries
+        method_names = []
+        method_keys = []
+
+        # Build method names and collect method keys
+        for i, method_dict in enumerate(method_dictionaries):
+            # Each method_dict is a dictionary with one method
+            method_key = next(iter(method_dict.keys()))  # Get the method key (method_type, method_name)
+            param_list = method_dict[method_key]  # Get the list of parameters for this method
+
+            # Build the method name string with parameters
+            params_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+            method_name_str = f"{i + 1}: {method_key[0]} {method_key[1]} ({params_str})"
+            method_names.append(method_name_str)
+            method_keys.append(method_key)
+
         # Create combo box for methods
-        method_name = self.__add_input("Select Method To Add Parameter:", widget_type="combo", options=method_names_list)
+        method_name_widget = self.__add_input("Select Method To Add Parameter:", widget_type="combo", options=method_names)
         
-        # Create input for the new parameter name
-        new_param_name = self.__add_input("Enter New Parameter Name:", widget_type="line")
+        # Create inputs for parameter type and name
+        param_type_widget = self.__add_input("Enter Parameter Type:", widget_type="line")
+        new_param_name_widget = self.__add_input("Enter New Parameter Name:", widget_type="line")
         
-        # Store the widgets for later use
-        self.input_widgets["new_param_name"] = new_param_name
-        self.input_widgets["current_method"] = method_name
-        
-        # Add buttons (OK/Cancel)
+        # Store widgets and data for later use
+        self.input_widgets["param_type"] = param_type_widget
+        self.input_widgets["new_param_name"] = new_param_name_widget
+        self.input_widgets["method_name_widget"] = method_name_widget
+        self.input_widgets["method_keys"] = method_keys  # List of method keys
+        self.input_widgets["method_dictionaries"] = method_dictionaries  # List of method dictionaries
+
+        # Add OK and Cancel buttons
         self.__add_buttons()
         
     def delete_param_popup(self, selected_class):
         """
-        Creates a dialog for adding a parameter.
+        Creates a dialog for deleting a parameter from a selected method.
         """
-        method_names_list = list(selected_class.method_name_list.keys())
+        method_dictionaries = selected_class.method_key_list  # List of method dictionaries
+        method_names = []
+        method_keys = []
+
+        # Build method names and collect method keys
+        for i, method_dict in enumerate(method_dictionaries):
+            # Each method_dict is a dictionary with one method
+            method_key = next(iter(method_dict.keys()))  # Get the method key (method_type, method_name, parameter_types)
+            param_list = method_dict[method_key]  # Get the list of parameters for this method
+
+            # Build the method name string with parameters
+            params_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+            method_name_str = f"{i + 1}: {method_key[0]} {method_key[1]}({params_str})"
+            method_names.append(method_name_str)
+            method_keys.append(method_key)
         
         # Create combo box for methods
-        method_name = self.__add_input("Select Method To Delete Parameter:", widget_type="combo", options=method_names_list)
+        method_name_widget = self.__add_input("Select Method To Delete Parameter:", widget_type="combo", options=method_names)
         
-        # Create combo box for parameters (initially based on the first method in the list)
-        param_name = self.__add_input("Select Parameter To Delete:", widget_type="combo", options=selected_class.method_name_list[method_name.currentText()])
+        # Store method dictionaries and keys for later use
+        self.input_widgets["method_keys"] = method_keys
+        self.input_widgets["method_dictionaries"] = method_dictionaries
+        self.input_widgets["method_name_widget"] = method_name_widget
+
+        # Get the parameters for the initially selected method
+        selected_index = method_name_widget.currentIndex()
+        selected_method_dict = method_dictionaries[selected_index]
+        selected_method_key = method_keys[selected_index]
+        selected_param_list = selected_method_dict[selected_method_key]
+        param_options = [f"{param_name}" for param_type, param_name in selected_param_list]
+
+        # Create combo box for parameters
+        param_name_widget = self.__add_input("Select Parameter To Delete:", widget_type="combo", options=param_options)
         
-        # Store the widgets for later use
-        self.input_widgets["param_name"] = param_name
-        self.input_widgets["current_method"] = method_name
+        # Store the parameter widget
+        self.input_widgets["param_name"] = param_name_widget
+        self.input_widgets["selected_param_list"] = selected_param_list
         
         # Add buttons (OK/Cancel)
         self.__add_buttons()
         
         # Connect the method_name combo box change to update the parameter list
-        method_name.currentIndexChanged.connect(lambda: self.__update_param_list(selected_class, method_name, param_name))
+        method_name_widget.currentIndexChanged.connect(lambda: self.__update_param_list())
         
     def rename_param_popup(self, selected_class):
         """
@@ -231,19 +313,25 @@ class CustomInputDialog(QtWidgets.QDialog):
             self.layout.addWidget(line_edit)
             return line_edit
         
-    def __update_param_list(self, selected_class, method_name_combo, param_combo):
+    def __update_param_list(self):
         """
-        Updates the parameter combo box options based on the selected method.
+        Update the parameter combo box based on the selected method.
         """
-        # Get the currently selected method
-        selected_method = method_name_combo.currentText()
-        
-        # Get the parameters for the selected method
-        param_list = selected_class.method_name_list.get(selected_method, [])
-        
-        # Clear and update the parameter combo box
-        param_combo.clear()
-        param_combo.addItems(param_list)
+        method_name_widget = self.input_widgets["method_name_widget"]
+        method_keys = self.input_widgets["method_keys"]
+        method_dictionaries = self.input_widgets["method_dictionaries"]
+        param_name_widget = self.input_widgets["param_name"]
+
+        # Get the newly selected method
+        selected_index = method_name_widget.currentIndex()
+        selected_method_dict = method_dictionaries[selected_index]
+        selected_method_key = method_keys[selected_index]
+        param_list = selected_method_dict[selected_method_key]
+        param_options = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+
+        # Update the parameter combo box
+        param_name_widget.clear()
+        param_name_widget.addItems(param_options)
     
     def __add_buttons(self):
         """

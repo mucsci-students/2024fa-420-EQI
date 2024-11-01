@@ -187,8 +187,8 @@ class UMLController:
             and third_param
             and fourth_param
         ):
-            add_method_command = Command.AddParameterCommand(self.__model, class_name=first_param, method_num=second_param, param_type=third_param, param_name=fourth_param)
-            self.__input_handler.execute_command(add_method_command)
+            add_param_command = Command.AddParameterCommand(self.__model, class_name=first_param, method_num=second_param, param_type=third_param, param_name=fourth_param)
+            self.__input_handler.execute_command(add_param_command)
         # Delete parameter from method
         elif (
             command == InterfaceOptions.DELETE_PARAM.value
