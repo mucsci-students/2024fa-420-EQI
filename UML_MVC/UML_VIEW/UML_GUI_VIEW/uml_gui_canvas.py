@@ -378,7 +378,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         method_text = self.selected_class.create_text_item(method_type + " " + method_name + "()", is_method=True, selectable=False, color=self.selected_class.text_color)
                         method_key = (method_type, method_name)
                         self.selected_class.method_list[method_key] = method_text  
-                        self.selected_class.method_key_list[method_key] = []  
+                        method_and_param_list_element = {method_key: []} 
+                        self.selected_class.method_key_list.append(method_and_param_list_element) 
                         if len(self.selected_class.method_key_list) == 1:
                             self.selected_class.create_separator(is_first=False)
                         self.selected_class.update_box()  # Update the UML box
@@ -401,17 +402,32 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         """
         if self.selected_class:
             if self.selected_class.method_list:
-                # Ask the user to select a method to remove
-                method_name_list = [method_key[1] for method_key in self.selected_class.method_key_list]
-                method_name, ok = QtWidgets.QInputDialog.getItem(None, "Remove Method", "Select method to remove:", method_name_list, 0, False)
+                # Generate a list of display options with indices for overloaded methods
+                method_display_list = [
+                    f"{i + 1}: {method_key[0]} {method_key[1]} ({', '.join(dictionary[method_key])})"
+                    for i, dictionary in enumerate(self.selected_class.method_key_list)
+                    for method_key in dictionary.keys() if isinstance(method_key, tuple) and len(method_key) > 1
+                ]
+
+
+                method_name, ok = QtWidgets.QInputDialog.getItem(None, "Remove Method", "Select method to remove:", method_display_list, 0, False)
 
                 if ok and method_name:
+                    # Extract the selected index from the display list
+                    selected_index = int(method_name.split(":")[0].strip()) - 1
+                    
+                    # Get the corresponding method_key dictionary entry using selected_index
+                    selected_method_key = list(self.selected_class.method_key_list[selected_index].keys())[0]
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
-                    is_method_deleted = self.interface.delete_method(selected_class_name, method_name)
+                    # Execute the delete command with the correct method index
+                    delete_method_command = Command.DeleteMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1))
+                    is_method_deleted = self.input_handler.execute_command(delete_method_command)
+
                     if is_method_deleted:
-                        self.selected_class.method_key_list.pop(method_name)  # Remove from method list
-                        self.scene().removeItem(self.selected_class.method_list.pop(method_name))  # Remove the method text
+                        # Remove method from lists and UI
+                        self.selected_class.method_key_list.pop(selected_index)
+                        self.scene().removeItem(self.selected_class.method_list.pop(selected_method_key))
                         self.selected_class.update_box()  # Refresh the UML box
 
     def rename_method(self):
@@ -436,11 +452,13 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if rename_method_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
-                    old_method_name = rename_method_dialog.input_widgets['old_method_name'].currentText()  # Use `currentText()` for QComboBox
-                    new_method_name = rename_method_dialog.input_widgets['new_method_name'].text()  # Use `text()` for QLineEdit
-
+                    new_method_name = rename_method_dialog.input_widgets["new_method_name"].text()  # Use `text()` for QLineEdit
+                    selected_index = rename_method_dialog.input_widgets["selected_index"]
+                    selected_method_key = rename_method_dialog.input_widgets["selected_method_key"]
+                    method_type = rename_method_dialog.input_widgets["method_type"]
+                    
                     # Check if the new field name already exists
-                    method_names = list(self.selected_class.method_key_list.keys())
+                    method_names = [method_key[1] for method_key in self.selected_class.method_list.keys()]
                     if new_method_name in method_names:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{new_method_name}' has already existed!")
                         return
@@ -449,15 +467,22 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     if not is_method_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name {new_method_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
+                    
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_method_renamed = self.interface.rename_method(selected_class_name, old_method_name, new_method_name)
+                    
+                    rename_method_command = Command.RenameMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1), new_name=new_method_name)
+                    is_method_renamed = self.input_handler.execute_command(rename_method_command)
+                    
                     if is_method_renamed:
-                        # Update the method name and refresh the UI
-                        if old_method_name in self.selected_class.method_list:
-                            self.selected_class.method_list[new_method_name] = self.selected_class.method_list.pop(old_method_name)  # Update the method name in the list
-                            self.selected_class.method_list[new_method_name].setPlainText(new_method_name + "()")  # Set the new name in the UML box
-                            self.selected_class.method_key_list[new_method_name] = self.selected_class.method_key_list.pop(old_method_name)  # Track the change
-                            self.selected_class.update_box()  # Refresh the UML box display
+                        for each_pair in self.selected_class.method_key_list:
+                            for method_key in each_pair.keys():
+                                new_key = (method_type, new_method_name)
+                                self.selected_class.method_list[new_key] = self.selected_class.method_list.pop(selected_method_key)
+                                self.selected_class.method_list[new_key].setPlainText(method_key[0] + " " + new_method_name + "()")
+                                current_param_list = self.selected_class.method_key_list[selected_index][selected_method_key]
+                                self.selected_class.method_key_list[selected_index] = {new_key : current_param_list}
+                                break  # Exit the loop after finding the matching field
+                        self.selected_class.update_box()  # Refresh the UML box display
             
     def add_param(self,loaded_class_name=None, loaded_method_name=None, loaded_param_name=None, is_loading=False):
         """

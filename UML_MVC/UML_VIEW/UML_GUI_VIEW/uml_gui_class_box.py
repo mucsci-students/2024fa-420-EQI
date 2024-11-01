@@ -21,8 +21,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
     and provides handles for resizing the box.
     """
     def __init__(self, interface, class_name="ClassName", 
-                 field_list=None, method_list=None, 
-                 parameter_list=None, relationship_list=None, parent=None):
+                 field_list=None, method_list=None, parent=None):
         """
         Initialize the UMLTestBox with default settings, including the class name, fields, methods, and handles.
         
@@ -48,7 +47,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         self.field_key_list: List = []
         
         self.method_list: Dict = method_list if method_list is not None else {}
-        self.method_key_list: Dict = {}
+        self.method_key_list: List = []
         
         self.parameter_name_list: List = []
         
@@ -311,22 +310,22 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         y_offset = self.class_name_text.boundingRect().height() + self.get_field_text_height() + self.default_margin
 
         # Iterate through each method and align them, along with their parameters
-        for method_name in self.method_key_list:
-            # Get the method text item
-            method_text = self.method_list[method_name]
-            # Calculate the x-position for the method text (aligned to the left)
-            method_x_pos = self.rect().topLeft().x() + self.default_margin
-            # Set the position of the method text item
-            method_text.setPos(method_x_pos, self.rect().topLeft().y() + y_offset)
-            
-            temp_param_list = []
-            # Align parameters under the current method
-            for method_key, method_param in self.method_key_list.items():
-                for param_name in method_param:
+        for each_pair in self.method_key_list:
+            for each_key, param_list in each_pair.items():
+                # Get the method text item
+                method_text = self.method_list[each_key]
+                # Calculate the x-position for the method text (aligned to the left)
+                method_x_pos = self.rect().topLeft().x() + self.default_margin
+                # Set the position of the method text item
+                method_text.setPos(method_x_pos, self.rect().topLeft().y() + y_offset)
+                
+                temp_param_list = []
+                # Align parameters under the current method
+                for param_name in param_list:
                     temp_param_list.append(param_name)   
                     # Combine method name with its parameters, separated by commas
                     param_text_str = ", ".join(temp_param_list)
-                    method_with_params = f"{method_key[0]} {method_key[1]}({param_text_str})"         
+                    method_with_params = f"{each_key[0]} {each_key[1]}({param_text_str})"         
                     # Update the method text to show the method name with parameters
                     method_text.setPlainText(method_with_params)
             # Update y_offset for the next method or parameter (incremented by the height of this method)
@@ -695,9 +694,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         method_tex_height = 0
         # Sum the heights of all method text items
-        for method_name in self.method_key_list:
-            method_text = self.method_list[method_name]  # Get the text item for each method
-            method_tex_height += method_text.boundingRect().height()
+        for each_pair in self.method_key_list:
+            for each_key in each_pair.keys():
+                # Get the method text item
+                method_text = self.method_list[each_key]
+                method_tex_height += method_text.boundingRect().height()
         return method_tex_height
 
     def get_param_text_height_of_single_method(self, method_name):
@@ -734,7 +735,10 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         max_field_width = max([self.field_list[field_key].boundingRect().width() for field_key in self.field_key_list], default=0)
         
         # Get the maximum width of all method text items
-        max_method_width = max([self.method_list[method_name].boundingRect().width() for method_name in self.method_key_list], default=0)
+        max_method_width = max(
+            [self.method_list[method_key].boundingRect().width() for method_key in self.method_key_list if isinstance(method_key, tuple)],
+            default=0
+        )
         
         # Determine the largest width among all components
         content_max_width = max(

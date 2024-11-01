@@ -47,18 +47,27 @@ class CustomInputDialog(QtWidgets.QDialog):
         self.input_widgets["method_name"] = method_name
         self.__add_buttons()
         
-        
     def rename_method_popup(self, selected_class):
         """
         Creates a dialog for renaming a method.
         """
-        method_names = list(selected_class.method_name_list.keys())
+        method_names = [
+            f"{i + 1}: {method_key[0]} {method_key[1]} ({', '.join(dictionary[method_key])})"
+            for i, dictionary in enumerate(selected_class.method_key_list)
+            for method_key in dictionary.keys() if isinstance(method_key, tuple) and len(method_key) > 1
+        ]
         old_method_name = self.__add_input("Select Method To Rename:", widget_type="combo", options=method_names)
         new_method_name = self.__add_input("Enter New Method Name:", widget_type="line")
+        selected_index = int(old_method_name.currentText().split(":")[0].strip()) - 1
+        selected_method_key = list(selected_class.method_key_list[selected_index].keys())[0]
+        method_type = selected_method_key[0]
         
         # Store the widgets for later use
         self.input_widgets["old_method_name"] = old_method_name
         self.input_widgets["new_method_name"] = new_method_name
+        self.input_widgets["selected_index"] = selected_index
+        self.input_widgets["selected_method_key"] = selected_method_key
+        self.input_widgets["method_type"] = method_type
         self.__add_buttons()
         
     def add_param_popup(self, selected_class):
