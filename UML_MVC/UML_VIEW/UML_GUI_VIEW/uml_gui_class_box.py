@@ -243,9 +243,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
                 self.rect().topRight().x(), y_pos
             )
             self.separator_line1.setPen(QtGui.QPen(QtGui.QColor(30,144,255)))  
-            
-        if hasattr(self, 'separator_line2') and self.separator_line2.scene() == self.scene():
-            if len(self.method_key_list) > 0:
+        
+        print(f"WTF?? {hasattr(self, 'separator_line2')}")
+        
+        if hasattr(self, 'separator_line2'):
+            if len(self.method_list) > 0:
                 class_name_height = self.class_name_text.boundingRect().height()
                 field_section_height = self.get_field_text_height()
                 y_pos = self.rect().topLeft().y() + class_name_height + field_section_height + self.default_margin
