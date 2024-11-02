@@ -123,6 +123,13 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         #################################################################
         self.help_action = self.findChild(QtWidgets.QAction, "Help")
         self.help_action.triggered.connect(self.show_instructions)
+        
+        #################################################################
+        self.undo_action = self.findChild(QtWidgets.QAction, "Undo")
+        self.redo_action = self.findChild(QtWidgets.QAction, "Redo")
+        
+        self.undo_action.triggered.connect(self.undo_gui)
+        self.redo_action.triggered.connect(self.redo_gui)
 
     #################################################################
     ### EVENT FUNCTIONS ###
@@ -252,6 +259,18 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         Save the UML diagram to the current file.
         """
         self.grid_view.save_gui()
+        
+    def undo_gui(self):
+        """
+        Undo actions
+        """
+        self.grid_view.undo()
+    
+    def redo_gui(self):
+        """
+        Redo actions
+        """
+        self.grid_view.redo()
 
     def new_file_gui(self):
         """

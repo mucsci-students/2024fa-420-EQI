@@ -104,12 +104,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if not is_class_name_valid:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {input_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
-                add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name)
+                class_box = UMLClassBox(self.interface, class_name=input_class_name)
+                add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name, view=self, class_box=class_box)
                 is_class_added = self.input_handler.execute_command(add_class_command)
                 if is_class_added:
-                    class_box = UMLClassBox(self.interface, class_name=input_class_name)
                     self.class_name_list[input_class_name] = class_box
-                    self.scene().addItem(class_box)
                 else:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
             
@@ -120,7 +119,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if self.selected_class:
             # Remove the class box
             input_class_name = self.selected_class.class_name_text.toPlainText()
-            delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name)
+            delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name, view=self, class_box=self.selected_class)
             is_class_deleted = self.input_handler.execute_command(delete_class_command)
             if is_class_deleted:
                 # Create a copy of the arrow_line_list to avoid modifying the list while iterating
@@ -140,7 +139,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     self.selected_class.arrow_line_list.remove(arrow_line)
                 # Remove the class from the class_name_list and scene
                 self.class_name_list.pop(input_class_name, None)
-                self.scene().removeItem(self.selected_class)
                 self.selected_class = None
             else:
                 QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' does not exist!")
@@ -164,11 +162,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if not is_class_name_valid:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {new_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
-                rename_class_command = Command.RenameClassCommand(self.model, class_name=old_class_name, new_name=new_class_name)
+                rename_class_command = Command.RenameClassCommand(self.model, class_name=old_class_name, new_name=new_class_name, view=self, class_box=self.selected_class)
                 is_class_renamed = self.input_handler.execute_command(rename_class_command)
                 if is_class_renamed:
                     self.class_name_list[new_class_name] = self.class_name_list.pop(old_class_name)
-                    self.selected_class.class_name_text.setPlainText(new_class_name)
                     self.selected_class.update_box()
                 else:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"New class name'{new_class_name}' has already existed!")
@@ -199,7 +196,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     is_field_added = self.interface.add_field(loaded_class_name, loaded_field_type, loaded_field_name)
                     if is_field_added:
                         # Create a text item for the field and add it to the list of the found class box
-                        field_text = selected_class_box.create_text_item(loaded_field_type + " " + loaded_field_name, is_field=True, selectable=False, color=selected_class_box.text_color)
+                        field_text = selected_class_box.create_text_item(loaded_field_type + " " + loaded_field_name, is_field=True, selectable=False, 
+                                                                         color=selected_class_box.text_color)
                         selected_class_box.field_list[loaded_field_name] = field_text  # Add the field to the internal list
                         selected_class_box.field_key_list.append(loaded_field_name)  # Track the field name in the name list
                         selected_class_box.update_box()  # Update the box to reflect the changes
@@ -233,17 +231,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name {field_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
                     
-                    add_field_command = Command.AddFieldCommand(self.model, class_name=selected_class_name, type=field_type, field_name=field_name)
+                    add_field_command = Command.AddFieldCommand(self.model, class_name=selected_class_name, type=field_type, 
+                                                                field_name=field_name, view=self, class_box=self.selected_class)
                     is_field_added = self.input_handler.execute_command(add_field_command)
                     
-                    if is_field_added:
-                        # Create a text item for the field and add it to the list
-                        field_text = self.selected_class.create_text_item(field_type + " " + field_name, is_field=True, selectable=False, color=self.selected_class.text_color)
-                        field_key = (field_type, field_name)
-                        self.selected_class.field_list[field_key] = field_text  # Add the field to the internal list
-                        self.selected_class.field_key_list.append(field_key)  # Track the field name in the name list
-                        self.selected_class.update_box()  # Update the box to reflect the changes
-                    else:
+                    if not is_field_added:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name '{field_name}' has already existed!")
                     
 
@@ -268,15 +260,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if ok and field_name:
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
-                    delete_field_command = Command.DeleteFieldCommand(self.model, class_name=selected_class_name, field_name=field_name)
-                    is_field_deleted = self.input_handler.execute_command(delete_field_command)
-                    
-                    if is_field_deleted:
-                        for field_key in self.selected_class.field_key_list:
-                            if field_key[1] == field_name:
-                                self.selected_class.field_key_list.remove(field_key)  # Remove from the name list
-                                self.selected_class.scene().removeItem(self.selected_class.field_list.pop(field_key))  # Remove the text item from the scene
-                        self.selected_class.update_box()  # Update the box to reflect the changes
+                    delete_field_command = Command.DeleteFieldCommand(self.model, class_name=selected_class_name, field_name=field_name, 
+                                                                      view=self, class_box=self.selected_class)
+                    self.input_handler.execute_command(delete_field_command)
     
     def rename_field(self):
         if self.selected_class:
@@ -307,21 +293,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name {new_field_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
      
-                    rename_field_command = Command.RenameFieldCommand(self.model, class_name=selected_class_name, old_field_name=old_field_name, new_field_name=new_field_name)
-                    is_field_renamed = self.input_handler.execute_command(rename_field_command)
-                        
-                    if is_field_renamed:
-                        # Update the field name in the list and refresh the display
-                        for field_key in self.selected_class.field_list:
-                            if field_key[1] == old_field_name:
-                                new_key = (field_key[0], new_field_name)
-                                self.selected_class.field_list[new_key] = self.selected_class.field_list.pop(field_key)
-                                self.selected_class.field_list[new_key].setPlainText(field_key[0] + " " + new_field_name)
-                                # Update field_key_list
-                                index = self.selected_class.field_key_list.index(field_key)
-                                self.selected_class.field_key_list[index] = new_key
-                                break  # Exit the loop after finding the matching field
-                        self.selected_class.update_box()  # Refresh the box display 
+                    rename_field_command = Command.RenameFieldCommand(self.model, class_name=selected_class_name, old_field_name=old_field_name, 
+                                                                      new_field_name=new_field_name, view=self, class_box=self.selected_class)
+                    self.input_handler.execute_command(rename_field_command)
                         
     def edit_field_type(self):
         if not self.selected_class:
@@ -1007,7 +981,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         else:
             file_base_name = os.path.basename(current_active_file_path)
             file_name_only = os.path.splitext(file_base_name)[0]
-            self.interface.save_gui(file_name_only, current_active_file_path)     
+            self.interface.save_gui(file_name_only, current_active_file_path)  
+            
+    def undo(self):
+        self.input_handler.undo()
+        self.scene().update()
+    
+    def redo(self):
+        self.input_handler.redo()   
+        self.scene().update()
     
     def clear_current_scene(self):
         """

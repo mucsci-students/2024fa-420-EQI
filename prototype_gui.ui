@@ -37,8 +37,8 @@
    <addaction name="Save"/>
    <addaction name="SaveAs"/>
    <addaction name="separator"/>
-   <addaction name="undo"/>
-   <addaction name="redo"/>
+   <addaction name="Undo"/>
+   <addaction name="Redo"/>
    <addaction name="separator"/>
    <addaction name="toggle_mode"/>
    <addaction name="Help"/>
@@ -308,7 +308,7 @@
     <string>Help</string>
    </property>
   </action>
-  <action name="undo">
+  <action name="Undo">
    <property name="icon">
     <iconset>
      <normaloff>UML_ICONS/undo-alt.png</normaloff>UML_ICONS/undo-alt.png</iconset>
@@ -320,7 +320,7 @@
     <string>Ctrl+Z</string>
    </property>
   </action>
-  <action name="redo">
+  <action name="Redo">
    <property name="icon">
     <iconset>
      <normaloff>UML_ICONS/redo.png</normaloff>UML_ICONS/redo.png</iconset>
