@@ -215,6 +215,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     field_type = add_field_dialog.input_widgets["field_type"].text()
                     field_name = add_field_dialog.input_widgets["field_name"].text()
                     
+                    if not field_type.strip() and not field_name.strip():
+                        return
+                    elif not field_name.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Field name is empty!")
+                        return
+                    elif not field_type.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Field type is empty!")
+                        return
+                    
                     is_field_type_valid = self.interface.is_valid_input(field_type=field_type)
                     if not is_field_type_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field type {field_type} is invalid! Only allow a-zA-Z, number, and underscore!")
@@ -283,6 +292,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     old_field_name = rename_field_dialog.input_widgets['old_field_name'].currentText()  # Use `currentText()` for QComboBox
                     new_field_name = rename_field_dialog.input_widgets['new_field_name'].text()  # Use `text()` for QLineEdit
+                    
+                    if not new_field_name.strip():
+                        return
 
                     # Check if the new field name already exists
                     if new_field_name in self.selected_class.field_key_list:
@@ -364,6 +376,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     method_type = add_method_dialog.input_widgets["method_type"].text()
                     method_name = add_method_dialog.input_widgets["method_name"].text()
+                    
+                    if not method_type.strip() and not method_name.strip():
+                        return
+                    elif not method_name.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Method name is empty!")
+                        return
+                    elif not method_type.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Method type is empty!")
+                        return
                     
                     is_method_type_valid = self.interface.is_valid_input(method_type=method_type)
                     if not is_method_type_valid:
@@ -461,6 +482,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     # Get new method name after the dialog is accepted
                     new_method_name = rename_method_dialog.input_widgets["new_method_name"].text()  # Use `text()` for QLineEdit
+                    if not new_method_name.strip():
+                        return
                     old_method_name_widget = rename_method_dialog.input_widgets["raw_method_name"]
                     selected_index = old_method_name_widget.currentIndex()
                     method_keys_list = rename_method_dialog.input_widgets["method_keys_list"]
@@ -542,6 +565,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         method_name = add_param_dialog.input_widgets["method_type"]
                         method_name_widget = add_param_dialog.input_widgets["method_name_widget"]
                         selected_class_name = self.selected_class.class_name_text.toPlainText()
+                        
+                        if not param_type.strip() and not param_name.strip():
+                            return
+                        elif not param_name.strip():
+                            QtWidgets.QMessageBox.warning(None, "Warning", "Parameter name is empty!")
+                            return
+                        elif not param_type.strip():
+                            QtWidgets.QMessageBox.warning(None, "Warning", "Parameter type is empty!")
+                            return
                         
                         # Get the selected index from the combo box
                         selected_index = method_name_widget.currentIndex()
@@ -643,6 +675,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_method_index = rename_param_dialog.input_widgets['method_name_widget'].currentIndex()
                     old_param_name = rename_param_dialog.input_widgets["param_name_only"]
                     new_param_name = rename_param_dialog.input_widgets['new_param_name_widget'].text()  # Use `text()` for QLineEdit
+                    if not new_param_name.strip():
+                        return
                     method_entry = self.selected_class.method_list[selected_method_index]
                     
                     for each_tuple in method_entry["parameters"]:
@@ -687,7 +721,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         """
         if self.selected_class:
             # Ensure there are methods to choose from
-            if self.selected_class.method_key_list:
+            if self.selected_class.method_list:
                 # Initialize the dialog
                 replace_param_dialog = Dialog("Rename Parameter")
                 replace_param_dialog.replace_param_list_popup(self.selected_class)
@@ -696,31 +730,55 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if replace_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
-                    method_name = replace_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                    new_param_string = replace_param_dialog.input_widgets['new_param_string'].text()  # Use `text()` for QLineEdit
-                    # Split the input string by commas to form a list of parameters
-                    new_param_list = [param.strip() for param in new_param_string.split(",") if param.strip()]
+                    new_param_string = replace_param_dialog.input_widgets['new_param_string']
+                    if not new_param_string.text().strip():
+                        return
+                    selected_method_index = replace_param_dialog.input_widgets['method_name_widget'].currentIndex()             
+                    method_entry = self.selected_class.method_list[selected_method_index]
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    new_param_list_str = [param.strip() for param in new_param_string.text().split(",") if param.strip()]
+                    
+                    new_param_list = []
+                    for param in new_param_string.text().split(","):
+                        # Strip any leading or trailing whitespace from the parameter string
+                        param = param.strip()
+                        # Split once on the first space to separate the type and the name
+                        if " " in param:
+                            type_name = param.split(" ", 1)
+                            # Append the tuple (type, name) to the new_param_list
+                            new_param_list.append((type_name[0].strip(), type_name[1].strip()))
+                            
+                    # Extract only the names from the new_param_list
+                    param_names_only = [param[1] for param in new_param_list]
+                            
                     # Check for duplicate parameter names
-                    unique_param_names = list(set(new_param_list))
+                    unique_param_names = list(set(param_names_only))
+                    if len(unique_param_names) != len(param_names_only):
+                        duplicates = [param for param in param_names_only if param_names_only.count(param) > 1]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"New list contain duplicate{duplicates}!")
+                        return
+                        
                     for each_param in unique_param_names:
                         is_param_name_valid = self.interface.is_valid_input(parameter_name=each_param)
                         if not is_param_name_valid:
                             QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {each_param} is invalid! Only allow a-zA-Z, number, and underscore!")
                             return
-                    if len(unique_param_names) != len(new_param_list):
-                        duplicates = [param for param in new_param_list if new_param_list.count(param) > 1]
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"New list contain duplicate{duplicates}!")
+                            
+                    print(new_param_list)
+                    
+                    rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
+                                                                               method_num=str(selected_method_index + 1), 
+                                                                               new_param_list=new_param_list_str)
+                    is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
+                    
+                    if is_param_list_replaced:
+                        self.selected_class.param_num = len(unique_param_names)
+                        method_entry["parameters"] = new_param_list
+                        # Update the box to reflect changes
+                        self.selected_class.update_box()
                     else:
-                        selected_class_name = self.selected_class.class_name_text.toPlainText()
-                        is_param_list_replaced = self.interface.replace_param_list_gui(selected_class_name, method_name, new_param_list)
-                        if is_param_list_replaced:
-                            # Clear the method's parameter list
-                            self.selected_class.method_key_list[method_name].clear()
-                            # Add new parameters to the method
-                            for new_param in new_param_list:
-                                self.selected_class.method_key_list[method_name].append(new_param)
-                            # Update the box to reflect changes
-                            self.selected_class.update_box()
+                        method_key = method_entry["method_key"]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
             
     def add_relationship(self, loaded_source_class=None, loaded_dest_class=None, loaded_type=None, is_loading=False):
         """
@@ -1008,11 +1066,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if self.selected_class.param_num > 0:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=True)
                     self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=True)
-                    self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=True)
                 else:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)
                     self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False)
-                    self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=False)
+                self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=True)
             else:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Method", self.rename_method, enabled=False)

@@ -843,7 +843,7 @@ class UMLModel:
         is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         if not is_class_and_method_exist:
             return False
-        
+
         # Check if method_num is numeric
         is_method_num_a_number = self._check_method_num(method_num)
         if not is_method_num_a_number:
@@ -873,6 +873,10 @@ class UMLModel:
             chosen_pair = method_and_parameter_list[selected_index]
             # Extract the selected method and its parameter list #
             method, params_list = next(iter(chosen_pair.items()))
+            # Check to see if the method with the new parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, {method: new_params_obj_list})
+            if not is_method_valid_with_param:
+                return False
             params_list.clear()
         
             for param in new_params_obj_list:
@@ -1167,7 +1171,7 @@ class UMLModel:
                 each_relationship._set_destination_class(new_name)
                 
     # Get method and parameter list of a chosen class #
-    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[str, List[Parameter]] | None:
+    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[Method, List[Parameter]] | None:
         """
         Retrieves the method and parameter list of a specified class.
 

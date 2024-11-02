@@ -234,17 +234,29 @@ class CustomInputDialog(QtWidgets.QDialog):
         """
         Creates a dialog for replacing parameter list.
         """
-        method_names_list = list(selected_class.method_name_list.keys())
-        
+        method_names = []
+        method_keys = []
+
+        # Build method names and collect method keys
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Build the method name string with parameters
+            params_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+            method_name_str = f"{i + 1}: {method_key[0]} {method_key[1]} ({params_str})"
+            method_names.append(method_name_str)
+            method_keys.append(method_key)
+
         # Create combo box for methods
-        method_name = self.__add_input("Select Method:", widget_type="combo", options=method_names_list)
+        method_name_widget = self.__add_input("Select Method To Replace Parameter List:", widget_type="combo", options=method_names)
+        self.input_widgets["method_name_widget"] = method_name_widget
         
         # Create input for the new parameter name
         new_param_string = self.__add_input("Enter New Parameter Name (comma-separated):", widget_type="line")
-
+        
         # Store the widgets for later use
         self.input_widgets["new_param_string"] = new_param_string
-        self.input_widgets["current_method"] = method_name
+        self.input_widgets["method_name_widget"] = method_name_widget
         
         # Add buttons (OK/Cancel)
         self.__add_buttons()
