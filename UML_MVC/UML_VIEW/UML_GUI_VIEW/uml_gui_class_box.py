@@ -320,6 +320,10 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             method_x_pos = self.rect().topLeft().x() + self.default_margin
             # Set the position of the method text item
             method_text.setPos(method_x_pos, self.rect().topLeft().y() + y_offset)
+            
+            if len(param_list) == 0:
+                method_text.setPlainText(f"{method_key[0]} {method_key[1]}()")
+                continue
                 
             temp_param_list = []
             # Align parameters under the current method
@@ -702,24 +706,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             method_tex_height += method_text.boundingRect().height()
         return method_tex_height
 
-    def get_param_text_height_of_single_method(self, method_name):
-        """
-        Calculate the total height of all parameter text items for a specific method.
-        
-        Parameters:
-        - method_name (str): The name of the method to get the parameter heights for.
-        
-        Returns:
-        - param_tex_height (int): The total height of all parameter text items for the method.
-        """
-        param_tex_height = 0
-        # Sum the heights of all parameter text items for the specified method
-        for param_name in self.method_key_list[method_name]:
-            param_text = self.parameter_list[param_name]  # Get the text item for each parameter
-            param_tex_height += param_text.boundingRect().height()
-        return param_tex_height
-    
-
     def get_maximum_width(self):
         """
         Calculate the maximum width of the UML box based on the widths of its fields, methods, and parameters.
@@ -735,17 +721,14 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         # Get the maximum width of all field text items
         max_field_width = max([self.field_list[field_key].boundingRect().width() for field_key in self.field_key_list], default=0)
         
-        # Get the maximum width of all method text items
         # Get the maximum width of all method text items, including parameters
         max_method_width = max(
             [
-                self.method_list[method_key].boundingRect().width() 
-                for method_dict in self.method_key_list
-                for method_key, param_list in method_dict.items() 
+                entry["method_text"].boundingRect().width() 
+                for entry in self.method_list  # Assuming `self.method_key_list` is the list of dictionaries
             ],
             default=0
         )
-
         
         # Determine the largest width among all components
         content_max_width = max(

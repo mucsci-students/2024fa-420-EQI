@@ -539,16 +539,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         # Retrieve input values
                         param_type = add_param_dialog.input_widgets["param_type"].text()
                         param_name = add_param_dialog.input_widgets["new_param_name"].text()
+                        method_name = add_param_dialog.input_widgets["method_type"]
                         method_name_widget = add_param_dialog.input_widgets["method_name_widget"]
-                        method_keys = add_param_dialog.input_widgets["method_keys"]
-                        method_dictionaries = add_param_dialog.input_widgets["method_dictionaries"]
                         selected_class_name = self.selected_class.class_name_text.toPlainText()
                         
                         # Get the selected index from the combo box
                         selected_index = method_name_widget.currentIndex()
-                        selected_method_key = method_keys[selected_index]
-                        selected_method_dict = method_dictionaries[selected_index]
-                        selected_param_list = selected_method_dict[selected_method_key]
                         
                         # Validate parameter type and name
                         is_param_type_valid = self.interface.is_valid_input(parameter_type=param_type)
@@ -561,8 +557,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                             QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{param_name}' is invalid! Only letters, numbers, and underscores are allowed!")
                             return
                         
+                        method_entry = self.selected_class.method_list[selected_index]
+                        
                         # Check if parameter name already exists in the selected method
-                        for param_tuple in selected_param_list:
+                        for param_tuple in method_entry["parameters"]:
                             if param_tuple[1] == param_name:
                                 QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{param_name}' already exists in the selected method!")
                                 return
@@ -581,54 +579,45 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         
                         if is_param_added:
                             # Append the parameter to the method's parameter list
-                            self.selected_class.param_num = self.selected_class.param_num + 1
+                            self.selected_class.param_num += 1
                             param_tuple = (param_type, param_name)
-                            selected_param_list.append(param_tuple)
+                            method_entry["parameters"].append(param_tuple)
                             self.selected_class.update_box()  # Update the UML box
                         else:
-                            QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_keys[selected_index][1]}' has the same parameter list signature as an existing method in class!")
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")
 
     def delete_param(self):
         """
         Remove a parameter from a selected method in the UML class.
-
-        This function allows the user to choose a method and a parameter to delete.
-        The parameter is removed from the method, and the UML class box is updated.
-
-        Steps:
-        1. Check if a class and method are selected.
-        2. Prompt the user to select a method and a parameter to delete.
-        3. Remove the parameter and update the UML class box.
         """
         if self.selected_class:
-            if self.selected_class.method_key_list:
-               # Initialize the dialog
+            if self.selected_class.method_list:
                 delete_param_dialog = Dialog("Delete Parameter")
                 delete_param_dialog.delete_param_popup(self.selected_class)
                 
-                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                # Execute dialog and wait for user confirmation
                 if delete_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
-                    
-                    # Get the old and new field names after the dialog is accepted
-                    param_name_widget = delete_param_dialog.input_widgets["param_name"]
-                    param_name = param_name_widget.currentText()
-                    selected_param_list = delete_param_dialog.input_widgets["selected_param_list"]
+                    param_name = delete_param_dialog.input_widgets["param_name_only"]
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    selected_method_index = delete_param_dialog.input_widgets["method_name_widget"].currentIndex()
+                    selected_param_index = delete_param_dialog.input_widgets["param_name_widget"].currentIndex()
                     
-                    # Get the selected index from the combo box
-                    selected_index = param_name_widget.currentIndex()
-                    
-                    
-                    delete_param_command = Command.DeleteParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1), param_name=param_name)
+                    delete_param_command = Command.DeleteParameterCommand(
+                        self.model, 
+                        class_name=selected_class_name, 
+                        method_num=str(selected_method_index + 1), 
+                        param_name=param_name
+                    )
                     is_param_deleted = self.input_handler.execute_command(delete_param_command)
-                    
+                    method_entry = self.selected_class.method_list[selected_method_index]
                     if is_param_deleted:
-                        self.selected_class.param_num = self.selected_class.param_num - 1
-                        for each_tuple in selected_param_list:
-                            if each_tuple[1] == param_name:
-                                selected_param_list.remove(each_tuple)
-                                break
+                        # Access the "parameters" list for the selected method and remove the parameter by index
+                        method_entry["parameters"].pop(selected_param_index)
                         self.selected_class.update_box()  # Refresh the UML box
+                        self.selected_class.param_num -= 1
+                    else:
+                        method_key = method_entry["method_key"]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
             
     def rename_param(self):
         """
@@ -643,7 +632,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Rename the parameter and update the UML class box.
         """
         if self.selected_class:
-            if self.selected_class.method_key_list:
+            if self.selected_class.method_list:
                 # Initialize the dialog
                 rename_param_dialog = Dialog("Rename Parameter")
                 rename_param_dialog.rename_param_popup(self.selected_class)
