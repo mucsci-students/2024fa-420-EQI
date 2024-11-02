@@ -844,8 +844,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     dest_class = add_rel_dialog.input_widgets["destination_class"].currentText()  # Use `currentText()` 
                     type = add_rel_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
                     source_class = self.selected_class.class_name_text.toPlainText()
-                    # Add the relationship via the interface
-                    is_rel_added = self.interface.add_relationship_gui(source_class_name=source_class, destination_class_name=dest_class, type=type)
+                    
+                    add_rel_command = Command.AddRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class, 
+                                           rel_type=type)
+                    is_rel_added = self.input_handler.execute_command(add_rel_command)
+                    
                     if is_rel_added:
                         self.selected_class.is_source_class = True
                         source_class_obj = self.selected_class
@@ -880,9 +883,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if delete_rel_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
-                    dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()` 
-                    # Delete the relationship if found
-                    is_rel_deleted = self.interface.delete_relationship(source_class, dest_class)
+                    dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()`
+                     
+                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class)
+                    is_rel_deleted = self.input_handler.execute_command(delete_rel_command)
+                    
                     if not is_rel_deleted:
                         return
                     for each_tuple in self.relationship_track_list[source_class]:
