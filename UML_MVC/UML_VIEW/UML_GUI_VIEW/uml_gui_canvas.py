@@ -414,7 +414,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         self.selected_class.method_list.append(method_entry)
 
                         if len(self.selected_class.method_list) == 1:
-                            self.selected_class.create_separator(is_first=False)
+                            self.selected_class.create_separator(is_first=False, is_second=True)
                         self.selected_class.update_box()  # Update the UML box
                     else:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")

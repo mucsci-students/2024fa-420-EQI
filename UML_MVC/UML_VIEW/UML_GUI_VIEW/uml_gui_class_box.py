@@ -323,7 +323,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
             
             if len(param_list) == 0:
                 method_text.setPlainText(f"{method_key[0]} {method_key[1]}()")
-                continue
                 
             temp_param_list = []
             # Align parameters under the current method
@@ -391,28 +390,6 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
 
             # Create the second separator as a horizontal line (QGraphicsLineItem) spanning the entire width of the UML box.
             self.separator_line2 = QtWidgets.QGraphicsLineItem(
-                self.rect().topLeft().x(),  # Starting x-coordinate (left side of the box)
-                y_pos,                      # Y-coordinate (below the fields section)
-                self.rect().topRight().x(),  # Ending x-coordinate (right side of the box)
-                y_pos,                      # Keep the same y-coordinate to make the line horizontal
-                self  # Set the UML class box as the parent for this line item.
-            )
-        # If it's not the second separator, create a separator (placed below the method section)
-        else:
-            # Calculate the height of the class name to start the separator calculation.
-            class_name_height = self.class_name_text.boundingRect().height()
-
-            # Calculate the total height of all the field text items to place the separator correctly.
-            field_section_height = self.get_field_text_height()
-            
-            # Calculate the total height of the method text items to place the separator correctly.
-            method_section_height = self.get_method_text_height()
-            
-            # Set the y-position for the second separator line just below the fields, with some margin.
-            y_pos = self.rect().topLeft().y() + class_name_height + field_section_height + method_section_height + self.default_margin
-            
-            # Create the second separator as a horizontal line (QGraphicsLineItem) spanning the entire width of the UML box.
-            self.separator_line3 = QtWidgets.QGraphicsLineItem(
                 self.rect().topLeft().x(),  # Starting x-coordinate (left side of the box)
                 y_pos,                      # Y-coordinate (below the fields section)
                 self.rect().topRight().x(),  # Ending x-coordinate (right side of the box)
