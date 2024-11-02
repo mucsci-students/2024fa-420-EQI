@@ -640,24 +640,38 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 # Execute the dialog and wait for user confirmation (OK or Cancel)
                 if rename_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
-                    # Get the old and new field names after the dialog is accepted
-                    method_name = rename_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                    old_param_name = rename_param_dialog.input_widgets['old_param_name'].currentText()  # Use `currentText()` for QComboBox
-                    new_param_name = rename_param_dialog.input_widgets['new_param_name'].text()  # Use `text()` for QLineEdit
-                    if new_param_name in self.selected_class.method_key_list:
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{new_param_name}' has already existed!")
-                        return
+                    selected_method_index = rename_param_dialog.input_widgets['method_name_widget'].currentIndex()
+                    old_param_name = rename_param_dialog.input_widgets["param_name_only"]
+                    new_param_name = rename_param_dialog.input_widgets['new_param_name_widget'].text()  # Use `text()` for QLineEdit
+                    method_entry = self.selected_class.method_list[selected_method_index]
+                    
+                    for each_tuple in method_entry["parameters"]:
+                        if new_param_name == each_tuple[1] :
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{new_param_name}' has already existed!")
+                            return
+                        
                     is_param_name_valid = self.interface.is_valid_input(new_name=new_param_name)
                     if not is_param_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {new_param_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
+                    
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_param_renamed = self.interface.rename_parameter(selected_class_name, method_name, old_param_name, new_param_name)
+                    
+                    rename_param_command = Command.RenameParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_method_index + 1), 
+                                                                          old_param_name=old_param_name, new_param_name=new_param_name)
+                    is_param_renamed = self.input_handler.execute_command(rename_param_command)
+
                     if is_param_renamed:
-                        # Update the parameter name and refresh the UML box
-                        param_list = self.selected_class.method_key_list[method_name]
-                        param_list[param_list.index(old_param_name)] = new_param_name  # Update in the method's parameter list
+                        # Iterate through the parameters to find and replace the old parameter tuple
+                        for i, param_tuple in enumerate(method_entry["parameters"]):
+                            if param_tuple[1] == old_param_name:
+                                # Replace the old tuple with a new one containing the new parameter name
+                                method_entry["parameters"][i] = (param_tuple[0], new_param_name)
+                                print(f"Renamed parameter '{old_param_name}' to '{new_param_name}'.")
+                                break  # Exit the loop after renaming
                         self.selected_class.update_box()  # Refresh the UML box
+                    else:
+                        QtWidgets.QMessageBox.warning(None, "Rename Failed", "Failed to rename the parameter.")
 
     def replace_param(self):
         """

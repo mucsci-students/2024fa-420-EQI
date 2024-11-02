@@ -158,14 +158,8 @@ class CustomInputDialog(QtWidgets.QDialog):
             method_names.append(method_name_str)
             method_keys.append(method_key)
 
-        # Check if there are methods available
-        if not method_names:
-            QtWidgets.QMessageBox.warning(self, "No Methods", "There are no methods available to delete parameters from.")
-            return
-
         # Create combo box for methods
         method_name_widget = self.__add_input("Select Method To Delete Parameter:", widget_type="combo", options=method_names)
-        self.input_widgets["method_name_widget"] = method_name_widget
 
         selected_index = method_name_widget.currentIndex()
         chosen_entry = selected_class.method_list[selected_index]
@@ -173,12 +167,9 @@ class CustomInputDialog(QtWidgets.QDialog):
         # Get the parameters for the initially selected method
         param_options = [f"{param_type} {param_name}" for param_type, param_name in chosen_entry["parameters"]]
 
-        # Check if there are parameters available
-        if not param_options:
-            QtWidgets.QMessageBox.warning(self, "No Parameters", "The selected method has no parameters to delete.")
-            return
-
         param_name_widget = self.__add_input("Select Parameter To Delete:", widget_type="combo", options=param_options)
+        
+        self.input_widgets["method_name_widget"] = method_name_widget
         self.input_widgets["param_name_widget"] = param_name_widget
 
         # Initialize 'param_name_only' based on the initial selection
@@ -192,64 +183,52 @@ class CustomInputDialog(QtWidgets.QDialog):
 
         # Connect the param_name_widget change to update 'param_name_only'
         param_name_widget.currentIndexChanged.connect(lambda: self.__update_param_name_only(param_name_widget))
-    
-    def __update_param_list(self, selected_class, selected_index, param_name_widget):
-        """
-        Updates the parameter combo box options based on the selected method.
-        """
-        # Retrieve the parameter list for the selected method
-        if 0 <= selected_index < len(selected_class.method_list):
-            selected_method_dict = selected_class.method_list[selected_index]
-            param_list = selected_method_dict["parameters"]
-
-            # Update the parameter combo box with the correct options
-            param_options = [f"{param_type} {param_name}" for param_type, param_name in param_list]
-            param_name_widget.clear()
-            param_name_widget.addItems(param_options)
-
-            # Handle the case where there are no parameters
-            if not param_options:
-                QtWidgets.QMessageBox.warning(self, "No Parameters", "The selected method has no parameters to delete.")
-                self.input_widgets["param_name_only"] = ""
-                return
-
-            # After updating the param_name_widget, update 'param_name_only'
-            self.__update_param_name_only(param_name_widget)
-    
-    def __update_param_name_only(self, param_name_widget):
-        """
-        Updates the 'param_name_only' based on the current selection in param_name_widget.
-        """
-        current_text = param_name_widget.currentText()
-        if current_text:
-            # Assuming the parameter name is the last word
-            self.input_widgets["param_name_only"] = current_text.split()[-1]
-            # print(f"Param name: {self.input_widgets['param_name_only']}")
-        else:
-            self.input_widgets["param_name_only"] = ""
-            print("No parameter selected.")
         
     def rename_param_popup(self, selected_class):
         """
         Creates a dialog for renaming a parameter.
         """
-        method_names_list = list(selected_class.method_name_list.keys())
-        
+        method_names = []
+        method_keys = []
+
+        # Build method names and collect method keys
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Build the method name string with parameters
+            params_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+            method_name_str = f"{i + 1}: {method_key[0]} {method_key[1]} ({params_str})"
+            method_names.append(method_name_str)
+            method_keys.append(method_key)
+
         # Create combo box for methods
-        method_name = self.__add_input("Select Method To Rename Parameter:", widget_type="combo", options=method_names_list)
+        method_name_widget = self.__add_input("Select Method To Change Parameter:", widget_type="combo", options=method_names)
+        self.input_widgets["method_name_widget"] = method_name_widget
+
+        selected_index = method_name_widget.currentIndex()
+        chosen_entry = selected_class.method_list[selected_index]
+
+        # Get the parameters for the initially selected method
+        param_options = [f"{param_type} {param_name}" for param_type, param_name in chosen_entry["parameters"]]
+
+        old_param_name_widget = self.__add_input("Select Parameter To Change:", widget_type="combo", options=param_options)
+        new_param_name_widget = self.__add_input("Enter New Parameter:", widget_type="line")
         
-        # Create combo box for parameters (initially based on the first method in the list)
-        old_param_name = self.__add_input("Select Parameter To Delete:", widget_type="combo", options=selected_class.method_name_list[method_name.currentText()])
-        
-        # Create input for the new parameter name
-        new_param_name = self.__add_input("Enter New Parameter Name:", widget_type="line")
-        
-        self.input_widgets["current_method"] = method_name
-        self.input_widgets["old_param_name"] = old_param_name
-        self.input_widgets["new_param_name"] = new_param_name
-        
+        self.input_widgets["method_name_widget"] = method_name_widget
+        self.input_widgets["old_param_name_widget"] = old_param_name_widget
+        self.input_widgets["new_param_name_widget"] = new_param_name_widget
+
+        # Initialize 'param_name_only' based on the initial selection
+        self.__update_param_name_only(old_param_name_widget)
+
         # Add buttons (OK/Cancel)
         self.__add_buttons()
+
+        # Connect the method_name combo box change to update the parameter list dynamically
+        method_name_widget.currentIndexChanged.connect(lambda index: self.__update_param_list(selected_class, index, old_param_name_widget))
+
+        # Connect the param_name_widget change to update 'param_name_only'
+        old_param_name_widget.currentIndexChanged.connect(lambda: self.__update_param_name_only(old_param_name_widget))
         
     def replace_param_list_popup(self, selected_class):
         """
@@ -357,7 +336,42 @@ class CustomInputDialog(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.layout.addWidget(buttons)
-        
+    
+    def __update_param_list(self, selected_class, selected_index, param_name_widget):
+        """
+        Updates the parameter combo box options based on the selected method.
+        """
+        # Retrieve the parameter list for the selected method
+        if 0 <= selected_index < len(selected_class.method_list):
+            selected_method_dict = selected_class.method_list[selected_index]
+            param_list = selected_method_dict["parameters"]
+
+            # Update the parameter combo box with the correct options
+            param_options = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+            param_name_widget.clear()
+            param_name_widget.addItems(param_options)
+
+            # Handle the case where there are no parameters
+            if not param_options:
+                QtWidgets.QMessageBox.warning(self, "No Parameters", "The selected method has no parameters to delete.")
+                self.input_widgets["param_name_only"] = ""
+                return
+
+            # After updating the param_name_widget, update 'param_name_only'
+            self.__update_param_name_only(param_name_widget)
+    
+    def __update_param_name_only(self, param_name_widget):
+        """
+        Updates the 'param_name_only' based on the current selection in param_name_widget.
+        """
+        current_text = param_name_widget.currentText()
+        if current_text:
+            # Assuming the parameter name is the last word
+            self.input_widgets["param_name_only"] = current_text.split()[-1]
+            print(f"Param name: {self.input_widgets['param_name_only']}")
+        else:
+            self.input_widgets["param_name_only"] = ""
+            print("No parameter selected.")
         
         
     
