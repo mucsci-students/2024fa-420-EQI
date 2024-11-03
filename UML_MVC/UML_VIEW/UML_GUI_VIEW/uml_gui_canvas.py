@@ -540,16 +540,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         
                         add_param_command = Command.AddParameterCommand(self.model,class_name=selected_class_name,
                                                                         method_num=method_num,param_type=param_type,
-                                                                        param_name=param_name,is_gui=True)
+                                                                        param_name=param_name, view=self, class_box=self.selected_class, is_gui=True)
                         is_param_added = self.input_handler.execute_command(add_param_command)
                         
-                        if is_param_added:
-                            # Append the parameter to the method's parameter list
-                            self.selected_class.param_num += 1
-                            param_tuple = (param_type, param_name)
-                            method_entry["parameters"].append(param_tuple)
-                            self.selected_class.update_box()  # Update the UML box
-                        else:
+                        if not is_param_added:
                             QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")
 
     def delete_param(self):
@@ -569,15 +563,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_param_index = delete_param_dialog.input_widgets["param_name_widget"].currentIndex()
                     
                     delete_param_command = Command.DeleteParameterCommand(self.model, class_name=selected_class_name,
-                                                                          method_num=str(selected_method_index + 1), param_name=param_name, is_gui=True)
+                                                                          method_num=str(selected_method_index + 1), view=self, class_box=self.selected_class, 
+                                                                          selected_param_index=selected_param_index, param_name=param_name, is_gui=True)
                     is_param_deleted = self.input_handler.execute_command(delete_param_command)
                     method_entry = self.selected_class.method_list[selected_method_index]
-                    if is_param_deleted:
-                        # Access the "parameters" list for the selected method and remove the parameter by index
-                        method_entry["parameters"].pop(selected_param_index)
-                        self.selected_class.update_box()  # Refresh the UML box
-                        self.selected_class.param_num -= 1
-                    else:
+                    if not is_param_deleted:
                         method_key = method_entry["method_key"]
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
             
@@ -621,20 +611,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
-                    rename_param_command = Command.RenameParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_method_index + 1), 
+                    rename_param_command = Command.RenameParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_method_index + 1),
+                                                                          view=self, class_box=self.selected_class, 
                                                                           old_param_name=old_param_name, new_param_name=new_param_name, is_gui=True)
                     is_param_renamed = self.input_handler.execute_command(rename_param_command)
 
-                    if is_param_renamed:
-                        # Iterate through the parameters to find and replace the old parameter tuple
-                        for i, param_tuple in enumerate(method_entry["parameters"]):
-                            if param_tuple[1] == old_param_name:
-                                # Replace the old tuple with a new one containing the new parameter name
-                                method_entry["parameters"][i] = (param_tuple[0], new_param_name)
-                                print(f"Renamed parameter '{old_param_name}' to '{new_param_name}'.")
-                                break  # Exit the loop after renaming
-                        self.selected_class.update_box()  # Refresh the UML box
-                    else:
+                    if not is_param_renamed:
                         QtWidgets.QMessageBox.warning(None, "Rename Failed", "Failed to rename the parameter.")
 
     def replace_param(self):
@@ -666,6 +648,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_method_index = replace_param_dialog.input_widgets['method_name_widget'].currentIndex()             
                     method_entry = self.selected_class.method_list[selected_method_index]
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    old_param_list_obj = method_entry["parameters"]
+                    old_param_list_str = [f"{type} {param}" for type, param in old_param_list_obj]
                     new_param_list_str = [param.strip() for param in new_param_string.text().split(",") if param.strip()]
                     
                     new_param_list = []
@@ -697,16 +681,14 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     print(new_param_list)
                     
                     rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
-                                                                               method_num=str(selected_method_index + 1), 
-                                                                               new_param_list=new_param_list_str, is_gui=True)
+                                                                               method_num=str(selected_method_index + 1), view=self, class_box=self.selected_class,
+                                                                               old_param_list_obj=old_param_list_obj, 
+                                                                               old_param_list_str=old_param_list_str,
+                                                                               new_param_list_obj=new_param_list,
+                                                                               new_param_list_str=new_param_list_str, is_gui=True)
                     is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
                     
-                    if is_param_list_replaced:
-                        self.selected_class.param_num = len(unique_param_names)
-                        method_entry["parameters"] = new_param_list
-                        # Update the box to reflect changes
-                        self.selected_class.update_box()
-                    else:
+                    if not is_param_list_replaced:
                         method_key = method_entry["method_key"]
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
             

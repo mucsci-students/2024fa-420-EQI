@@ -861,6 +861,7 @@ class UMLModel:
             for param in new_param_name_list:
                 # Split param into type and name
                 parts = param.strip().split()
+
                 if len(parts) != 2:
                     self.__console.print(f"\n[bold red]Error: Invalid parameter format '{param}'. Expected format: 'type name'.[/bold red]")
                     return False
