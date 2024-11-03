@@ -46,13 +46,18 @@ class DeleteClassCommand(Command):
             for method_entry in self.class_box.method_list:
                 if method_entry["method_text"].scene() == self.view.scene():
                     self.view.scene().removeItem(method_entry["method_text"])
-            self.view.scene().removeItem(self.class_box)
+                method_entry["method_key"] = None
+                method_entry["method_text"] = None
+                method_entry["parameters"] = []
+                  
         # Clear lists to avoid any visual overlaps on restore
         self.class_box.field_list = {}
         self.class_box.field_key_list = []
         self.class_box.method_list = []
         self.class_box.param_num = 0 
+        self.view.model._current_number_of_method = 0
         self.class_box.update_box()
+        self.view.scene().removeItem(self.class_box)
         # Store a copy of the main data before deletion
         self.main_data_copy = self.uml_model._get_main_data()
         return self.uml_model._delete_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
