@@ -246,6 +246,7 @@ class DeleteMethodCommand(Command):
         self.method_name = None
         self.method_type = None
         self.view = view
+        self.old_param_list = []
         self.class_box = class_box
         self.is_gui = is_gui
 
@@ -257,10 +258,12 @@ class DeleteMethodCommand(Command):
         self.method_type = chosen_method._get_type()
         self.method_name = chosen_method._get_name()
         
+        # Access and remove the method entry directly from method_list
+        method_entry = self.class_box.method_list[int(self.method_num) - 1]
+        self.old_param_list = method_entry["parameters"]
         is_method_deleted = self.uml_model._delete_method(self.class_name, self.method_num, is_undo_or_redo=is_undo_or_redo)
+        
         if is_method_deleted and self.is_gui:
-            # Access and remove the method entry directly from method_list
-            method_entry = self.class_box.method_list[int(self.method_num) - 1]
             # Check if the item is still in the scene before removing
             if method_entry["method_text"].scene() == self.view.scene():
                 self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
@@ -275,12 +278,12 @@ class DeleteMethodCommand(Command):
             if is_method_added and self.is_gui:
                 method_text = self.class_box.create_text_item(self.method_type + " " + self.method_name + "()", is_method=True, selectable=False, color=self.class_box.text_color)
                 method_key = (self.method_type, self.method_name)
-                
+
                 # Create a new method entry as a dictionary with method_key, method_text, and parameters
                 method_entry = {
                     "method_key": method_key,
                     "method_text": method_text,
-                    "parameters": []
+                    "parameters": self.old_param_list
                 }
                 # Append this dictionary to method_list
                 self.class_box.method_list.insert(int(self.method_num) - 1, method_entry)
@@ -368,9 +371,12 @@ class AddParameterCommand(Command):
             param_tuple = (self.param_type, self.param_name)
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
-            self.class_box.param_num += len(method_entry["parameters"]) + 1
+            self.class_box.param_num += 1
             method_entry["parameters"].append(param_tuple)
             self.selected_param_index = self.class_box.param_num - 1
+            
+            print(f"Added parameter: {param_tuple} | Current parameters: {method_entry['parameters']}")
+            
             self.class_box.update_box()  # Update the UML box
         return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=is_undo_or_redo)
 
@@ -378,8 +384,11 @@ class AddParameterCommand(Command):
         if self.is_gui:
             # Access the "parameters" list for the selected method and remove the parameter by index
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
-            self.class_box.param_num -= len(method_entry["parameters"]) - 1
+            self.class_box.param_num -= 1
             method_entry["parameters"].pop(self.selected_param_index)
+            
+            print(f"Undo add parameter: {self.param_name} | Remaining parameters: {method_entry['parameters']}")
+            
             self.class_box.update_box()  # Refresh the UML box
         return self.uml_model._delete_parameter(self.class_name, str(self.method_num), self.param_name, is_undo_or_redo=True)
     
@@ -410,14 +419,14 @@ class DeleteParameterCommand(Command):
         
     def undo(self):
         if self.param_type:
-            # Append the parameter to the method's parameter list
-            self.class_box.param_num += 1
             param_tuple = (self.param_type, self.param_name)
             if self.is_gui:
                 # Access and remove the method entry directly from method_list
                 method_entry = self.class_box.method_list[int(self.method_num) - 1]
                 method_entry["parameters"].append(param_tuple)
                 self.selected_param_index = len(method_entry["parameters"]) - 1
+                # Append the parameter to the method's parameter list
+                self.class_box.param_num += 1
                 self.class_box.update_box()  # Update the UML box
             return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=True)
         
@@ -433,7 +442,8 @@ class RenameParameterCommand(Command):
         self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
-        if self.is_gui:
+        is_param_renamed = self.uml_model._rename_parameter(self.class_name, self.method_num, self.old_param_name, self.new_param_name, is_undo_or_redo=is_undo_or_redo)
+        if is_param_renamed and self.is_gui:
             # Iterate through the parameters to find and replace the old parameter tuple
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
@@ -441,35 +451,38 @@ class RenameParameterCommand(Command):
                 if param_tuple[1] == self.old_param_name:
                     # Replace the old tuple with a new one containing the new parameter name
                     method_entry["parameters"][i] = (param_tuple[0], self.new_param_name)
+                    
                     print(f"Renamed parameter '{self.old_param_name}' to '{self.new_param_name}'.")
+                    
                     break  # Exit the loop after renaming
             self.class_box.update_box()  # Refresh the UML box
-        return self.uml_model._rename_parameter(self.class_name, self.method_num, self.old_param_name, self.new_param_name, is_undo_or_redo=is_undo_or_redo)
+        return is_param_renamed
 
     def undo(self):
-        if self.is_gui:
+        is_param_renamed = self.uml_model._rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name, is_undo_or_redo=True)
+        if is_param_renamed and self.is_gui:
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
             for i, param_tuple in enumerate(method_entry["parameters"]):
                 if param_tuple[1] == self.new_param_name:
                     # Replace the old tuple with a new one containing the new parameter name
                     method_entry["parameters"][i] = (param_tuple[0], self.old_param_name)
+                    
                     print(f"Renamed parameter '{self.new_param_name}' to '{self.old_param_name}'.")
+                    
                     break  # Exit the loop after renaming
             self.class_box.update_box()  # Refresh the UML box
-        return self.uml_model._rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name, is_undo_or_redo=True)
+        return is_param_renamed
     
 class ReplaceParameterListCommand(Command):
     def __init__(self, uml_model, class_name, method_num, 
-                 old_param_list_obj=None, 
-                 old_param_list_str=None,
                  new_param_list_obj=None, 
                  new_param_list_str=None, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
-        self.old_param_list_str = old_param_list_str
-        self.old_param_list_obj = old_param_list_obj
+        self.old_param_list_str = None
+        self.old_param_list_obj = None
         self.new_param_list_str = new_param_list_str
         self.new_param_list_obj = new_param_list_obj
         self.view = view
@@ -477,24 +490,35 @@ class ReplaceParameterListCommand(Command):
         self.is_gui = is_gui
     
     def execute(self, is_undo_or_redo=False):
-        if self.is_gui:
+        is_param_list_replaced = self.uml_model._replace_param_list(self.class_name, self.method_num, self.new_param_list_str, is_undo_or_redo=is_undo_or_redo)
+        if is_param_list_replaced and self.is_gui:
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
+            self.old_param_list_obj = method_entry["parameters"]
+            self.old_param_list_str = [f"{type} {param}" for type, param in self.old_param_list_obj]
             method_entry["parameters"] = self.new_param_list_obj
             self.class_box.param_num = len(method_entry["parameters"])
+            
+            print(f"Replaced parameters | New parameters: {method_entry['parameters']} | Old parameters: {self.old_param_list_obj}")
+            
             # Update the box to reflect changes
             self.class_box.update_box()
-        return self.uml_model._replace_param_list(self.class_name, self.method_num, self.new_param_list_str, is_undo_or_redo=is_undo_or_redo)
+        return is_param_list_replaced
 
     def undo(self):
-        if self.is_gui:
+        is_param_list_replaced = self.uml_model._replace_param_list(self.class_name, self.method_num, self.old_param_list_str, is_undo_or_redo=True)
+        if is_param_list_replaced and self.is_gui:
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
+            self.new_param_list_obj = method_entry["parameters"]
             method_entry["parameters"] = self.old_param_list_obj
             self.class_box.param_num = len(method_entry["parameters"])
+            
+            print(f"Undo replace parameters | Restored parameters: {method_entry['parameters']}")
+            
             # Update the box to reflect changes
             self.class_box.update_box()
-        return self.uml_model._replace_param_list(self.class_name, self.method_num, self.old_param_list_str, is_undo_or_redo=True)
+        return is_param_list_replaced
     
 class AddRelationshipCommand(Command):
     def __init__(self, uml_model, source_class, dest_class, rel_type, view=None, class_box=None, is_gui=False):

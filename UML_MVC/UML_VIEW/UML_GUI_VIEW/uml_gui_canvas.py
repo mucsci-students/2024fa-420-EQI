@@ -648,11 +648,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_method_index = replace_param_dialog.input_widgets['method_name_widget'].currentIndex()             
                     method_entry = self.selected_class.method_list[selected_method_index]
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    old_param_list_obj = method_entry["parameters"]
-                    old_param_list_str = [f"{type} {param}" for type, param in old_param_list_obj]
                     new_param_list_str = [param.strip() for param in new_param_string.text().split(",") if param.strip()]
                     
-                    new_param_list = []
+                    new_param_list_obj = []
                     for param in new_param_string.text().split(","):
                         # Strip any leading or trailing whitespace from the parameter string
                         param = param.strip()
@@ -660,10 +658,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         if " " in param:
                             type_name = param.split(" ", 1)
                             # Append the tuple (type, name) to the new_param_list
-                            new_param_list.append((type_name[0].strip(), type_name[1].strip()))
+                            new_param_list_obj.append((type_name[0].strip(), type_name[1].strip()))
                             
                     # Extract only the names from the new_param_list
-                    param_names_only = [param[1] for param in new_param_list]
+                    param_names_only = [param[1] for param in new_param_list_obj]
                             
                     # Check for duplicate parameter names
                     unique_param_names = list(set(param_names_only))
@@ -678,13 +676,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                             QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {each_param} is invalid! Only allow a-zA-Z, number, and underscore!")
                             return
                             
-                    print(new_param_list)
+                    print(new_param_list_obj)
                     
                     rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
-                                                                               method_num=str(selected_method_index + 1), view=self, class_box=self.selected_class,
-                                                                               old_param_list_obj=old_param_list_obj, 
-                                                                               old_param_list_str=old_param_list_str,
-                                                                               new_param_list_obj=new_param_list,
+                                                                               method_num=str(selected_method_index + 1), view=self, 
+                                                                               class_box=self.selected_class,
+                                                                               new_param_list_obj=new_param_list_obj,
                                                                                new_param_list_str=new_param_list_str, is_gui=True)
                     is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
                     
