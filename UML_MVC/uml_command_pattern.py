@@ -10,68 +10,91 @@ class Command(ABC):
         pass
 
 class AddClassCommand(Command):
-    def __init__(self, uml_model, class_name, view, class_box):
+    def __init__(self, uml_model, class_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.view = view
         self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         is_class_added = self.uml_model._add_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
-        if is_class_added:
+        if is_class_added and self.is_gui:
             self.view.scene().addItem(self.class_box)
         return is_class_added
 
     def undo(self):
         self.view.scene().removeItem(self.class_box)
-        self.uml_model._delete_class(self.class_name, is_undo_or_redo=True)
+        return self.uml_model._delete_class(self.class_name, is_undo_or_redo=True)
 
 class DeleteClassCommand(Command):
-    def __init__(self, uml_model, class_name, view, class_box):
+    def __init__(self, uml_model, class_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.view = view
         self.class_box = class_box
+        self.is_gui = is_gui
+        self.command_list_copy = None
 
     def execute(self, is_undo_or_redo=False):
-        self.view.scene().removeItem(self.class_box)
+        if self.is_gui:
+            # Clear all fields and methods in the class_box
+            for field_item in self.class_box.field_list.values():
+                if field_item.scene() == self.view.scene():
+                    self.view.scene().removeItem(field_item)
+
+            for method_entry in self.class_box.method_list:
+                if method_entry["method_text"].scene() == self.view.scene():
+                    self.view.scene().removeItem(method_entry["method_text"])
+            self.view.scene().removeItem(self.class_box)
+        # Clear lists to avoid any visual overlaps on restore
+        self.class_box.field_list = {}
+        self.class_box.field_key_list = []
+        self.class_box.method_list = []
+        self.class_box.param_num = 0 
+        self.class_box.update_box()
+        # Store a copy of the main data before deletion
+        self.main_data_copy = self.uml_model._get_main_data()
         return self.uml_model._delete_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
 
     def undo(self):
-        self.view.scene().addItem(self.class_box)
-        self.uml_model._add_class(self.class_name , is_undo_or_redo=True)
-        
+        for command in self.view.input_handler.command_list[:-1]:
+            command.execute(is_undo_or_redo=True)
+
 class RenameClassCommand(Command):
-    def __init__(self, uml_model, class_name, new_name, view, class_box):
+    def __init__(self, uml_model, class_name, new_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.new_name = new_name
         self.view = view
         self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         is_class_renamed = self.uml_model._rename_class(self.class_name, self.new_name, is_undo_or_redo=is_undo_or_redo)
-        if is_class_renamed:
+        if is_class_renamed and self.is_gui:
             self.class_box.class_name_text.setPlainText(self.new_name)
             self.class_box.update_box()
         return is_class_renamed
 
     def undo(self):
-        self.class_box.class_name_text.setPlainText(self.class_name)
+        if self.is_gui:
+            self.class_box.class_name_text.setPlainText(self.class_name)
         return self.uml_model._rename_class(self.new_name, self.class_name, is_undo_or_redo=True)
         
 class AddFieldCommand(Command):
-    def __init__(self, uml_model, class_name, type, field_name, view, class_box):
+    def __init__(self, uml_model, class_name, type, field_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.field_type = type
         self.field_name = field_name
         self.view = view
         self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         is_field_added = self.uml_model._add_field(self.class_name, self.field_type, self.field_name, is_undo_or_redo=is_undo_or_redo)
-        if is_field_added:
+        if is_field_added and self.is_gui:
             # Create a text item for the field and add it to the list
                 field_text = self.class_box.create_text_item(self.field_type + " " + self.field_name, is_field=True, selectable=False, color=self.class_box.text_color)
                 field_key = (self.field_type, self.field_name)
@@ -81,15 +104,16 @@ class AddFieldCommand(Command):
         return is_field_added
 
     def undo(self):
-        for field_key in self.class_box.field_key_list:
-            if field_key[1] == self.field_name:
-                self.class_box.field_key_list.remove(field_key)  # Remove from the name list
-                self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
-        self.class_box.update_box()
+        if self.is_gui:
+            for field_key in self.class_box.field_key_list:
+                if field_key[1] == self.field_name:
+                    self.class_box.field_key_list.remove(field_key)  # Remove from the name list
+                    self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+            self.class_box.update_box()
         return self.uml_model._delete_field(self.class_name, self.field_name, is_undo_or_redo=True)
 
 class DeleteFieldCommand(Command):
-    def __init__(self, uml_model, class_name, field_name, view, class_box):
+    def __init__(self, uml_model, class_name, field_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.field_name = field_name
@@ -97,23 +121,25 @@ class DeleteFieldCommand(Command):
         self.view = view
         self.class_box = class_box
         self.position = None  # To store the position of the field when deleted
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         # Capture the field type before deleting the field
-        chosen_field = self.uml_model._get_chosen_field_or_method(self.class_name, self.field_name, is_field = True)
-        if chosen_field is not None:
-            self.field_type = chosen_field._get_type()
-        for index, field_key in enumerate(self.class_box.field_key_list):
-            if field_key[1] == self.field_name:
-                self.position = index
-                self.class_box.field_key_list.remove(field_key)  # Remove from the name list
-                self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
-        self.class_box.update_box()
+        if self.is_gui:
+            chosen_field = self.uml_model._get_chosen_field_or_method(self.class_name, self.field_name, is_field = True)
+            if chosen_field is not None:
+                self.field_type = chosen_field._get_type()
+            for index, field_key in enumerate(self.class_box.field_key_list):
+                if field_key[1] == self.field_name:
+                    self.position = index
+                    self.class_box.field_key_list.remove(field_key)  # Remove from the name list
+                    self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+            self.class_box.update_box()
         return self.uml_model._delete_field(self.class_name, self.field_name, is_undo_or_redo=is_undo_or_redo)
 
     def undo(self):
         is_field_added = self.uml_model._add_field(self.class_name, self.field_type, self.field_name, is_undo_or_redo=True)
-        if is_field_added:
+        if is_field_added and self.is_gui:
             # Create a text item for the field and add it to the list
                 field_text = self.class_box.create_text_item(self.field_type + " " + self.field_name, is_field=True, selectable=False, color=self.class_box.text_color)
                 field_key = (self.field_type, self.field_name)
@@ -123,17 +149,18 @@ class DeleteFieldCommand(Command):
         return is_field_added
     
 class RenameFieldCommand(Command):
-    def __init__(self, uml_model, class_name, old_field_name, new_field_name, view, class_box):
+    def __init__(self, uml_model, class_name, old_field_name, new_field_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.old_name = old_field_name
         self.new_name = new_field_name
         self.view = view
         self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         is_field_renamed = self.uml_model._rename_field(self.class_name, self.old_name, self.new_name, is_undo_or_redo=is_undo_or_redo)
-        if is_field_renamed:
+        if is_field_renamed and self.is_gui:
             # Update the field name in the list and refresh the display
             for field_key in self.class_box.field_list:
                 if field_key[1] == self.old_name:
@@ -149,7 +176,7 @@ class RenameFieldCommand(Command):
 
     def undo(self):
         is_field_renamed = self.uml_model._rename_field(self.class_name, self.new_name, self.old_name, is_undo_or_redo=True)
-        if is_field_renamed:
+        if is_field_renamed and self.is_gui:
             # Update the field name in the list and refresh the display
             for field_key in self.class_box.field_list:
                 if field_key[1] == self.new_name:
@@ -164,66 +191,168 @@ class RenameFieldCommand(Command):
         return is_field_renamed
 
 class AddMethodCommand(Command):
-    def __init__(self, uml_model, class_name, type, method_name):
+    def __init__(self, uml_model, class_name, type, method_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
-        self.type = type
+        self.method_type = type
         self.method_name = method_name
+        self.view = view
+        self.class_box = class_box
+        self.method_num = None
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
-        return self.uml_model._add_method(self.class_name, self.type, self.method_name, is_undo_or_redo=is_undo_or_redo)
+        is_method_added = self.uml_model._add_method(self.class_name, self.method_type, self.method_name, is_undo_or_redo=is_undo_or_redo)
+        if is_method_added and self.is_gui:
+            method_text = self.class_box.create_text_item(self.method_type + " " + self.method_name + "()", is_method=True, selectable=False, color=self.class_box.text_color)
+            method_key = (self.method_type, self.method_name)
+            
+            # Create a new method entry as a dictionary with method_key, method_text, and parameters
+            method_entry = {
+                "method_key": method_key,
+                "method_text": method_text,
+                "parameters": []
+            }
+            # Append this dictionary to method_list
+            self.class_box.method_list.append(method_entry)
+            self.method_num = str(self.view.model._current_number_of_method)
+            if len(self.class_box.method_list) == 1:
+                self.class_box.create_separator(is_first=False, is_second=True)
+            self.class_box.update_box()  # Update the UML box
+        return is_method_added
 
     def undo(self):
-        return self.uml_model._delete_method(self.class_name, str(self.uml_model._current_number_of_method), is_undo_or_redo=True)
+        is_method_deleted = self.uml_model._delete_method(self.class_name, str(self.method_num), is_undo_or_redo=True)
+        if is_method_deleted and self.is_gui:
+            # Access and remove the method entry directly from method_list
+            method_entry = self.class_box.method_list[int(self.method_num) - 1]
+            # Check if the item is still in the scene before removing
+            if method_entry["method_text"].scene() == self.view.scene():
+                self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
+            self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
+            self.class_box.update_box()  # Refresh the UML box
+        return is_method_deleted
     
 class DeleteMethodCommand(Command):
-    def __init__(self, uml_model, class_name, method_num):
+    def __init__(self, uml_model, class_name, method_num, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.method_name = None
-        self.type = None
+        self.method_type = None
+        self.view = view
+        self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         # Capture the field type before deleting the method
         chosen_method = self.uml_model._get_method_based_on_index(self.class_name, self.method_num)
         if chosen_method is None:
             return False
-        self.type = chosen_method._get_type()
+        self.method_type = chosen_method._get_type()
         self.method_name = chosen_method._get_name()
-        return self.uml_model._delete_method(self.class_name, self.method_num, is_undo_or_redo=is_undo_or_redo)
+        
+        is_method_deleted = self.uml_model._delete_method(self.class_name, self.method_num, is_undo_or_redo=is_undo_or_redo)
+        if is_method_deleted and self.is_gui:
+            # Access and remove the method entry directly from method_list
+            method_entry = self.class_box.method_list[int(self.method_num) - 1]
+            # Check if the item is still in the scene before removing
+            if method_entry["method_text"].scene() == self.view.scene():
+                self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
+            self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
+            self.class_box.update_box()  # Refresh the UML box
+            
+        return is_method_deleted
         
     def undo(self):
-        if self.type and self.method_name:
-            return self.uml_model._add_method(self.class_name, self.type, self.method_name, is_undo_or_redo=True)
+        if self.method_type and self.method_name:
+            is_method_added = self.uml_model._add_method(self.class_name, self.method_type, self.method_name, is_undo_or_redo=True)
+            if is_method_added and self.is_gui:
+                method_text = self.class_box.create_text_item(self.method_type + " " + self.method_name + "()", is_method=True, selectable=False, color=self.class_box.text_color)
+                method_key = (self.method_type, self.method_name)
+                
+                # Create a new method entry as a dictionary with method_key, method_text, and parameters
+                method_entry = {
+                    "method_key": method_key,
+                    "method_text": method_text,
+                    "parameters": []
+                }
+                # Append this dictionary to method_list
+                self.class_box.method_list.insert(int(self.method_num) - 1, method_entry)
+                if len(self.class_box.method_list) == 1:
+                    self.class_box.create_separator(is_first=False, is_second=True)
+                self.class_box.update_box()  # Update the UML box
+            return is_method_added
         return False
     
 class RenameMethodCommand(Command):
-    def __init__(self, uml_model, class_name, method_num, new_name):
+    def __init__(self, uml_model, class_name, method_num, new_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.old_name = None
         self.new_name = new_name
+        self.view = view
+        self.class_box = class_box
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         chosen_method = self.uml_model._get_method_based_on_index(self.class_name, self.method_num)
         if chosen_method is None:
             return False
         self.old_name = chosen_method._get_name()
-        return self.uml_model._rename_method(self.class_name, self.method_num, self.new_name, is_undo_or_redo=is_undo_or_redo)
+        
+        is_method_renamed = self.uml_model._rename_method(self.class_name, self.method_num, self.new_name, is_undo_or_redo=is_undo_or_redo)
+        if is_method_renamed and self.is_gui:
+            # Access the method entry to rename
+            method_entry = self.class_box.method_list[int(self.method_num) - 1]
+            old_method_key = method_entry["method_key"]
+            method_type = old_method_key[0]
+
+            # Create the new method key with the updated name
+            new_method_key = (method_type, self.new_name)
+            method_entry["method_key"] = new_method_key  # Update key in method entry
+            
+            # Update the display text of the method in the UI
+            method_text = method_entry["method_text"]
+            param_list = method_entry["parameters"]
+            param_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+            method_text.setPlainText(f"{method_type} {self.new_name}({param_str})")
+            
+            self.class_box.update_box()  # Refresh the UML box display
+        return is_method_renamed
 
     def undo(self):
         if self.old_name:
-            return self.uml_model._rename_method(self.class_name, self.method_num, self.old_name, is_undo_or_redo=True)
+            is_method_renamed = self.uml_model._rename_method(self.class_name, self.method_num, self.old_name, is_undo_or_redo=True)
+            if is_method_renamed and self.is_gui:
+                # Access the method entry to rename
+                method_entry = self.class_box.method_list[int(self.method_num) - 1]
+                old_method_key = method_entry["method_key"]
+                method_type = old_method_key[0]
+
+                # Create the new method key with the updated name
+                new_method_key = (method_type, self.old_name)
+                method_entry["method_key"] = new_method_key  # Update key in method entry
+                
+                # Update the display text of the method in the UI
+                method_text = method_entry["method_text"]
+                param_list = method_entry["parameters"]
+                param_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
+                method_text.setPlainText(f"{method_type} {self.old_name}({param_str})")
+                
+                self.class_box.update_box()  # Refresh the UML box display
+            return is_method_renamed
     
 class AddParameterCommand(Command):
-    def __init__(self, uml_model, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
+    def __init__(self, uml_model, class_name: str = None, method_num: str = None, 
+                 param_type: str = None, param_name: str = None, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.param_type = param_type
         self.param_name = param_name
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=is_undo_or_redo)
@@ -232,12 +361,13 @@ class AddParameterCommand(Command):
         return self.uml_model._delete_parameter(self.class_name, str(self.method_num), self.param_name, is_undo_or_redo=True)
     
 class DeleteParameterCommand(Command):
-    def __init__(self, uml_model, class_name, method_num, param_name):
+    def __init__(self, uml_model, class_name, method_num, param_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.param_name = param_name
         self.param_type = None
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         chosen_param = self.uml_model._get_param_based_on_index(self.class_name, self.method_num, self.param_name)
@@ -251,12 +381,13 @@ class DeleteParameterCommand(Command):
             return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=True)
         
 class RenameParameterCommand(Command):
-    def __init__(self, uml_model, class_name, method_num, old_param_name, new_param_name):
+    def __init__(self, uml_model, class_name, method_num, old_param_name, new_param_name, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.old_param_name = old_param_name
         self.new_param_name = new_param_name
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         return self.uml_model._rename_parameter(self.class_name, self.method_num, self.old_param_name, self.new_param_name, is_undo_or_redo=is_undo_or_redo)
@@ -265,12 +396,13 @@ class RenameParameterCommand(Command):
         return self.uml_model._rename_parameter(self.class_name, self.method_num, self.new_param_name, self.old_param_name, is_undo_or_redo=True)
     
 class ReplaceParameterListCommand(Command):
-    def __init__(self, uml_model, class_name, method_num, new_param_list):
+    def __init__(self, uml_model, class_name, method_num, new_param_list, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
         self.old_param_list = None
         self.new_param_list = new_param_list
+        self.is_gui = is_gui
     
     def execute(self, is_undo_or_redo=False):
         self.old_param_list = self.uml_model._get_param_list(self.class_name, self.method_num)
@@ -281,11 +413,12 @@ class ReplaceParameterListCommand(Command):
             return self.uml_model._replace_param_list(self.class_name, self.method_num, self.old_param_list, is_undo_or_redo=True)
 
 class AddRelationshipCommand(Command):
-    def __init__(self, uml_model, source_class, dest_class, rel_type):
+    def __init__(self, uml_model, source_class, dest_class, rel_type, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.source_class = source_class
         self.dest_class = dest_class
         self.rel_type = rel_type
+        self.is_gui = is_gui
     
     def execute(self, is_undo_or_redo=False):
         return self.uml_model._add_relationship(self.source_class, self.dest_class, self.rel_type, is_gui=False, is_undo_or_redo=is_undo_or_redo)
@@ -294,11 +427,12 @@ class AddRelationshipCommand(Command):
         return self.uml_model._delete_relationship(self.source_class, self.dest_class, is_undo_or_redo=True)
     
 class DeleteRelationshipCommand(Command):
-    def __init__(self, uml_model, source_class, dest_class):
+    def __init__(self, uml_model, source_class, dest_class, view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.source_class = source_class
         self.dest_class = dest_class
         self.rel_type = None
+        self.is_gui = is_gui
     
     def execute(self, is_undo_or_redo=False):
         self.rel_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
@@ -314,7 +448,8 @@ class ChangeTypeCommand(Command):
                  input_name: str=None, source_class: str=None,
                  dest_class: str=None, new_type: str=None, 
                  is_field: bool=None,is_method: bool=None, 
-                 is_param: bool=None, is_rel: bool=None):
+                 is_param: bool=None, is_rel: bool=None,
+                 view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
         self.class_name = class_name
         self.method_num = method_num
@@ -327,6 +462,7 @@ class ChangeTypeCommand(Command):
         self.is_param = is_param
         self.is_rel = is_rel
         self.original_type = None  # To store the original type
+        self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
         # Determine if it's a field or method and capture the original type

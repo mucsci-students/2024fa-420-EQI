@@ -40,6 +40,13 @@ class UMLController:
         self.__user_view = view  # Reference to the view for displaying data
         self.__console = console  # Console for printing messages
         self.__storage_manager: Storage = self.__model._get_storage_manager()  # Storage manager to handle save/load functionality
+        
+    
+    def _get_model_obj(self):
+        return self.__model
+    
+    def _get_input_handler(self):
+        return self.__input_handler
     
     #################################################################
     

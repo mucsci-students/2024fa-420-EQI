@@ -8,6 +8,7 @@ to handle save/load functionality and provides static methods for creating UML c
 """
 ###################################################################################################
 
+import copy
 import re
 import os
 from typing import Dict, List
@@ -85,7 +86,7 @@ class UMLModel:
         return self.__relationship_list
     
     def _get_main_data(self) -> Dict:
-        return self.__main_data
+        return copy.deepcopy(self.__main_data)
     
     def _set_main_data(self, new_main_data) -> Dict:
         self.__main_data = new_main_data

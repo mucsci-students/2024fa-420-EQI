@@ -11,19 +11,18 @@ def main():
     parser = argparse.ArgumentParser(description="Run the UML application in GUI or CLI mode.")
     parser.add_argument('--cli', action='store_true', help="Run the program in CLI mode")
     args = parser.parse_args()
-
+    
+    cli_view = CLIView()
+    interface = Interface(cli_view)
     # CLI Mode
     if args.cli:
-        cli_view = CLIView()
-        interface = Interface(cli_view)
+        
         interface.attach_observer(cli_view)
         interface.main_program_loop()
 
     # GUI Mode
     else:
         app = QApplication(sys.argv)
-        cli_view = CLIView()  # CLI view can still be attached if needed
-        interface = Interface(cli_view)
         
         # GUI View
         gui_view = GUIView(interface)  # Pass the interface to the GUI view

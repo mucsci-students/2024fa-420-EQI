@@ -33,9 +33,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
         # Interface to communicate with UMLCoreManager
         self.interface = interface  
-        self.model = self.interface.Model
+        self.model = self.interface.Controller._get_model_obj()
         
-        self.input_handler = Command.InputHandler()
+        self.input_handler = self.interface.Controller._get_input_handler()
         
         # Class name list
         self.class_name_list = {}
@@ -105,7 +105,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {input_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
                 class_box = UMLClassBox(self.interface, class_name=input_class_name)
-                add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name, view=self, class_box=class_box)
+                add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name, view=self, class_box=class_box, is_gui=True)
                 is_class_added = self.input_handler.execute_command(add_class_command)
                 if is_class_added:
                     self.class_name_list[input_class_name] = class_box
@@ -119,7 +119,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if self.selected_class:
             # Remove the class box
             input_class_name = self.selected_class.class_name_text.toPlainText()
-            delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name, view=self, class_box=self.selected_class)
+            delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name, view=self, class_box=self.selected_class, is_gui=True)
             is_class_deleted = self.input_handler.execute_command(delete_class_command)
             if is_class_deleted:
                 # Create a copy of the arrow_line_list to avoid modifying the list while iterating
@@ -138,8 +138,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Remove the arrow from the selected class's arrow_line_list
                     self.selected_class.arrow_line_list.remove(arrow_line)
                 # Remove the class from the class_name_list and scene
-                self.class_name_list.pop(input_class_name, None)
-                self.selected_class = None
+                self.class_name_list.pop(input_class_name, None)     
+                self.selected_class = None    
             else:
                 QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' does not exist!")
         else:
@@ -162,7 +162,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if not is_class_name_valid:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {new_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
-                rename_class_command = Command.RenameClassCommand(self.model, class_name=old_class_name, new_name=new_class_name, view=self, class_box=self.selected_class)
+                rename_class_command = Command.RenameClassCommand(self.model, class_name=old_class_name, new_name=new_class_name, view=self, class_box=self.selected_class, is_gui=True)
                 is_class_renamed = self.input_handler.execute_command(rename_class_command)
                 if is_class_renamed:
                     self.class_name_list[new_class_name] = self.class_name_list.pop(old_class_name)
@@ -232,7 +232,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         return
                     
                     add_field_command = Command.AddFieldCommand(self.model, class_name=selected_class_name, type=field_type, 
-                                                                field_name=field_name, view=self, class_box=self.selected_class)
+                                                                field_name=field_name, view=self, class_box=self.selected_class, is_gui=True)
                     is_field_added = self.input_handler.execute_command(add_field_command)
                     
                     if not is_field_added:
@@ -261,7 +261,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
                     delete_field_command = Command.DeleteFieldCommand(self.model, class_name=selected_class_name, field_name=field_name, 
-                                                                      view=self, class_box=self.selected_class)
+                                                                      view=self, class_box=self.selected_class, is_gui=True)
                     self.input_handler.execute_command(delete_field_command)
     
     def rename_field(self):
@@ -294,9 +294,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         return
      
                     rename_field_command = Command.RenameFieldCommand(self.model, class_name=selected_class_name, old_field_name=old_field_name, 
-                                                                      new_field_name=new_field_name, view=self, class_box=self.selected_class)
+                                                                      new_field_name=new_field_name, view=self, class_box=self.selected_class, is_gui=True)
                     self.input_handler.execute_command(rename_field_command)
                         
+       
     def edit_field_type(self):
         if not self.selected_class:
             pass
@@ -371,26 +372,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
-                    add_method_command = Command.AddMethodCommand(self.model, class_name=selected_class_name, type=method_type, method_name=method_name)
+                    add_method_command = Command.AddMethodCommand(self.model, class_name=selected_class_name, type=method_type, method_name=method_name, 
+                                                                  view=self, class_box=self.selected_class, is_gui=True)
                     is_method_added = self.input_handler.execute_command(add_method_command)
                     
-                    if is_method_added:
-                        method_text = self.selected_class.create_text_item(method_type + " " + method_name + "()", is_method=True, selectable=False, color=self.selected_class.text_color)
-                        method_key = (method_type, method_name)
-                        
-                        # Create a new method entry as a dictionary with method_key, method_text, and parameters
-                        method_entry = {
-                            "method_key": method_key,
-                            "method_text": method_text,
-                            "parameters": []
-                        }
-                        # Append this dictionary to method_list
-                        self.selected_class.method_list.append(method_entry)
-
-                        if len(self.selected_class.method_list) == 1:
-                            self.selected_class.create_separator(is_first=False, is_second=True)
-                        self.selected_class.update_box()  # Update the UML box
-                    else:
+                    if not is_method_added:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")
     
     def delete_method(self):
@@ -422,16 +408,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
                     # Execute the delete command with the correct method index
-                    delete_method_command = Command.DeleteMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1))
-                    is_method_deleted = self.input_handler.execute_command(delete_method_command)
-
-                    if is_method_deleted:
-                        # Access and remove the method entry directly from method_list
-                        method_entry = self.selected_class.method_list[selected_index]
-                        self.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
-                        self.selected_class.method_list.pop(selected_index)  # Remove the method from method_list
-                        self.selected_class.update_box()  # Refresh the UML box
-
+                    delete_method_command = Command.DeleteMethodCommand(self.model, class_name=selected_class_name, 
+                                                                        method_num=str(selected_index + 1), view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(delete_method_command)
 
     def rename_method(self):
         """
@@ -475,26 +454,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
-                    rename_method_command = Command.RenameMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1), new_name=new_method_name)
-                    is_method_renamed = self.input_handler.execute_command(rename_method_command)
+                    rename_method_command = Command.RenameMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1), 
+                                                                        new_name=new_method_name, view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(rename_method_command)
                     
-                    if is_method_renamed:
-                        # Access the method entry to rename
-                        method_entry = self.selected_class.method_list[selected_index]
-                        old_method_key = method_entry["method_key"]
-                        method_type = old_method_key[0]
-
-                        # Create the new method key with the updated name
-                        new_method_key = (method_type, new_method_name)
-                        method_entry["method_key"] = new_method_key  # Update key in method entry
-                        
-                        # Update the display text of the method in the UI
-                        method_text = method_entry["method_text"]
-                        param_list = method_entry["parameters"]
-                        param_str = ', '.join(f"{param_type} {param_name}" for param_type, param_name in param_list)
-                        method_text.setPlainText(f"{method_type} {new_method_name}({param_str})")
-                        
-                        self.selected_class.update_box()  # Refresh the UML box display
+                    
             
     def add_param(self,loaded_class_name=None, loaded_method_name=None, loaded_param_name=None, is_loading=False):
         """
@@ -574,13 +538,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         # Get the method number (assuming method numbers start from 1)
                         method_num = str(selected_index + 1)
                         
-                        add_param_command = Command.AddParameterCommand(
-                            self.model,
-                            class_name=selected_class_name,
-                            method_num=method_num,
-                            param_type=param_type,
-                            param_name=param_name
-                        )
+                        add_param_command = Command.AddParameterCommand(self.model,class_name=selected_class_name,
+                                                                        method_num=method_num,param_type=param_type,
+                                                                        param_name=param_name,is_gui=True)
                         is_param_added = self.input_handler.execute_command(add_param_command)
                         
                         if is_param_added:
@@ -608,12 +568,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_method_index = delete_param_dialog.input_widgets["method_name_widget"].currentIndex()
                     selected_param_index = delete_param_dialog.input_widgets["param_name_widget"].currentIndex()
                     
-                    delete_param_command = Command.DeleteParameterCommand(
-                        self.model, 
-                        class_name=selected_class_name, 
-                        method_num=str(selected_method_index + 1), 
-                        param_name=param_name
-                    )
+                    delete_param_command = Command.DeleteParameterCommand(self.model, class_name=selected_class_name,
+                                                                          method_num=str(selected_method_index + 1), param_name=param_name, is_gui=True)
                     is_param_deleted = self.input_handler.execute_command(delete_param_command)
                     method_entry = self.selected_class.method_list[selected_method_index]
                     if is_param_deleted:
@@ -666,7 +622,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     
                     rename_param_command = Command.RenameParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_method_index + 1), 
-                                                                          old_param_name=old_param_name, new_param_name=new_param_name)
+                                                                          old_param_name=old_param_name, new_param_name=new_param_name, is_gui=True)
                     is_param_renamed = self.input_handler.execute_command(rename_param_command)
 
                     if is_param_renamed:
@@ -742,7 +698,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
                                                                                method_num=str(selected_method_index + 1), 
-                                                                               new_param_list=new_param_list_str)
+                                                                               new_param_list=new_param_list_str, is_gui=True)
                     is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
                     
                     if is_param_list_replaced:
@@ -820,7 +776,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     source_class = self.selected_class.class_name_text.toPlainText()
                     
                     add_rel_command = Command.AddRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class, 
-                                           rel_type=type)
+                                           rel_type=type, is_gui=True)
                     is_rel_added = self.input_handler.execute_command(add_rel_command)
                     
                     if is_rel_added:
@@ -859,7 +815,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Get the old and new field names after the dialog is accepted
                     dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()`
                      
-                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class)
+                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class, is_gui=True)
                     is_rel_deleted = self.input_handler.execute_command(delete_rel_command)
                     
                     if not is_rel_deleted:
