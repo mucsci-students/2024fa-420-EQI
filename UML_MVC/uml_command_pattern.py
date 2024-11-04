@@ -898,7 +898,17 @@ class ChangeTypeCommand(Command):
             if chosen_param is None:
                 return False
             self.original_param_type = chosen_param._get_type()
-            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.new_type, is_param=True, is_undo_or_redo=is_undo_or_redo)
+            is_param_type_changed = self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, 
+                                                                     new_type=self.new_type, is_param=True, is_undo_or_redo=is_undo_or_redo)
+            if is_param_type_changed and self.is_gui:
+                method_entry = self.class_box.method_list[int(self.method_num) - 1]
+                for i, param_tuple in enumerate(method_entry["parameters"]):
+                    if param_tuple[1] == self.input_name:
+                        method_entry["parameters"][i] = (self.new_type, param_tuple[1])
+                        break  # Exit the loop after renaming
+                self.class_box.update_box()  # Refresh the UML box
+            
+            return is_param_type_changed
         
         elif self.is_rel:
             self.original_rel_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
@@ -977,7 +987,17 @@ class ChangeTypeCommand(Command):
                 return is_method_return_type_changed
         
         elif self.is_param and self.original_param_type:
-            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.original_rel_type, is_param=True, is_undo_or_redo=True)
+            is_param_type_changed = self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, 
+                                                                     new_type=self.original_rel_type, is_param=True, is_undo_or_redo=True)
+            if is_param_type_changed and self.is_gui:
+                method_entry = self.class_box.method_list[int(self.method_num) - 1]
+                for i, param_tuple in enumerate(method_entry["parameters"]):
+                    if param_tuple[1] == self.input_name:
+                        method_entry["parameters"][i] = (self.original_param_type, param_tuple[1])
+                        break  # Exit the loop after renaming
+                self.class_box.update_box()  # Refresh the UML box
+            
+            return is_param_type_changed
         
         elif self.is_rel and self.original_rel_type:
             is_rel_type_changed = self.uml_model._change_data_type(

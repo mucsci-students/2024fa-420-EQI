@@ -719,6 +719,36 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     if not is_param_list_replaced:
                         method_key = method_entry["method_key"]
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
+                        
+    def edit_param_type(self):
+        if self.selected_class:
+            if self.selected_class.method_list: 
+                # Initialize the dialog
+                edit_param_type_dialog = Dialog("Edit Method Return Type")
+                edit_param_type_dialog.edit_param_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_param_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    method_num = edit_param_type_dialog.input_widgets['method_name_widget'].currentIndex()
+                    param_name = edit_param_type_dialog.input_widgets['param_name']
+                    new_param_type = edit_param_type_dialog.input_widgets['new_param_type'].text()
+                    
+                    edit_param_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                new_type=new_param_type,
+                                method_num=str(method_num + 1),
+                                input_name=param_name,
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_param=True
+                            )
+                    self.input_handler.execute_command(edit_param_type_command)
+    
             
     def add_relationship(self, loaded_source_class=None, loaded_dest_class=None, loaded_type=None, is_loading=False):
         """
@@ -1015,9 +1045,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if self.selected_class.param_num > 0:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=True)
                     self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=True)
+                    self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=True)
                 else:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)
-                    self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False)
+                    self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False) 
+                    self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=False)
                 self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=True)
             else:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=False)
@@ -1027,8 +1059,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 self.add_context_menu_action(contextMenu, "Add Parameter", self.add_param, enabled=False)
                 self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=False)
                 self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=False)
-
+                
             self.add_context_menu_separator(contextMenu)
 
             # RELATIONSHIP OPTIONS

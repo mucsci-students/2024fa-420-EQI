@@ -37,7 +37,7 @@ class CustomInputDialog(QtWidgets.QDialog):
         
     def edit_field_type_popup(self, selected_class):
         """
-        Creates a dialog for renaming a field.
+        Creates a dialog for renaming a field type.
         """
         field_name_list = [field_key[1] for field_key in selected_class.field_key_list]
         field_name = self.__add_input("Select Field To Edit Type:", widget_type="combo", options=field_name_list)
@@ -300,6 +300,51 @@ class CustomInputDialog(QtWidgets.QDialog):
         
         # Add buttons (OK/Cancel)
         self.__add_buttons()
+        
+    def edit_param_type_popup(self, selected_class):
+        """
+        Creates a dialog for renaming a parameter type.
+        """
+        method_names = []
+        method_keys = []
+        
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Convert parameter tuples to strings
+            param_str_list = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+            params_str = ', '.join(param_str_list)
+            # Build the display string
+            display_str = f"{i + 1}: {method_key[0]} {method_key[1]}({params_str})"
+            method_names.append(display_str)
+            method_keys.append(method_key)
+  
+        # Create combo box for methods
+        method_name_widget = self.__add_input("Select Method To Change Parameter:", widget_type="combo", options=method_names)
+
+        selected_index = method_name_widget.currentIndex()
+        chosen_entry = selected_class.method_list[selected_index]
+
+        # Get the parameters for the initially selected method
+        param_options = [f"{param_type} {param_name}" for param_type, param_name in chosen_entry["parameters"]]
+
+        param_name_widget = self.__add_input("Select Parameter To Change Type:", widget_type="combo", options=param_options)
+        param_name_format = param_name_widget.currentText()
+        param_name = param_name_format.split()[-1]  # Extract only the param_name (last part)
+        
+        new_param_type = self.__add_input("Enter New Parameter Type:", widget_type="line")
+        
+        self.input_widgets["method_name_widget"] = method_name_widget
+        self.input_widgets["param_name"] = param_name
+        self.input_widgets["new_param_type"] = new_param_type
+        
+        self.__add_buttons()
+        
+        # Connect the method_name combo box change to update the parameter list dynamically
+        method_name_widget.currentIndexChanged.connect(lambda index: self.__update_param_list(selected_class, index, param_name_widget))
+
+        # Connect the param_name_widget change to update 'param_name_only'
+        param_name_widget.currentIndexChanged.connect(lambda: self.__update_param_name_only(param_name_widget))
         
     
     def add_relationship_popup(self, class_name_list, type_list):
