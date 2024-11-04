@@ -61,15 +61,38 @@ def test_get_method_and_parameters_list(uml_class):
     # Test getting the method and parameters list (initially empty)
     assert uml_class._get_method_and_parameters_list() == []
 
-def test_convert_to_json_uml_class(uml_class):
+def test_get_position():
+    # Reset position to ensure consistent test results
+    UMLClass._UMLClass__last_x = 0
+    UMLClass._UMLClass__last_y = 0
+
+    # Create an instance of UMLClass with default position
+    uml_class = UMLClass(class_name="TestClass")
+
+    # Check if the position is as expected
+    expected_position = {'x': 0, 'y': 0}  # Starting position after reset
+    assert uml_class._get_position() == expected_position
+
+
+def test_convert_to_json_uml_class():
+    # Reset position to ensure consistent test results
+    UMLClass._UMLClass__last_x = 0
+    UMLClass._UMLClass__last_y = 0
+
+    # Create an instance of UMLClass with known data
+    uml_class = UMLClass(class_name="TestClass")
+
     # Test conversion of UMLClass to JSON format
     json_data = uml_class._convert_to_json_uml_class()
-    # Verify the structure and contents of the JSON
+
+    # Expected JSON structure
     expected_json = {
         "name": "TestClass",
         "fields": [],
-        "methods": []
+        "methods": [],
+        "position": {'x': 0, 'y': 0}  # Starting position after reset
     }
+
     assert json_data == expected_json
 
 def test_str(uml_class):
@@ -96,13 +119,18 @@ def test_modify_class_name_after_initialization(uml_class):
     assert uml_class._get_class_name() == "ModifiedClassName"
 
 def test_empty_class_json_conversion():
+    # Reset position to ensure consistent test results
+    UMLClass._UMLClass__last_x = 0
+    UMLClass._UMLClass__last_y = 0
+
     # Test JSON conversion for an empty UMLClass instance
     empty_class = UMLClass()
     json_data = empty_class._convert_to_json_uml_class()
     expected_json = {
         "name": "",
         "fields": [],
-        "methods": []
+        "methods": [],
+        "position": {'x': 0, 'y': 0}  # Adjust to the expected initial position
     }
     assert json_data == expected_json
 
@@ -120,3 +148,16 @@ def test_set_empty_field_name(uml_class, sample_field):
     sample_field._set_name("")
     uml_class._set_class_field_list([sample_field])
     assert uml_class._get_class_field_list()[0]._get_name() == ""
+
+def test_set_position():
+    # Create an instance of UMLClass with default position
+    uml_class = UMLClass(class_name="TestClass")
+
+    # Set a new position
+    new_x, new_y = 50, 100
+    uml_class._set_position(new_x, new_y)
+
+    # Verify that the position has been updated
+    expected_position = {'x': new_x, 'y': new_y}
+    assert uml_class._get_position() == expected_position
+
