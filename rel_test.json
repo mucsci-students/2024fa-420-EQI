@@ -23,34 +23,19 @@
     ],
     "relationships": [
         {
-            "source": "Human",
-            "destination": "Human",
-            "type": "Aggregation"
-        },
-        {
-            "source": "Human",
-            "destination": "Animal",
-            "type": "Composition"
-        },
-        {
-            "source": "Animal",
+            "source": "House",
             "destination": "Animal",
             "type": "Realization"
         },
         {
-            "source": "Animal",
+            "source": "House",
             "destination": "Human",
+            "type": "Composition"
+        },
+        {
+            "source": "House",
+            "destination": "TEST",
             "type": "Inheritance"
-        },
-        {
-            "source": "House",
-            "destination": "Animal",
-            "type": "Realization"
-        },
-        {
-            "source": "House",
-            "destination": "Human",
-            "type": "Composition"
         }
     ]
 }
