@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_arrow_line import UMLArrow as ArrowLine
 
 class Command(ABC):
     @abstractmethod
@@ -21,23 +22,28 @@ class AddClassCommand(Command):
         is_class_added = self.uml_model._add_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
         if is_class_added and self.is_gui:
             self.view.scene().addItem(self.class_box)
+            self.view.class_name_list[self.class_name] = self.class_box
         return is_class_added
 
     def undo(self):
-        self.view.scene().removeItem(self.class_box)
-        return self.uml_model._delete_class(self.class_name, is_undo_or_redo=True)
-
-class DeleteClassCommand(Command):
-    def __init__(self, uml_model, class_name, view=None, class_box=None, is_gui=False):
-        self.uml_model = uml_model
-        self.class_name = class_name
-        self.view = view
-        self.class_box = class_box
-        self.is_gui = is_gui
-        self.command_list_copy = None
-
-    def execute(self, is_undo_or_redo=False):
-        if self.is_gui:
+        if self.is_gui:       
+            # Create a copy of the arrow_line_list to avoid modifying the list while iterating
+            arrow_lines = list(self.class_box.arrow_line_list)
+            for arrow_line in arrow_lines:
+                # Remove the arrow from the scene
+                if arrow_line.scene() == self.view.scene():  # Check if the arrow is in the current scene
+                    self.view.scene().removeItem(arrow_line)
+                # Remove the arrow from the source class's arrow_line_list if it's not the selected class
+                if arrow_line.source_class != self.class_box:
+                    if arrow_line in arrow_line.source_class.arrow_line_list:
+                        arrow_line.source_class.arrow_line_list.remove(arrow_line)
+                # Remove the arrow from the destination class's arrow_line_list if it's not the selected class
+                if arrow_line.dest_class != self.class_box:
+                    if arrow_line in arrow_line.dest_class.arrow_line_list:
+                        arrow_line.dest_class.arrow_line_list.remove(arrow_line)
+                # Remove the arrow from the selected class's arrow_line_list
+                self.class_box.arrow_line_list.remove(arrow_line)
+                
             # Clear all fields and methods in the class_box
             for field_item in self.class_box.field_list.values():
                 if field_item.scene() == self.view.scene():
@@ -49,22 +55,189 @@ class DeleteClassCommand(Command):
                 method_entry["method_key"] = None
                 method_entry["method_text"] = None
                 method_entry["parameters"] = []
+                
             # Clear lists to avoid any visual overlaps on restore
             self.class_box.field_list = {}
             self.class_box.field_key_list = []
             self.class_box.method_list = []
             self.class_box.param_num = 0 
-            self.view.model._current_number_of_method = 0
+            # self.view.model._current_number_of_method = 0  
+            
+            # Remove the class from the class_name_list and scene
+            self.view.class_name_list.pop(self.class_name, None)  
+            if self.class_box.scene() == self.view.scene():
+                self.view.scene().removeItem(self.class_box)    
+        return self.uml_model._delete_class(self.class_name, is_undo_or_redo=True)
+    
+class DeleteClassCommand(Command):
+    def __init__(self, uml_model, class_name, view=None, class_box=None, is_gui=False):
+        super().__init__()
+        self.uml_model = uml_model
+        self.class_name = class_name
+        self.view = view
+        self.class_box = class_box
+        self.is_gui = is_gui
+
+        # Store the state of the class before deletion
+        self.stored_fields = []          # List of tuples: (field_type, field_name)
+        self.stored_methods = []         # List of tuples: (method_type, method_name)
+        self.stored_parameters = {}      # Dict: {method_key: [(param_type, param_name), ...]}
+        self.stored_relationships = {}   # List of arrow_line objects
+
+    def execute(self, is_undo_or_redo=False):
+        if self.is_gui:
+            # 0. Store relationship
+            self.stored_relationships = self.view.relationship_track_list
+            
+            # 1. Store all fields before deletion
+            self.stored_fields = list(self.class_box.field_list.keys())
+
+            # 2. Store all methods and their parameters before deletion
+            for method_entry in self.class_box.method_list:
+                method_key = method_entry["method_key"]
+                self.stored_methods.append(method_key)
+                self.stored_parameters[method_key] = list(method_entry["parameters"])
+
+            # 3. Remove all associated arrow lines from the scene
+            # Create a copy of the arrow_line_list to avoid modifying the list while iterating
+            arrow_lines = list(self.class_box.arrow_line_list)
+            for arrow_line in arrow_lines:
+                # Remove the arrow from the scene
+                if arrow_line.scene() == self.view.scene():  # Check if the arrow is in the current scene
+                    self.view.scene().removeItem(arrow_line)
+                # Remove the arrow from the source class's arrow_line_list if it's not the selected class
+                if arrow_line.source_class != self.class_box:
+                    if arrow_line in arrow_line.source_class.arrow_line_list:
+                        arrow_line.source_class.arrow_line_list.remove(arrow_line)
+                # Remove the arrow from the destination class's arrow_line_list if it's not the selected class
+                if arrow_line.dest_class != self.class_box:
+                    if arrow_line in arrow_line.dest_class.arrow_line_list:
+                        arrow_line.dest_class.arrow_line_list.remove(arrow_line)
+                # Remove the arrow from the selected class's arrow_line_list
+                self.class_box.arrow_line_list.remove(arrow_line)
+
+            # 4. Remove all fields from the scene
+            for field_key in self.stored_fields:
+                field_type, field_name = field_key
+                field_text = self.class_box.field_list.get(field_key)
+                if field_text and field_text.scene() == self.view.scene():
+                    self.view.scene().removeItem(field_text)
+
+            # 5. Remove all methods and their parameters from the scene
+            for method_entry in self.class_box.method_list:
+                method_text = method_entry["method_text"]
+                if method_text and method_text.scene() == self.view.scene():
+                    self.view.scene().removeItem(method_text)
+
+            # 6. Update the class box and remove it from the scene
             self.class_box.update_box()
-            self.view.scene().removeItem(self.class_box)
-            # Store a copy of the main data before deletion
-            self.main_data_copy = self.uml_model._get_main_data()
-                  
-        return self.uml_model._delete_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
+            if self.class_box.scene() == self.view.scene():
+                self.view.scene().removeItem(self.class_box)
+
+            # 7. Clear lists to avoid any visual overlaps on restore
+            self.class_box.field_list = {}
+            self.class_box.field_key_list = []
+            self.class_box.method_list = []
+            self.class_box.param_num = 0
+            self.view.relationship_track_list = {}
+            self.view.class_name_list.pop(self.class_name, None)
+
+        # 8. Delete the class from the model
+        result = self.uml_model._delete_class(self.class_name, is_undo_or_redo=is_undo_or_redo)
+        return result
 
     def undo(self):
-        for command in self.view.input_handler.command_list[:-1]:
-            command.execute(is_undo_or_redo=True)
+        if self.is_gui:
+            if self.class_name in self.view.class_name_list:
+                return False
+             # 1. Re-execute the AddClassCommand to add the class back
+            add_class_command = AddClassCommand(
+                uml_model=self.uml_model,
+                class_name=self.class_name,
+                view=self.view,
+                class_box=self.class_box,
+                is_gui=True
+            )
+            add_class_command.execute(is_undo_or_redo=True)
+
+            # 2. Re-execute all AddFieldCommands to restore fields
+            for field_key in self.stored_fields:
+                field_type, field_name = field_key
+                add_field_command = AddFieldCommand(
+                    uml_model=self.uml_model,
+                    class_name=self.class_name,
+                    type=field_type,
+                    field_name=field_name,
+                    view=self.view,
+                    class_box=self.class_box,
+                    is_gui=True
+                )
+                add_field_command.execute(is_undo_or_redo=True)
+
+            # 3. Re-execute all AddMethodCommands to restore methods
+            for i, method_key in enumerate(self.stored_methods, start=1):
+                method_type, method_name = method_key
+                add_method_command = AddMethodCommand(
+                    uml_model=self.uml_model,
+                    class_name=self.class_name,
+                    type=method_type,
+                    method_name=method_name,
+                    view=self.view,
+                    class_box=self.class_box,
+                    is_gui=True
+                )
+                add_method_command.execute(is_undo_or_redo=True)
+
+                # 4. Re-execute all AddParameterCommands for each method
+                parameters = self.stored_parameters.get(method_key, [])
+                method_num = str(i)  # Assign method_num based on the order of restoration
+                for param_type, param_name in parameters:
+                    add_param_command = AddParameterCommand(
+                        uml_model=self.uml_model,
+                        class_name=self.class_name,
+                        method_num=method_num,
+                        param_type=param_type,
+                        param_name=param_name,
+                        view=self.view,
+                        class_box=self.class_box,
+                        is_gui=True
+                    )
+                    add_param_command.execute(is_undo_or_redo=True)
+
+            # 5. Restore all relationships (arrow lines)
+            for source_class_str, arrow_list in self.stored_relationships.items():
+                # Retrieve the source class object from the view's class_name_list
+                source_class_obj = self.view.class_name_list.get(source_class_str)
+                if not source_class_obj:
+                    continue  # Skip restoring this relationship if source class doesn't exist
+
+                for dest_class_str, arrow_line in arrow_list:
+                    # Retrieve the destination class object from the view's class_name_list
+                    dest_class_obj = self.view.class_name_list.get(dest_class_str)
+                    if not dest_class_obj:
+                        continue  # Skip restoring this relationship if destination class doesn't exist
+
+                    # Ensure that class_box is set to the source class's class_box
+                    source_class_box = source_class_obj  
+
+                    # Instantiate the AddRelationshipCommand with class objects
+                    add_relationship_command = AddRelationshipCommand(
+                        uml_model=self.uml_model,
+                        source_class=source_class_str,          # Pass class object, not string
+                        dest_class=dest_class_str,              # Pass class object, not string
+                        rel_type=arrow_line.arrow_type,          # Use the stored relationship type
+                        view=self.view,
+                        class_box=source_class_box,             # Set to source class's class_box
+                        is_gui=True
+                    )
+                    add_relationship_command.execute(is_undo_or_redo=True)
+           
+
+        self.stored_fields = []
+        self.stored_methods = []
+        self.stored_parameters = {}
+        self.stored_relationships = {}
+        return True
 
 class RenameClassCommand(Command):
     def __init__(self, uml_model, class_name, new_name, view=None, class_box=None, is_gui=False):
@@ -201,6 +374,7 @@ class AddMethodCommand(Command):
         self.class_name = class_name
         self.method_type = type
         self.method_name = method_name
+        self.method_text = None
         self.view = view
         self.class_box = class_box
         self.method_num = None
@@ -220,7 +394,7 @@ class AddMethodCommand(Command):
             }
             # Append this dictionary to method_list
             self.class_box.method_list.append(method_entry)
-            self.method_num = str(self.view.model._current_number_of_method)
+            self.method_num = str(len(self.class_box.method_list))
             if len(self.class_box.method_list) == 1:
                 self.class_box.create_separator(is_first=False, is_second=True)
             self.class_box.update_box()  # Update the UML box
@@ -366,29 +540,24 @@ class AddParameterCommand(Command):
         self.is_gui = is_gui
 
     def execute(self, is_undo_or_redo=False):
-        if self.is_gui:
+        is_param_added = self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=is_undo_or_redo)
+        if is_param_added and self.is_gui:
             # Append the parameter to the method's parameter list
             param_tuple = (self.param_type, self.param_name)
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
-            self.class_box.param_num += 1
             method_entry["parameters"].append(param_tuple)
+            self.class_box.param_num = len(method_entry["parameters"])
             self.selected_param_index = self.class_box.param_num - 1
-            
-            print(f"Added parameter: {param_tuple} | Current parameters: {method_entry['parameters']}")
-            
             self.class_box.update_box()  # Update the UML box
-        return self.uml_model._add_parameter(self.class_name, str(self.method_num), self.param_type, self.param_name, is_undo_or_redo=is_undo_or_redo)
+        return is_param_added
 
     def undo(self):
         if self.is_gui:
             # Access the "parameters" list for the selected method and remove the parameter by index
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
-            self.class_box.param_num -= 1
             method_entry["parameters"].pop(self.selected_param_index)
-            
-            print(f"Undo add parameter: {self.param_name} | Remaining parameters: {method_entry['parameters']}")
-            
+            self.class_box.param_num = len(method_entry["parameters"])
             self.class_box.update_box()  # Refresh the UML box
         return self.uml_model._delete_parameter(self.class_name, str(self.method_num), self.param_name, is_undo_or_redo=True)
     
@@ -451,9 +620,6 @@ class RenameParameterCommand(Command):
                 if param_tuple[1] == self.old_param_name:
                     # Replace the old tuple with a new one containing the new parameter name
                     method_entry["parameters"][i] = (param_tuple[0], self.new_param_name)
-                    
-                    print(f"Renamed parameter '{self.old_param_name}' to '{self.new_param_name}'.")
-                    
                     break  # Exit the loop after renaming
             self.class_box.update_box()  # Refresh the UML box
         return is_param_renamed
@@ -467,9 +633,6 @@ class RenameParameterCommand(Command):
                 if param_tuple[1] == self.new_param_name:
                     # Replace the old tuple with a new one containing the new parameter name
                     method_entry["parameters"][i] = (param_tuple[0], self.old_param_name)
-                    
-                    print(f"Renamed parameter '{self.new_param_name}' to '{self.old_param_name}'.")
-                    
                     break  # Exit the loop after renaming
             self.class_box.update_box()  # Refresh the UML box
         return is_param_renamed
@@ -498,9 +661,6 @@ class ReplaceParameterListCommand(Command):
             self.old_param_list_str = [f"{type} {param}" for type, param in self.old_param_list_obj]
             method_entry["parameters"] = self.new_param_list_obj
             self.class_box.param_num = len(method_entry["parameters"])
-            
-            print(f"Replaced parameters | New parameters: {method_entry['parameters']} | Old parameters: {self.old_param_list_obj}")
-            
             # Update the box to reflect changes
             self.class_box.update_box()
         return is_param_list_replaced
@@ -513,42 +673,142 @@ class ReplaceParameterListCommand(Command):
             self.new_param_list_obj = method_entry["parameters"]
             method_entry["parameters"] = self.old_param_list_obj
             self.class_box.param_num = len(method_entry["parameters"])
-            
-            print(f"Undo replace parameters | Restored parameters: {method_entry['parameters']}")
-            
             # Update the box to reflect changes
             self.class_box.update_box()
         return is_param_list_replaced
     
 class AddRelationshipCommand(Command):
     def __init__(self, uml_model, source_class, dest_class, rel_type, view=None, class_box=None, is_gui=False):
+        super().__init__()
         self.uml_model = uml_model
-        self.source_class = source_class
-        self.dest_class = dest_class
-        self.rel_type = rel_type
-        self.is_gui = is_gui
+        self.source_class = source_class          # String: Source class name
+        self.dest_class = dest_class              # String: Destination class name
+        self.rel_type = rel_type                  # String: Relationship type
+        self.view = view                          # View instance
+        self.class_box = class_box                # GUI component of source class
+        self.is_gui = is_gui                      # Boolean: Whether to update GUI
+        self.arrow_line = None                    # To keep track of the created arrow
     
     def execute(self, is_undo_or_redo=False):
-        return self.uml_model._add_relationship(self.source_class, self.dest_class, self.rel_type, is_gui=False, is_undo_or_redo=is_undo_or_redo)
-
+        # Add the relationship to the model
+        is_relationship_added = self.uml_model._add_relationship(
+            self.source_class, 
+            self.dest_class, 
+            self.rel_type, 
+            is_gui=self.is_gui,                      # Use self.is_gui instead of hardcoding
+            is_undo_or_redo=is_undo_or_redo
+        )
+        if is_relationship_added and self.is_gui:
+            self.class_box.is_source_class = True
+            # Retrieve the source and destination class boxes
+            source_class_obj = self.class_box                     # GUI component of source class
+            dest_class_obj = self.view.class_name_list[self.dest_class]  # GUI component of destination class
+            
+            # Create the arrow line between the GUI components
+            self.arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.rel_type)
+            
+            # Track the relationship in the view
+            self.view.track_relationship(self.source_class, self.dest_class, self.arrow_line)
+            
+            # Add the arrow to the scene to display it
+            self.view.scene().addItem(self.arrow_line)
+            
+            # Update the source class box to reflect the new relationship
+            self.class_box.update_box()
+        return is_relationship_added
+    
     def undo(self):
-        return self.uml_model._delete_relationship(self.source_class, self.dest_class, is_undo_or_redo=True)
+        # Remove the relationship from the model
+        is_relationship_deleted = self.uml_model._delete_relationship(
+            self.source_class, 
+            self.dest_class, 
+            is_undo_or_redo=True
+        )
+        if is_relationship_deleted and self.is_gui:
+            # Remove the arrow from the scene and the tracking list
+            for each_tuple in self.view.relationship_track_list.get(self.source_class, []):
+                if each_tuple[0] == self.dest_class:
+                    arrow_line = each_tuple[1]
+                    if arrow_line.scene() == self.view.scene():
+                        self.view.scene().removeItem(arrow_line)
+                        self.view.relationship_track_list[self.source_class].remove(each_tuple)
+                        break
+            # If no more relationships from the source class, update the flag
+            if len(self.view.relationship_track_list.get(self.source_class, [])) == 0:
+                self.class_box.is_source_class = False
+        return is_relationship_deleted
+
     
 class DeleteRelationshipCommand(Command):
     def __init__(self, uml_model, source_class, dest_class, view=None, class_box=None, is_gui=False):
+        super().__init__()
         self.uml_model = uml_model
-        self.source_class = source_class
-        self.dest_class = dest_class
-        self.rel_type = None
-        self.is_gui = is_gui
+        self.source_class = source_class          # String: Source class name
+        self.dest_class = dest_class              # String: Destination class name
+        self.rel_type = None                      # To store the relationship type
+        self.view = view                          # View instance
+        self.class_box = class_box                # GUI component of source class
+        self.is_gui = is_gui                      # Boolean: Whether to update GUI
+        self.arrow_line = None                    # To keep track of the deleted arrow
     
     def execute(self, is_undo_or_redo=False):
+        # Retrieve the relationship type before deletion
         self.rel_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
-        return self.uml_model._delete_relationship(self.source_class, self.dest_class, is_undo_or_redo=is_undo_or_redo)
-
+        
+        # Delete the relationship from the model
+        is_relationship_deleted = self.uml_model._delete_relationship(
+            self.source_class, 
+            self.dest_class, 
+            is_undo_or_redo=is_undo_or_redo
+        )
+        if is_relationship_deleted and self.is_gui:
+            # Store the classes involved for undo
+            self.old_source_class = self.source_class
+            self.old_dest_class = self.dest_class
+            
+            # Remove the arrow from the scene and tracking list
+            for each_tuple in self.view.relationship_track_list.get(self.source_class, []):
+                if each_tuple[0] == self.dest_class:
+                    arrow_line = each_tuple[1]
+                    if arrow_line.scene() == self.view.scene():
+                        self.view.scene().removeItem(arrow_line)
+                        self.view.relationship_track_list[self.source_class].remove(each_tuple)
+                        self.arrow_line = arrow_line  
+                        break
+            # Update the flag if no more relationships from the source class
+            if len(self.view.relationship_track_list.get(self.source_class, [])) == 0:
+                self.class_box.is_source_class = False
+        return is_relationship_deleted
+    
     def undo(self):
         if self.rel_type:
-            return self.uml_model._add_relationship(self.source_class, self.dest_class, self.rel_type, is_gui=False, is_undo_or_redo=True)
+            # Re-add the relationship to the model
+            is_relationship_added = self.uml_model._add_relationship(
+                self.source_class, 
+                self.dest_class, 
+                self.rel_type, 
+                is_gui=False, 
+                is_undo_or_redo=True
+            )
+            if is_relationship_added and self.is_gui:
+                self.class_box.is_source_class = True
+                # Retrieve the class boxes for source and destination
+                source_class_box = self.view.class_name_list[self.source_class]
+                dest_class_box = self.view.class_name_list[self.dest_class]
+                
+                # Create the arrow line between the GUI components
+                self.arrow_line = ArrowLine(source_class_box, dest_class_box, self.rel_type)
+                
+                # Track the relationship in the view
+                self.view.track_relationship(self.source_class, self.dest_class, self.arrow_line)
+                
+                # Add the arrow to the scene to display it
+                self.view.scene().addItem(self.arrow_line)
+                
+                # Update the source class box to reflect the new relationship
+                source_class_box.update_box()
+            return is_relationship_added
+
 
 class ChangeTypeCommand(Command):
     def __init__(self, uml_model, 
@@ -631,9 +891,11 @@ class InputHandler:
             command = self.command_list[self.pointer]
             command.undo()
             self.pointer -= 1
+            # print(f"Pointer after undo: {self.pointer}")
 
     def redo(self):
         if self.pointer < len(self.command_list) - 1:
             self.pointer += 1
+            # print(f"Pointer after redo: {self.pointer}")
             command = self.command_list[self.pointer]
             command.execute(is_undo_or_redo=True)

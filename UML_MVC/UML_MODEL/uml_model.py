@@ -427,7 +427,7 @@ class UMLModel:
         return True
 
     # Delete method #
-    def _delete_method(self, class_name: str, method_num: int, is_undo_or_redo: bool = False):
+    def _delete_method(self, class_name: str, method_num: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing method from a UML class and notifies observers.
 

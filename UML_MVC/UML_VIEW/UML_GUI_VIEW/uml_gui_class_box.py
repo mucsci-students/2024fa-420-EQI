@@ -148,6 +148,9 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         # Update the separators between the class name, fields, and methods
         self.update_separators()
         
+        self.update_arrow_lines()
+        
+        
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionChange:
             # Update arrow positions when the position of the box changes

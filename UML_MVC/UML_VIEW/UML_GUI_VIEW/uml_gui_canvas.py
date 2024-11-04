@@ -107,9 +107,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 class_box = UMLClassBox(self.interface, class_name=input_class_name)
                 add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name, view=self, class_box=class_box, is_gui=True)
                 is_class_added = self.input_handler.execute_command(add_class_command)
-                if is_class_added:
-                    self.class_name_list[input_class_name] = class_box
-                else:
+
+                if not is_class_added:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
             
     def delete_class(self):
@@ -121,26 +120,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             input_class_name = self.selected_class.class_name_text.toPlainText()
             delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name, view=self, class_box=self.selected_class, is_gui=True)
             is_class_deleted = self.input_handler.execute_command(delete_class_command)
-            if is_class_deleted:
-                # Create a copy of the arrow_line_list to avoid modifying the list while iterating
-                arrow_lines = list(self.selected_class.arrow_line_list)
-                for arrow_line in arrow_lines:
-                    # Remove the arrow from the scene
-                    self.scene().removeItem(arrow_line)
-                    # Remove the arrow from the source class's arrow_line_list if it's not the selected class
-                    if arrow_line.source_class != self.selected_class:
-                        if arrow_line in arrow_line.source_class.arrow_line_list:
-                            arrow_line.source_class.arrow_line_list.remove(arrow_line)
-                    # Remove the arrow from the destination class's arrow_line_list if it's not the selected class
-                    if arrow_line.dest_class != self.selected_class:
-                        if arrow_line in arrow_line.dest_class.arrow_line_list:
-                            arrow_line.dest_class.arrow_line_list.remove(arrow_line)
-                    # Remove the arrow from the selected class's arrow_line_list
-                    self.selected_class.arrow_line_list.remove(arrow_line)
-                # Remove the class from the class_name_list and scene
-                self.class_name_list.pop(input_class_name, None)     
-                self.selected_class = None    
-            else:
+            if not is_class_deleted:
                 QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' does not exist!")
         else:
             QtWidgets.QMessageBox.warning(None, "Warning", "No class selected!")
@@ -198,7 +178,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         # Create a text item for the field and add it to the list of the found class box
                         field_text = selected_class_box.create_text_item(loaded_field_type + " " + loaded_field_name, is_field=True, selectable=False, 
                                                                          color=selected_class_box.text_color)
-                        selected_class_box.field_list[loaded_field_name] = field_text  # Add the field to the internal list
+                        field_key = (loaded_field_type, loaded_field_name)
+                        selected_class_box.field_list[field_key] = field_text  # Add the field to the internal list
                         selected_class_box.field_key_list.append(loaded_field_name)  # Track the field name in the name list
                         selected_class_box.update_box()  # Update the box to reflect the changes
         else:
@@ -754,20 +735,13 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     type = add_rel_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
                     source_class = self.selected_class.class_name_text.toPlainText()
                     
-                    add_rel_command = Command.AddRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class, 
-                                           rel_type=type, is_gui=True)
+                    add_rel_command = Command.AddRelationshipCommand(self.model, source_class=source_class,
+                                                                    view=self, class_box=self.selected_class,
+                                                                    dest_class=dest_class, 
+                                                                    rel_type=type, is_gui=True)
                     is_rel_added = self.input_handler.execute_command(add_rel_command)
                     
-                    if is_rel_added:
-                        self.selected_class.is_source_class = True
-                        source_class_obj = self.selected_class
-                        dest_class_obj = self.class_name_list[dest_class]
-                        arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
-                        self.track_relationship(source_class, dest_class, arrow_line)
-                        self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
-                        # # Update the class box
-                        self.selected_class.update_box()
-                    else:
+                    if not is_rel_added:
                         QtWidgets.QMessageBox.warning(None, "Warning", "Relationship has already existed!")
 
     def delete_relationship(self):
@@ -794,18 +768,10 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Get the old and new field names after the dialog is accepted
                     dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()`
                      
-                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class, dest_class=dest_class, is_gui=True)
-                    is_rel_deleted = self.input_handler.execute_command(delete_rel_command)
-                    
-                    if not is_rel_deleted:
-                        return
-                    for each_tuple in self.relationship_track_list[source_class]:
-                        if each_tuple[0] == dest_class:
-                            self.scene().removeItem(each_tuple[1])
-                            self.relationship_track_list[source_class].remove(each_tuple)
-                            break
-                    if len(self.relationship_track_list[source_class]) == 0:
-                        self.selected_class.is_source_class = False
+                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class,
+                                                                           view=self, class_box=self.selected_class, 
+                                                                           dest_class=dest_class, is_gui=True)
+                    self.input_handler.execute_command(delete_rel_command)
                         
     def track_relationship(self, source_class, dest_class, arrow_line):
         """
