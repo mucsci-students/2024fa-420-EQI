@@ -835,12 +835,6 @@ class ChangeTypeCommand(Command):
         self.original_param_type = None
         self.original_rel_type = None
         self.is_gui = is_gui
-        
-    def get_method_index_by_name(self, method_name):
-        for index, method_entry in enumerate(self.class_box.method_list):
-            if method_entry["method_key"][1] == method_name:  # Check by method name
-                return index
-        return None  # Return None if not found
 
     def execute(self, is_undo_or_redo=False):
         # Determine if it's a field or method and capture the original type

@@ -733,7 +733,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     # Get the old and new field names after the dialog is accepted
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
                     method_num = edit_param_type_dialog.input_widgets['method_name_widget'].currentIndex()
-                    param_name = edit_param_type_dialog.input_widgets['param_name']
+                    param_name = edit_param_type_dialog.input_widgets["param_name_only"]
                     new_param_type = edit_param_type_dialog.input_widgets['new_param_type'].text()
                     
                     edit_param_type_command = Command.ChangeTypeCommand(
