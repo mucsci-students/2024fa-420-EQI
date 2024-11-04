@@ -104,6 +104,7 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
     def calculate_self_arrow(self):
         """
         Calculate the path for a self-referential arrow (loop) on top of the class box.
+        Ensures the arrowhead does not overlap with the class box by adjusting the end point.
         """
         # Get the bounding rectangle of the class in scene coordinates
         rect = self.source_class.mapToScene(self.source_class.rect()).boundingRect()
@@ -112,8 +113,18 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         start_point = rect.topLeft() + QtCore.QPointF(rect.width() / 3, 0)
         end_point = rect.topRight() - QtCore.QPointF(rect.width() / 3, 0)
 
+        # Define an additional offset to prevent arrowhead from overlapping
+        arrow_offset_x = 10  # Adjust this value as needed
+        arrow_offset_y = 10
+        
+        if self.relationship_type in ["Inheritance", "Realization"]:
+            # Subtract the arrow_offset from the y-coordinate to move the end_point upwards
+            end_point = end_point - QtCore.QPointF(arrow_offset_x, 0)
+        elif self.relationship_type in ["Aggregation", "Composition"]:
+            start_point = start_point - QtCore.QPointF(0, arrow_offset_y)
+
         # Offset for control points to shape the loop (above the class box)
-        control_offset = 50 # Adjust this value to change loop height
+        control_offset = 40  # Adjust this value to change loop height
 
         # Control points to create a loop above the class
         control_point1 = start_point - QtCore.QPointF(0, control_offset)
@@ -123,6 +134,7 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         self.path = QtGui.QPainterPath()
         self.path.moveTo(start_point)
         self.path.cubicTo(control_point1, control_point2, end_point)
+
 
     def paint(self, painter, option, widget=None):
         """
