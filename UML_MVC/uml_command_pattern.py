@@ -814,7 +814,7 @@ class ChangeTypeCommand(Command):
     def __init__(self, uml_model, 
                  class_name: str=None, method_num:int = None, 
                  input_name: str=None, source_class: str=None,
-                 dest_class: str=None, new_type: str=None, 
+                 dest_class: str=None, new_type: str=None, arrow_line=None,
                  is_field: bool=None,is_method: bool=None, 
                  is_param: bool=None, is_rel: bool=None,
                  view=None, class_box=None, is_gui=False):
@@ -825,6 +825,10 @@ class ChangeTypeCommand(Command):
         self.source_class = source_class
         self.dest_class = dest_class
         self.new_type = new_type
+        self.arrow_line = arrow_line
+        self.new_arrow_line_copy = None
+        self.class_box = class_box
+        self.view = view
         self.is_field = is_field
         self.is_method = is_method
         self.is_param = is_param
@@ -856,7 +860,21 @@ class ChangeTypeCommand(Command):
         
         elif self.is_rel:
             self.original_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
-            return self.uml_model._change_data_type(source_class=self.source_class, dest_class=self.dest_class, new_type=self.new_type, is_rel=True, is_undo_or_redo=is_undo_or_redo)
+            is_rel_type_changed = self.uml_model._change_data_type(
+                source_class=self.source_class, dest_class=self.dest_class, 
+                new_type=self.new_type, is_rel=True, is_undo_or_redo=is_undo_or_redo
+            )
+            if is_rel_type_changed and self.is_gui:
+                if self.arrow_line.scene() == self.view.scene():
+                    self.view.scene().removeItem(self.arrow_line)
+                self.view.relationship_track_list[self.source_class].remove((self.dest_class, self.arrow_line))
+                source_class_obj = self.class_box
+                dest_class_obj = self.view.class_name_list[self.dest_class]
+                new_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.new_type)
+                self.new_arrow_line_copy = new_arrow_line
+                self.view.track_relationship(self.source_class, self.dest_class, new_arrow_line)
+                self.view.scene().addItem(new_arrow_line)
+            return is_rel_type_changed
 
     def undo(self):
         # Restore the original type
@@ -867,8 +885,22 @@ class ChangeTypeCommand(Command):
         elif self.is_param and self.original_type:
             return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.original_type, is_param=True, is_undo_or_redo=True)
         elif self.is_rel and self.original_type:
-             return self.uml_model._change_data_type(source_class=self.source_class, dest_class=self.dest_class, new_type=self.original_type, is_rel=True, is_undo_or_redo=True)
+            is_rel_type_changed = self.uml_model._change_data_type(
+                source_class=self.source_class, dest_class=self.dest_class, 
+                new_type=self.original_type, is_rel=True, is_undo_or_redo=True
+            )
+            if is_rel_type_changed and self.is_gui:
+                if self.new_arrow_line_copy.scene() == self.view.scene():
+                    self.view.scene().removeItem(self.new_arrow_line_copy)
+                self.view.relationship_track_list[self.source_class].remove((self.dest_class, self.new_arrow_line_copy))
+                source_class_obj = self.class_box
+                dest_class_obj = self.view.class_name_list[self.dest_class]
+                old_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.original_type)
+                self.view.track_relationship(self.source_class, self.dest_class, old_arrow_line)
+                self.view.scene().addItem(old_arrow_line)
+            return is_rel_type_changed
         return False
+        
 
 class InputHandler:
     def __init__(self):

@@ -815,16 +815,17 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                             if type == arrow_line.arrow_type:
                                 QtWidgets.QMessageBox.warning(None, "Warning", f"New relationship type is identical to current type {type}!")
                                 return
-                            else:
-                                self.interface.change_type(source_class, dest_class, type)
-                                self.scene().removeItem(arrow_line)
-                                self.relationship_track_list[source_class].remove((current_dest_class, arrow_line))
-                                source_class_obj = self.selected_class
-                                dest_class_obj = self.class_name_list[dest_class]
-                                arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
-                                self.track_relationship(source_class, dest_class, arrow_line)
-                                self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it  
-                                                         
+                            
+                            change_rel_type_command = Command.ChangeTypeCommand(
+                                                                            self.model, source_class=source_class, 
+                                                                            dest_class=current_dest_class, new_type=type,
+                                                                            arrow_line=arrow_line, view=self, 
+                                                                            class_box=self.selected_class, is_gui=True, is_rel=True)
+                            
+                            is_rel_type_changed = self.input_handler.execute_command(change_rel_type_command)
+                            if not is_rel_type_changed:
+                                return
+                        
     #################################################################
     def open_folder_gui(self):
         """
