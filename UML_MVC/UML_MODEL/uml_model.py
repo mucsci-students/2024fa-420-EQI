@@ -1768,8 +1768,16 @@ class UMLModel:
             for class_name, data in each_pair.items():
                 field_list = data["fields"]
                 method_list = data["method_list"]
+
+                # Check for position data in the loaded class information
+                position = data.get("position")
+
                 # Add classes, fields, methods, and parameters to the program state
                 self._add_class(class_name, is_loading=True)
+
+                if position:
+                    self.__class_list[class_name]._set_position(position["x"], position["y"])
+
                 for each_field in field_list:
                     field_name = each_field["name"]
                     field_type = each_field["type"]
@@ -1835,32 +1843,50 @@ class UMLModel:
     # Extract class, field, method, and parameters from json file #
     def _extract_class_data(self, class_data: List[Dict]) -> List[Dict[str, Dict[str, List | Dict]]]:
         """
-        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing.
+        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing,
+        including position data if available.
 
         Parameters:
             class_data (List[Dict]): A list of dictionaries representing class data loaded from JSON.
 
         Returns:
-            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, and parameters.
+            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, parameters, and position.
         """
         class_info_list: List[Dict[str, Dict[str, List | Dict]]] = []
-        # Loop through the class data to extract fields and methods
+        
+        # Loop through the class data to extract fields, methods, and position
         for class_element in class_data:
-            method_list = []
             class_name = class_element["name"]
             fields = [{"name": field["name"], "type": field["type"]} for field in class_element["fields"]]
+            
             # Extract methods and their parameters
+            method_list = []
             for method_element in class_element["methods"]:
-                temp_param_list: List[str] = []
-                for param_element in method_element["params"]:
-                    temp_param_list.append({"type" : param_element["type"], "name": param_element["name"]})
+                temp_param_list = [{"type": param["type"], "name": param["name"]} for param in method_element["params"]]
                 method_list.append({
                     "name": method_element["name"],
-                    "return_type" : method_element["return_type"],
+                    "return_type": method_element["return_type"],
                     "params": temp_param_list
                 })
-            class_info_list.append({class_name: {"fields": fields, "method_list": method_list}})
+            
+            # Directly assign position if it exists, else it will be None
+            position = class_element.get("position")
+            
+            # Prepare class data dictionary
+            class_data_dict = {
+                "fields": fields,
+                "method_list": method_list
+            }
+            
+            # Only include position if it exists
+            if position:
+                class_data_dict["position"] = position
+            
+            # Append the class data to the list
+            class_info_list.append({class_name: class_data_dict})
+        
         return class_info_list
+
     
     # Delete saved file #
     def _delete_saved_file(self):
