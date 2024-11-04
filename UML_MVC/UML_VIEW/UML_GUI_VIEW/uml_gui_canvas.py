@@ -886,7 +886,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     dest_class = change_rel_type_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()` 
                     new_type = change_rel_type_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
 
-                    relationships = self.relationship_track_list.get(source_class, [])
+                    relationships = self.relationship_track_list.get(source_class)
                     for relationship in relationships:
                         if relationship["dest_class"] == dest_class:
                             arrow_line = relationship["arrow_list"]

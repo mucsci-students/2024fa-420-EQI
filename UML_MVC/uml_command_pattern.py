@@ -911,23 +911,31 @@ class ChangeTypeCommand(Command):
                 new_type=self.new_type, is_rel=True, is_undo_or_redo=is_undo_or_redo
             )
             if is_rel_type_changed and self.is_gui:
-                # Remove the old arrow line from the scene
-                if self.arrow_line.scene() == self.view.scene():
-                    self.view.scene().removeItem(self.arrow_line)
-
                 # Update the relationship tracking list with the new type
-                for relationship in self.view.relationship_track_list.get(self.source_class, []):
+                relationships = self.view.relationship_track_list.get(self.source_class)
+                for relationship in relationships:
                     if relationship["dest_class"] == self.dest_class:
-                        relationship["arrow_list"].arrow_type = self.new_type
+                        arrow_line = relationship["arrow_list"]
+                        if arrow_line.scene() == self.view.scene():
+                            self.view.scene().removeItem(arrow_line)
+                        relationships.remove(relationship)
                         break
+                if len(self.view.relationship_track_list.get(self.source_class)) == 0:
+                    self.class_box.is_source_class = False
                 
                 # Create the new arrow line with updated type
                 source_class_obj = self.class_box
                 dest_class_obj = self.view.class_name_list[self.dest_class]
-                new_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.new_type)
-                self.arrow_line = new_arrow_line
-                self.view.scene().addItem(new_arrow_line)
+                self.arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.new_type)
+                # Track the relationship in the view
+                value = {"dest_class": self.dest_class, "arrow_list": self.arrow_line}
+                if self.source_class not in self.view.relationship_track_list:
+                    self.view.relationship_track_list[self.source_class] = []
+                self.view.relationship_track_list[self.source_class].append(value)
 
+                # Add the arrow to the scene to display it
+                self.view.scene().addItem(self.arrow_line)
+                self.class_box.update_box()
             return is_rel_type_changed
 
     def undo(self):
@@ -982,7 +990,7 @@ class ChangeTypeCommand(Command):
         
         elif self.is_param and self.original_param_type:
             is_param_type_changed = self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, 
-                                                                     new_type=self.original_rel_type, is_param=True, is_undo_or_redo=True)
+                                                                     new_type=self.original_param_type, is_param=True, is_undo_or_redo=True)
             if is_param_type_changed and self.is_gui:
                 method_entry = self.class_box.method_list[int(self.method_num) - 1]
                 for i, param_tuple in enumerate(method_entry["parameters"]):
@@ -999,21 +1007,33 @@ class ChangeTypeCommand(Command):
                 new_type=self.original_rel_type, is_rel=True, is_undo_or_redo=True
             )
             if is_rel_type_changed and self.is_gui:
-                if self.arrow_line.scene() == self.view.scene():
-                    self.view.scene().removeItem(self.arrow_line)
-
-                for relationship in self.view.relationship_track_list.get(self.source_class, []):
+                # Update the relationship tracking list with the new type
+                relationships = self.view.relationship_track_list.get(self.source_class)
+                for relationship in relationships:
                     if relationship["dest_class"] == self.dest_class:
-                        relationship["arrow_list"].arrow_type = self.original_rel_type
+                        arrow_line = relationship["arrow_list"]
+                        if arrow_line.scene() == self.view.scene():
+                            self.view.scene().removeItem(arrow_line)
+                        relationships.remove(relationship)
                         break
                 
+                if len(self.view.relationship_track_list.get(self.source_class)) == 0:
+                    self.class_box.is_source_class = False
+                
+                # Create the new arrow line with updated type
                 source_class_obj = self.class_box
                 dest_class_obj = self.view.class_name_list[self.dest_class]
-                old_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.original_rel_type)
-                self.arrow_line = old_arrow_line
-                self.view.scene().addItem(old_arrow_line)
+                self.arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.original_rel_type)
+                # Track the relationship in the view
+                value = {"dest_class": self.dest_class, "arrow_list": self.arrow_line}
+                if self.source_class not in self.view.relationship_track_list:
+                    self.view.relationship_track_list[self.source_class] = []
+                self.view.relationship_track_list[self.source_class].append(value)
 
-            return is_rel_type_changed
+                # Add the arrow to the scene to display it
+                self.view.scene().addItem(self.arrow_line)
+                self.class_box.update_box()
+                return is_rel_type_changed
         return False
         
 
