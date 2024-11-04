@@ -4,7 +4,7 @@
 
 from PyQt5 import uic
 from PyQt5 import QtWidgets
-from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUIView
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUICanvas
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 from UML_MVC.uml_observer import UMLObserver as Observer
 
@@ -31,7 +31,7 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         uic.loadUi('prototype_gui.ui', self)
 
         # Create a grid view where UML class boxes and relationships will be displayed, and set it as the central widget
-        self.grid_view = GUIView(self.interface)
+        self.grid_view = GUICanvas(self.interface)
         self.grid_view.set_grid_visible(False)
         self.setCentralWidget(self.grid_view)
         self.box = UMLClassBox(self.interface)
@@ -123,6 +123,13 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         #################################################################
         self.help_action = self.findChild(QtWidgets.QAction, "Help")
         self.help_action.triggered.connect(self.show_instructions)
+        
+        #################################################################
+        self.undo_action = self.findChild(QtWidgets.QAction, "Undo")
+        self.redo_action = self.findChild(QtWidgets.QAction, "Redo")
+        
+        self.undo_action.triggered.connect(self.undo_gui)
+        self.redo_action.triggered.connect(self.redo_gui)
 
     #################################################################
     ### EVENT FUNCTIONS ###
@@ -252,6 +259,18 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         Save the UML diagram to the current file.
         """
         self.grid_view.save_gui()
+        
+    def undo_gui(self):
+        """
+        Undo actions
+        """
+        self.grid_view.undo()
+    
+    def redo_gui(self):
+        """
+        Redo actions
+        """
+        self.grid_view.redo()
 
     def new_file_gui(self):
         """
