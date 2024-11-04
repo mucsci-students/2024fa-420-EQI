@@ -280,8 +280,31 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                         
        
     def edit_field_type(self):
-        if not self.selected_class:
-            pass
+        if self.selected_class:
+            if self.selected_class.field_key_list: 
+                # Initialize the dialog
+                edit_field_type_dialog = Dialog("Edit Field Type")
+                edit_field_type_dialog.edit_field_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_field_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    field_name = edit_field_type_dialog.input_widgets['field_name'].currentText()  # Use `currentText()` for QComboBox
+                    new_field_type = edit_field_type_dialog.input_widgets['new_field_type'].text()  # Use `text()` for QLineEdit
+                    
+                    edit_field_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                input_name=field_name,
+                                new_type=new_field_type,
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_field=True
+                            )
+                    self.input_handler.execute_command(edit_field_type_command)
         
             
     def add_method(self, loaded_class_name=None, loaded_return_type=None, loaded_method_name=None, is_loading=False):
@@ -439,6 +462,33 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                                                                         new_name=new_method_name, view=self, class_box=self.selected_class, is_gui=True)
                     self.input_handler.execute_command(rename_method_command)
                     
+                    
+    def edit_method_return_type(self):
+        if self.selected_class:
+            if self.selected_class.method_list: 
+                # Initialize the dialog
+                edit_method_return_type_dialog = Dialog("Edit Method Return Type")
+                edit_method_return_type_dialog.edit_method_return_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_method_return_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    method_num = edit_method_return_type_dialog.input_widgets['method_name'].currentIndex()
+                    new_method_return_type = edit_method_return_type_dialog.input_widgets['new_method_return_type'].text()
+                    
+                    edit_method_return_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                new_type=new_method_return_type,
+                                method_num=str(method_num + 1),
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_method=True
+                            )
+                    self.input_handler.execute_command(edit_method_return_type_command)
                     
             
     def add_param(self,loaded_class_name=None, loaded_method_name=None, loaded_param_name=None, is_loading=False):
@@ -715,7 +765,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 )
                 if is_rel_added:
                     arrow_line = ArrowLine(source_class_obj, dest_class_obj, loaded_type)
-                    self.track_relationship(loaded_source_class, loaded_dest_class, arrow_line)
+                    value = {"dest_class" : loaded_dest_class, 
+                            "arrow_list" : arrow_line}
+                    if loaded_source_class not in self.relationship_track_list:
+                        self.relationship_track_list[loaded_source_class] = []
+                    self.relationship_track_list[loaded_source_class].append(value)
                     self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
                     # Update the class boxes
                     source_class_obj.update_box()
@@ -772,15 +826,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                                                                            view=self, class_box=self.selected_class, 
                                                                            dest_class=dest_class, is_gui=True)
                     self.input_handler.execute_command(delete_rel_command)
-                        
-    def track_relationship(self, source_class, dest_class, arrow_line):
-        """
-        Keep track of relationships between source class and destination class.
-        """
-        value = (dest_class, arrow_line)
-        if source_class not in self.relationship_track_list:
-            self.relationship_track_list[source_class] = []
-        self.relationship_track_list[source_class].append(value)
 
         # This is for checking the list in the terminal
         print(f"Current relationship tracking: {self.relationship_track_list}")
@@ -809,18 +854,30 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     # Get the old and new field names after the dialog is accepted
                     dest_class = change_rel_type_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()` 
-                    type = change_rel_type_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
-                    for current_dest_class, arrow_line in self.relationship_track_list[source_class]:
-                        if current_dest_class == dest_class:
-                            if type == arrow_line.arrow_type:
-                                QtWidgets.QMessageBox.warning(None, "Warning", f"New relationship type is identical to current type {type}!")
+                    new_type = change_rel_type_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
+
+                    relationships = self.relationship_track_list.get(source_class, [])
+                    for relationship in relationships:
+                        if relationship["dest_class"] == dest_class:
+                            arrow_line = relationship["arrow_list"]
+                            print(f"Current Type: {arrow_line.arrow_type}, New Type: {new_type}")  # Debugging output
+
+                            # Normalize and compare the relationship types
+                            if new_type.strip().lower() == arrow_line.arrow_type.strip().lower():
+                                QtWidgets.QMessageBox.warning(None, "Warning", f"New relationship type is identical to current type {new_type}!")
                                 return
                             
                             change_rel_type_command = Command.ChangeTypeCommand(
-                                                                            self.model, source_class=source_class, 
-                                                                            dest_class=current_dest_class, new_type=type,
-                                                                            arrow_line=arrow_line, view=self, 
-                                                                            class_box=self.selected_class, is_gui=True, is_rel=True)
+                                self.model, 
+                                source_class=source_class, 
+                                dest_class=dest_class,  # Use dest_class directly
+                                new_type=new_type,
+                                arrow_line=arrow_line, 
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_rel=True
+                            )
                             
                             is_rel_type_changed = self.input_handler.execute_command(change_rel_type_command)
                             if not is_rel_type_changed:
@@ -938,9 +995,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             if self.selected_class.field_key_list:
                 self.add_context_menu_action(contextMenu, "Delete Field", self.delete_field, enabled=True)
                 self.add_context_menu_action(contextMenu, "Rename Field", self.rename_field, enabled=True)
+                self.add_context_menu_action(contextMenu, "Edit Field Type", self.edit_field_type, enabled=True)
             else:
                 self.add_context_menu_action(contextMenu, "Delete Field", self.delete_field, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Field", self.rename_field, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Field Type", self.edit_field_type, enabled=False)
 
             self.add_context_menu_separator(contextMenu)
 
@@ -949,6 +1008,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             if self.selected_class.method_list:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=True)
                 self.add_context_menu_action(contextMenu, "Rename Method", self.rename_method, enabled=True)
+                self.add_context_menu_action(contextMenu, "Edit Method Type", self.edit_method_return_type, enabled=True)
                 self.add_context_menu_separator(contextMenu)
                 self.add_context_menu_action(contextMenu, "Add Parameter", self.add_param, enabled=True)
                 # PARAMETER OPTIONS
@@ -962,6 +1022,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             else:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Method", self.rename_method, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Method Type", self.edit_method_return_type, enabled=False)
                 self.add_context_menu_separator(contextMenu)
                 self.add_context_menu_action(contextMenu, "Add Parameter", self.add_param, enabled=False)
                 self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)

@@ -35,6 +35,19 @@ class CustomInputDialog(QtWidgets.QDialog):
         self.input_widgets["new_field_name"] = new_field_name
         self.__add_buttons()
         
+    def edit_field_type_popup(self, selected_class):
+        """
+        Creates a dialog for renaming a field.
+        """
+        field_name_list = [field_key[1] for field_key in selected_class.field_key_list]
+        field_name = self.__add_input("Select Field To Edit Type:", widget_type="combo", options=field_name_list)
+        new_field_type = self.__add_input("Enter New Type Name:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets["field_name"] = field_name
+        self.input_widgets["new_field_type"] = new_field_type
+        self.__add_buttons()
+        
     def add_method_popup(self):
         """
         Creates a dialog for renaming a field.
@@ -100,6 +113,33 @@ class CustomInputDialog(QtWidgets.QDialog):
         # Store the widgets for later use
         self.input_widgets["raw_method_name"] = old_method_name
         self.input_widgets["new_method_name"] = new_method_name
+        self.input_widgets["method_keys_list"] = method_keys_list
+        self.__add_buttons()
+        
+    def edit_method_return_type_popup(self, selected_class):
+        """
+        Creates a dialog for renaming a method.
+        """
+        method_display_list = []
+        method_keys_list = []
+        
+        for i, dictionary in enumerate(selected_class.method_list):
+            method_key = dictionary["method_key"]
+            param_list = dictionary["parameters"]
+            # Convert parameter tuples to strings
+            param_str_list = [f"{param_type} {param_name}" for param_type, param_name in param_list]
+            params_str = ', '.join(param_str_list)
+            # Build the display string
+            display_str = f"{i + 1}: {method_key[0]} {method_key[1]}({params_str})"
+            method_display_list.append(display_str)
+            method_keys_list.append(method_key)
+  
+        method_name = self.__add_input("Select Method To Edit Return Type:", widget_type="combo", options=method_display_list)
+        new_method_return_type = self.__add_input("Enter New Method Return Type:", widget_type="line")
+        
+        # Store the widgets for later use
+        self.input_widgets["method_name"] = method_name
+        self.input_widgets["new_method_return_type"] = new_method_return_type
         self.input_widgets["method_keys_list"] = method_keys_list
         self.__add_buttons()
         
@@ -284,31 +324,54 @@ class CustomInputDialog(QtWidgets.QDialog):
         """
         Creates a dialog for deleting a relationship.
         """
-        # Extract all dest_class names from the list of tuples
-        dest_classes = [dest_class for dest_class, arrow_line in relationship_track_list[source_class_name]]
+        # Extract all dest_class names from the relationship track list
+        dest_classes = []
+        relationships = relationship_track_list.get(source_class_name, [])
         
-        # Create combo box for source class names
-        destination_class_list_of_current_source_class = self.__add_input("Select Destination Class To Delete Relationship:", 
-                                                                          widget_type="combo", options=dest_classes)
+        for relationship in relationships:
+            dest_class = relationship["dest_class"]  # Access the dest_class key in the dictionary
+            dest_classes.append(dest_class)
+        
+        # Create combo box for destination class names
+        destination_class_list_of_current_source_class = self.__add_input(
+            "Select Destination Class To Delete Relationship:", 
+            widget_type="combo", 
+            options=dest_classes
+        )
         self.input_widgets["destination_class_list_of_current_source_class"] = destination_class_list_of_current_source_class
+        
         # Add buttons (OK/Cancel)
         self.__add_buttons()
         
     def change_type_popup(self, source_class_name, relationship_track_list, type_list):
         """
-        Creates a dialog for deleting a relationship.
+        Creates a dialog for changing the type of a relationship.
         """
-        # Extract all dest_class names from the list of tuples
-        dest_classes = [dest_class for dest_class, arrow_line in relationship_track_list[source_class_name]]
-        # Create combo box for source class names
-        destination_class_list_of_current_source_class = self.__add_input("Select Destination Class To Change Relationship Type:", 
-                                                                          widget_type="combo", 
-                                                                          options=dest_classes)
-         # Create combo box for type
-        type = self.__add_input("Select A New Type For The Relationship:", widget_type="combo", options=type_list)
+        # Extract all dest_class names from the relationship track list
+        dest_classes = []
+        relationships = relationship_track_list.get(source_class_name, [])
         
+        for relationship in relationships:
+            dest_class = relationship["dest_class"]  # Access the dest_class key in the dictionary
+            dest_classes.append(dest_class)
+
+        # Create combo box for destination class names
+        destination_class_list_of_current_source_class = self.__add_input(
+            "Select Destination Class To Change Relationship Type:", 
+            widget_type="combo", 
+            options=dest_classes
+        )
+        
+        # Create combo box for relationship types
+        relationship_type = self.__add_input(
+            "Select A New Type For The Relationship:", 
+            widget_type="combo", 
+            options=type_list
+        )
+        
+        # Store the input widgets
         self.input_widgets["destination_class_list_of_current_source_class"] = destination_class_list_of_current_source_class
-        self.input_widgets["type"] = type
+        self.input_widgets["type"] = relationship_type
         
         # Add buttons (OK/Cancel)
         self.__add_buttons()

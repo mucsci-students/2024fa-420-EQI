@@ -211,7 +211,11 @@ class DeleteClassCommand(Command):
                 if not source_class_obj:
                     continue  # Skip restoring this relationship if source class doesn't exist
 
-                for dest_class_str, arrow_line in arrow_list:
+                # Iterate over each relationship in the stored arrow_list
+                for relationship in arrow_list:  # Each relationship is a dictionary
+                    dest_class_str = relationship["dest_class"]  # Get the destination class name
+                    arrow_line = relationship["arrow_list"]  # Get the corresponding arrow line
+                    
                     # Retrieve the destination class object from the view's class_name_list
                     dest_class_obj = self.view.class_name_list.get(dest_class_str)
                     if not dest_class_obj:
@@ -223,15 +227,14 @@ class DeleteClassCommand(Command):
                     # Instantiate the AddRelationshipCommand with class objects
                     add_relationship_command = AddRelationshipCommand(
                         uml_model=self.uml_model,
-                        source_class=source_class_str,          # Pass class object, not string
-                        dest_class=dest_class_str,              # Pass class object, not string
-                        rel_type=arrow_line.arrow_type,          # Use the stored relationship type
+                        source_class=source_class_str,  # Pass class object, not string
+                        dest_class=dest_class_str,       # Pass class object, not string
+                        rel_type=arrow_line.arrow_type,  # Use the stored relationship type
                         view=self.view,
-                        class_box=source_class_box,             # Set to source class's class_box
+                        class_box=source_class_box,      # Set to source class's class_box
                         is_gui=True
                     )
                     add_relationship_command.execute(is_undo_or_redo=True)
-           
 
         self.stored_fields = []
         self.stored_methods = []
@@ -681,108 +684,103 @@ class AddRelationshipCommand(Command):
     def __init__(self, uml_model, source_class, dest_class, rel_type, view=None, class_box=None, is_gui=False):
         super().__init__()
         self.uml_model = uml_model
-        self.source_class = source_class          # String: Source class name
-        self.dest_class = dest_class              # String: Destination class name
-        self.rel_type = rel_type                  # String: Relationship type
-        self.view = view                          # View instance
-        self.class_box = class_box                # GUI component of source class
-        self.is_gui = is_gui                      # Boolean: Whether to update GUI
-        self.arrow_line = None                    # To keep track of the created arrow
+        self.source_class = source_class
+        self.dest_class = dest_class
+        self.rel_type = rel_type
+        self.view = view
+        self.class_box = class_box
+        self.is_gui = is_gui
+        self.arrow_line = None
     
     def execute(self, is_undo_or_redo=False):
-        # Add the relationship to the model
         is_relationship_added = self.uml_model._add_relationship(
             self.source_class, 
             self.dest_class, 
             self.rel_type, 
-            is_gui=self.is_gui,                      # Use self.is_gui instead of hardcoding
+            is_gui=self.is_gui, 
             is_undo_or_redo=is_undo_or_redo
         )
         if is_relationship_added and self.is_gui:
             self.class_box.is_source_class = True
-            # Retrieve the source and destination class boxes
-            source_class_obj = self.class_box                     # GUI component of source class
-            dest_class_obj = self.view.class_name_list[self.dest_class]  # GUI component of destination class
-            
+            source_class_obj = self.class_box
+            dest_class_obj = self.view.class_name_list[self.dest_class]
+
+            # Check for existing arrows and remove them if needed
+            existing_arrow = next((arrow for arrow in self.class_box.arrow_line_list if arrow.dest_class == self.dest_class), None)
+            if existing_arrow:
+                self.view.scene().removeItem(existing_arrow)
+                self.class_box.arrow_line_list.remove(existing_arrow)
+
             # Create the arrow line between the GUI components
             self.arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.rel_type)
-            
+
             # Track the relationship in the view
-            self.view.track_relationship(self.source_class, self.dest_class, self.arrow_line)
-            
+            value = {"dest_class": self.dest_class, "arrow_list": self.arrow_line}
+            if self.source_class not in self.view.relationship_track_list:
+                self.view.relationship_track_list[self.source_class] = []
+            self.view.relationship_track_list[self.source_class].append(value)
+
             # Add the arrow to the scene to display it
             self.view.scene().addItem(self.arrow_line)
-            
-            # Update the source class box to reflect the new relationship
             self.class_box.update_box()
         return is_relationship_added
     
     def undo(self):
-        # Remove the relationship from the model
         is_relationship_deleted = self.uml_model._delete_relationship(
             self.source_class, 
             self.dest_class, 
             is_undo_or_redo=True
         )
         if is_relationship_deleted and self.is_gui:
-            # Remove the arrow from the scene and the tracking list
-            for each_tuple in self.view.relationship_track_list.get(self.source_class, []):
-                if each_tuple[0] == self.dest_class:
-                    arrow_line = each_tuple[1]
+            relationships = self.view.relationship_track_list.get(self.source_class)
+            for relationship in relationships:
+                if relationship["dest_class"] == self.dest_class:
+                    arrow_line = relationship["arrow_list"]
                     if arrow_line.scene() == self.view.scene():
                         self.view.scene().removeItem(arrow_line)
-                        self.view.relationship_track_list[self.source_class].remove(each_tuple)
-                        break
-            # If no more relationships from the source class, update the flag
-            if len(self.view.relationship_track_list.get(self.source_class, [])) == 0:
+                    relationships.remove(relationship)
+                    break
+
+            if len(self.view.relationship_track_list.get(self.source_class)) == 0:
                 self.class_box.is_source_class = False
         return is_relationship_deleted
 
-    
+
+
 class DeleteRelationshipCommand(Command):
     def __init__(self, uml_model, source_class, dest_class, view=None, class_box=None, is_gui=False):
         super().__init__()
         self.uml_model = uml_model
-        self.source_class = source_class          # String: Source class name
-        self.dest_class = dest_class              # String: Destination class name
-        self.rel_type = None                      # To store the relationship type
-        self.view = view                          # View instance
-        self.class_box = class_box                # GUI component of source class
-        self.is_gui = is_gui                      # Boolean: Whether to update GUI
-        self.arrow_line = None                    # To keep track of the deleted arrow
-    
+        self.source_class = source_class
+        self.dest_class = dest_class
+        self.rel_type = None
+        self.view = view
+        self.class_box = class_box
+        self.is_gui = is_gui
+
     def execute(self, is_undo_or_redo=False):
-        # Retrieve the relationship type before deletion
         self.rel_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
-        
-        # Delete the relationship from the model
         is_relationship_deleted = self.uml_model._delete_relationship(
             self.source_class, 
             self.dest_class, 
             is_undo_or_redo=is_undo_or_redo
         )
         if is_relationship_deleted and self.is_gui:
-            # Store the classes involved for undo
-            self.old_source_class = self.source_class
-            self.old_dest_class = self.dest_class
-            
-            # Remove the arrow from the scene and tracking list
-            for each_tuple in self.view.relationship_track_list.get(self.source_class, []):
-                if each_tuple[0] == self.dest_class:
-                    arrow_line = each_tuple[1]
+            relationships = self.view.relationship_track_list.get(self.source_class)
+            for relationship in relationships:
+                if relationship["dest_class"] == self.dest_class:
+                    arrow_line = relationship["arrow_list"]
                     if arrow_line.scene() == self.view.scene():
                         self.view.scene().removeItem(arrow_line)
-                        self.view.relationship_track_list[self.source_class].remove(each_tuple)
-                        self.arrow_line = arrow_line  
-                        break
-            # Update the flag if no more relationships from the source class
-            if len(self.view.relationship_track_list.get(self.source_class, [])) == 0:
+                    relationships.remove(relationship)
+                    break
+
+            if len(self.view.relationship_track_list.get(self.source_class)) == 0:
                 self.class_box.is_source_class = False
         return is_relationship_deleted
-    
+
     def undo(self):
         if self.rel_type:
-            # Re-add the relationship to the model
             is_relationship_added = self.uml_model._add_relationship(
                 self.source_class, 
                 self.dest_class, 
@@ -792,21 +790,21 @@ class DeleteRelationshipCommand(Command):
             )
             if is_relationship_added and self.is_gui:
                 self.class_box.is_source_class = True
-                # Retrieve the class boxes for source and destination
-                source_class_box = self.view.class_name_list[self.source_class]
-                dest_class_box = self.view.class_name_list[self.dest_class]
-                
+                source_class_obj = self.class_box
+                dest_class_obj = self.view.class_name_list[self.dest_class]
+
                 # Create the arrow line between the GUI components
-                self.arrow_line = ArrowLine(source_class_box, dest_class_box, self.rel_type)
-                
+                self.arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.rel_type)
+
                 # Track the relationship in the view
-                self.view.track_relationship(self.source_class, self.dest_class, self.arrow_line)
-                
+                value = {"dest_class": self.dest_class, "arrow_list": self.arrow_line}
+                if self.source_class not in self.view.relationship_track_list:
+                    self.view.relationship_track_list[self.source_class] = []
+                self.view.relationship_track_list[self.source_class].append(value)
+
                 # Add the arrow to the scene to display it
                 self.view.scene().addItem(self.arrow_line)
-                
-                # Update the source class box to reflect the new relationship
-                source_class_box.update_box()
+                self.class_box.update_box()
             return is_relationship_added
 
 
@@ -815,7 +813,7 @@ class ChangeTypeCommand(Command):
                  class_name: str=None, method_num:int = None, 
                  input_name: str=None, source_class: str=None,
                  dest_class: str=None, new_type: str=None, arrow_line=None,
-                 is_field: bool=None,is_method: bool=None, 
+                 is_field: bool=None, is_method: bool=None, 
                  is_param: bool=None, is_rel: bool=None,
                  view=None, class_box=None, is_gui=False):
         self.uml_model = uml_model
@@ -826,78 +824,181 @@ class ChangeTypeCommand(Command):
         self.dest_class = dest_class
         self.new_type = new_type
         self.arrow_line = arrow_line
-        self.new_arrow_line_copy = None
         self.class_box = class_box
         self.view = view
         self.is_field = is_field
         self.is_method = is_method
         self.is_param = is_param
         self.is_rel = is_rel
-        self.original_type = None  # To store the original type
+        self.original_field_type = None  # To store the original type
+        self.original_method_type = None
+        self.original_param_type = None
+        self.original_rel_type = None
         self.is_gui = is_gui
+        
+    def get_method_index_by_name(self, method_name):
+        for index, method_entry in enumerate(self.class_box.method_list):
+            if method_entry["method_key"][1] == method_name:  # Check by method name
+                return index
+        return None  # Return None if not found
 
     def execute(self, is_undo_or_redo=False):
         # Determine if it's a field or method and capture the original type
         if self.is_field:
             chosen_field = self.uml_model._get_chosen_field_or_method(self.class_name, self.input_name, is_field=True)
             if chosen_field is not None:
-                self.original_type = chosen_field._get_type()
-                return self.uml_model._change_data_type(class_name=self.class_name, input_name=self.input_name, new_type=self.new_type, is_field=True, is_undo_or_redo=is_undo_or_redo)
+                self.original_field_type = chosen_field._get_type()
+                is_field_type_changed = self.uml_model._change_data_type(class_name=self.class_name, input_name=self.input_name, 
+                                                                         new_type=self.new_type, is_field=True, is_undo_or_redo=is_undo_or_redo)
+                if is_field_type_changed and self.is_gui:
+                    for index, field_key in enumerate(self.class_box.field_key_list):
+                        if field_key[1] == self.input_name:
+                            self.position = index
+                            self.class_box.field_key_list.remove(field_key)  # Remove from the name list
+                            self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+                    field_text = self.class_box.create_text_item(self.new_type + " " + self.input_name, is_field=True, selectable=False, color=self.class_box.text_color)
+                    field_key = (self.new_type, self.input_name)
+                    self.class_box.field_list[field_key] = field_text  # Add the field to the internal list
+                    self.class_box.field_key_list.insert(self.position, field_key)
+                    self.class_box.update_box()
+                return is_field_type_changed
 
         elif self.is_method:
             chosen_method = self.uml_model._get_method_based_on_index(self.class_name, self.method_num)
-            if chosen_method is None:
-                return False
-            self.original_type = chosen_method._get_type()
-            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.new_type, is_method=True, is_undo_or_redo=is_undo_or_redo)
+            if chosen_method is not None:
+                self.original_method_type = chosen_method._get_type()
+                is_method_return_type_changed = self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num,
+                                                                                new_type=self.new_type, is_method=True, is_undo_or_redo=is_undo_or_redo)
+                # Check if the item is still in the scene before removing
+                if is_method_return_type_changed and self.is_gui:
+                    method_entry = self.class_box.method_list[int(self.method_num) - 1]  # Directly use self.method_num
+                    if method_entry["method_text"].scene() == self.view.scene():
+                        self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
+                    self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
+                    method_key = method_entry["method_key"]
+                    current_param_list = method_entry["parameters"]
+                    # Create the new method text item with the new return type
+                    new_method_text = self.class_box.create_text_item(self.new_type + " " + method_key[1] + "()", is_method=True, selectable=False, color=self.class_box.text_color)
+                    new_method_key = (self.new_type, method_key[1])  
+                    # Create a new method entry as a dictionary with method_key, method_text, and parameters
+                    method_entry = {
+                        "method_key": new_method_key,
+                        "method_text": new_method_text,
+                        "parameters": current_param_list
+                    }
+                    # Append this dictionary to method_list
+                    self.class_box.method_list.insert(int(self.method_num) - 1, method_entry)
+                    if len(self.class_box.method_list) == 1:
+                        self.class_box.create_separator(is_first=False, is_second=True)
+                    self.class_box.update_box()
+                return is_method_return_type_changed
         
         elif self.is_param:
             chosen_param = self.uml_model._get_param_based_on_index(self.class_name, self.method_num, self.input_name)
             if chosen_param is None:
                 return False
-            self.original_type = chosen_param._get_type()
+            self.original_param_type = chosen_param._get_type()
             return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.new_type, is_param=True, is_undo_or_redo=is_undo_or_redo)
         
         elif self.is_rel:
-            self.original_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
+            self.original_rel_type = self.uml_model._get_rel_type(self.source_class, self.dest_class)
             is_rel_type_changed = self.uml_model._change_data_type(
                 source_class=self.source_class, dest_class=self.dest_class, 
                 new_type=self.new_type, is_rel=True, is_undo_or_redo=is_undo_or_redo
             )
             if is_rel_type_changed and self.is_gui:
+                # Remove the old arrow line from the scene
                 if self.arrow_line.scene() == self.view.scene():
                     self.view.scene().removeItem(self.arrow_line)
-                self.view.relationship_track_list[self.source_class].remove((self.dest_class, self.arrow_line))
+
+                # Update the relationship tracking list with the new type
+                for relationship in self.view.relationship_track_list.get(self.source_class, []):
+                    if relationship["dest_class"] == self.dest_class:
+                        relationship["arrow_list"].arrow_type = self.new_type
+                        break
+                
+                # Create the new arrow line with updated type
                 source_class_obj = self.class_box
                 dest_class_obj = self.view.class_name_list[self.dest_class]
                 new_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.new_type)
-                self.new_arrow_line_copy = new_arrow_line
-                self.view.track_relationship(self.source_class, self.dest_class, new_arrow_line)
+                self.arrow_line = new_arrow_line
                 self.view.scene().addItem(new_arrow_line)
+
             return is_rel_type_changed
 
     def undo(self):
         # Restore the original type
-        if self.is_field and self.original_type:
-            return self.uml_model._change_data_type(class_name=self.class_name, input_name=self.input_name, new_type=self.original_type, is_field=True, is_undo_or_redo=True)
-        elif self.is_method and self.original_type:
-            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, new_type=self.original_type, is_method=True, is_undo_or_redo=True)
-        elif self.is_param and self.original_type:
-            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.original_type, is_param=True, is_undo_or_redo=True)
-        elif self.is_rel and self.original_type:
+        if self.is_field and self.original_field_type:
+            chosen_field = self.uml_model._get_chosen_field_or_method(self.class_name, self.input_name, is_field=True)
+            if chosen_field is not None:
+                is_field_type_changed = self.uml_model._change_data_type(class_name=self.class_name, input_name=self.input_name, 
+                                                                         new_type=self.original_field_type, is_field=True, is_undo_or_redo=True)
+                if is_field_type_changed and self.is_gui:
+                    for index, field_key in enumerate(self.class_box.field_key_list):
+                        if field_key[1] == self.input_name:
+                            self.position = index
+                            self.class_box.field_key_list.remove(field_key)  # Remove from the name list
+                            self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+                    field_text = self.class_box.create_text_item(self.original_field_type + " " + self.input_name, is_field=True, selectable=False, color=self.class_box.text_color)
+                    field_key = (self.original_field_type, self.input_name)
+                    self.class_box.field_list[field_key] = field_text  # Add the field to the internal list
+                    self.class_box.field_key_list.insert(self.position, field_key)
+                    self.class_box.update_box()
+                return is_field_type_changed
+        
+        elif self.is_method and self.original_method_type:
+            chosen_method = self.uml_model._get_method_based_on_index(self.class_name, self.method_num)
+            if chosen_method is not None:
+                is_method_return_type_changed = self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, 
+                                                                                 new_type=self.original_method_type, is_method=True, is_undo_or_redo=True)
+                # Check if the item is still in the scene before removing
+                if is_method_return_type_changed and self.is_gui:
+                    method_entry = self.class_box.method_list[int(self.method_num) - 1]  # Directly use self.method_num
+                    if method_entry["method_text"].scene() == self.view.scene():
+                        self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
+                    self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
+                    method_key = method_entry["method_key"]
+                    current_param_list = method_entry["parameters"]
+                    # Create the new method text item with the new return type
+                    new_method_text = self.class_box.create_text_item(self.original_method_type + " " + method_key[1] + "()", is_method=True, selectable=False, color=self.class_box.text_color)
+                    new_method_key = (self.original_method_type, method_key[1])  
+                    # Create a new method entry as a dictionary with method_key, method_text, and parameters
+                    method_entry = {
+                        "method_key": new_method_key,
+                        "method_text": new_method_text,
+                        "parameters": current_param_list
+                    }
+                    # Append this dictionary to method_list
+                    self.class_box.method_list.insert(int(self.method_num) - 1, method_entry)
+                    if len(self.class_box.method_list) == 1:
+                        self.class_box.create_separator(is_first=False, is_second=True)
+                    self.class_box.update_box()
+                    
+                return is_method_return_type_changed
+        
+        elif self.is_param and self.original_param_type:
+            return self.uml_model._change_data_type(class_name=self.class_name, method_num=self.method_num, input_name=self.input_name, new_type=self.original_rel_type, is_param=True, is_undo_or_redo=True)
+        
+        elif self.is_rel and self.original_rel_type:
             is_rel_type_changed = self.uml_model._change_data_type(
                 source_class=self.source_class, dest_class=self.dest_class, 
-                new_type=self.original_type, is_rel=True, is_undo_or_redo=True
+                new_type=self.original_rel_type, is_rel=True, is_undo_or_redo=True
             )
             if is_rel_type_changed and self.is_gui:
-                if self.new_arrow_line_copy.scene() == self.view.scene():
-                    self.view.scene().removeItem(self.new_arrow_line_copy)
-                self.view.relationship_track_list[self.source_class].remove((self.dest_class, self.new_arrow_line_copy))
+                if self.arrow_line.scene() == self.view.scene():
+                    self.view.scene().removeItem(self.arrow_line)
+
+                for relationship in self.view.relationship_track_list.get(self.source_class, []):
+                    if relationship["dest_class"] == self.dest_class:
+                        relationship["arrow_list"].arrow_type = self.original_rel_type
+                        break
+                
                 source_class_obj = self.class_box
                 dest_class_obj = self.view.class_name_list[self.dest_class]
-                old_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.original_type)
-                self.view.track_relationship(self.source_class, self.dest_class, old_arrow_line)
+                old_arrow_line = ArrowLine(source_class_obj, dest_class_obj, self.original_rel_type)
+                self.arrow_line = old_arrow_line
                 self.view.scene().addItem(old_arrow_line)
+
             return is_rel_type_changed
         return False
         
