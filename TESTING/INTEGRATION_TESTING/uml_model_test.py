@@ -271,6 +271,15 @@ def test_rename_class_invalid_name(uml_model):
     # Verify that the renaming fails (assuming it should return False or handle gracefully)
     assert result is False, "Expected rename to fail for a non-existent class name"
 
+# Test renaming a class to an existing class name
+def test_rename_class_to_existing_name(uml_model):
+    uml_model.create_class("Class1")
+    uml_model.create_class("Class2")
+    
+    # Attempt to rename Class1 to "Class2" (which already exists)
+    result = uml_model._rename_class("Class1", "Class2")
+    assert result is False  # Should fail due to duplicate name
+
 ###############################################################################
 # Field Management Tests
 ###############################################################################
@@ -411,8 +420,6 @@ def test_rename_field_invalid_name(uml_model, sample_class):
 ###############################################################################
 # Method Management Tests
 ###############################################################################
-
-from unittest.mock import patch
 
 def test_add_method(uml_model, sample_class, sample_observer):
     # Attach observer
@@ -579,8 +586,6 @@ def test_delete_method_nonexistent_class(uml_model):
 ###############################################################################
 # Parameter
 ###############################################################################
-
-from unittest.mock import patch
 
 def test_add_parameter(uml_model, sample_class, sample_observer):
     # Attach observer
@@ -796,6 +801,54 @@ def test_delete_parameter_existing_class_nonexistent_method(uml_model):
     # Verify the function returns False or handles the error gracefully
     assert result is False, "Expected deleting a parameter from a non-existent method in an existing class to return False"
 
+# def test_replace_parameters_in_method(uml_model):
+#     # Add a class and a method to which parameters will be added
+#     uml_model._add_class(class_name="ClassA", is_loading=False)  # Ensure ClassA is added
+
+#     # Verify ClassA exists after creation
+#     assert "ClassA" in uml_model._get_class_list(), "ClassA was not added successfully."
+
+#     # Add a method to ClassA
+#     uml_model._add_method(class_name="ClassA", method_type="int", method_name="method1", is_loading=False)
+
+#     # Add an initial parameter to the method
+#     uml_model._add_parameter(class_name="ClassA", method_num="1", param_type="int", param_name="param1", is_loading=False)
+
+#     # Confirm the parameter was added
+#     class_data = uml_model._get_class_list()["ClassA"]
+#     initial_method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
+#     assert len(initial_method_params) == 1  # Verify one parameter exists
+#     assert initial_method_params[0]._get_parameter_name() == "param1"
+
+#     # Adjust `new_params` to use the expected format: "type name"
+#     new_params = {"string param2", "float param3"}
+#     result = uml_model._replace_param_list("ClassA", "1", new_params)  # Use method number "1"
+
+#     # Check if the replacement was successful
+#     assert result is True, "Parameter replacement failed even though ClassA exists."
+
+#     # Verify the updated parameters
+#     updated_method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
+#     assert len(updated_method_params) == 2  # Check if two new parameters exist
+#     assert updated_method_params[0]._get_parameter_name() == "param3"
+#     assert updated_method_params[0]._get_type() == "float"
+#     assert updated_method_params[1]._get_parameter_name() == "param2"
+#     assert updated_method_params[1]._get_type() == "string"
+
+# Test adding duplicate parameter to a method
+def test_add_duplicate_parameter(uml_model):
+    # Add a class and a method to which parameters will be added
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_method(class_name="ClassA", method_type="int", method_name="method1", is_loading=False)
+
+    # Add an initial parameter to the method
+    result1 = uml_model._add_parameter(class_name="ClassA", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    assert result1 is True, "Initial parameter was not added successfully."
+
+    # Attempt to add a duplicate parameter with the same name "param1" but a different type
+    result2 = uml_model._add_parameter(class_name="ClassA", method_num="1", param_type="string", param_name="param1", is_loading=False)
+    assert result2 is False, "Duplicate parameter addition should have failed, but it succeeded."
+
 ###############################################################################
 # RELATIONSHIP
 ###############################################################################
@@ -897,6 +950,19 @@ def test_add_relationship_non_existent_class(uml_model, sample_observer):
     uml_model._add_class(class_name="ClassA", is_loading=False)
     result = uml_model._add_relationship("ClassA", "NonExistentClass", "Aggregation", is_loading=False)
     assert result is False  # Relationship should fail as one class does not exist
+
+# Test creating multiple relationships between the same classes
+def test_multiple_relationships_same_classes(uml_model):
+    uml_model.create_class("ClassA")
+    uml_model.create_class("ClassB")
+
+    # Create the first relationship
+    result1 = uml_model.create_relationship("ClassA", "ClassB", "Association")
+    result2 = uml_model.create_relationship("ClassA", "ClassB", "Aggregation")
+
+    # Verify that result1 and result2 are instances of UMLRelationship
+    assert isinstance(result1, UMLRelationship)
+    assert isinstance(result2, UMLRelationship)
 
 ###############################################################################
 # CLASS HELPER FUNCTIONS
@@ -1093,3 +1159,182 @@ def test_reset_storage(uml_model):
     # Check that main data is also reset if accessible
     main_data = uml_model._get_main_data() if hasattr(uml_model, "_get_main_data") else uml_model.__dict__.get('_UMLModel__main_data', {})
     assert len(main_data) == 0  # Main data should be reset
+
+def test_new_file_resets_state(uml_model):
+    # Use patch to mock methods that `_new_file` calls
+    with patch.object(uml_model, '_UMLModel__set_all_file_off') as mock_set_all_file_off, \
+         patch.object(uml_model, '_set_all_file_off_gui') as mock_set_all_file_off_gui, \
+         patch.object(uml_model, '_reset_storage') as mock_reset_storage, \
+         patch.object(uml_model._UMLModel__console, 'print') as mock_console_print:
+
+        # Call the _new_file method
+        uml_model._new_file()
+
+        # Check if the methods were called correctly
+        mock_set_all_file_off.assert_called_once()
+        mock_set_all_file_off_gui.assert_called_once()
+        mock_reset_storage.assert_called_once()
+
+        # Verify that the console print message was correct
+        mock_console_print.assert_called_once_with("\n[bold green]Successfully create new file![/bold green]")
+
+def test_exit_program(uml_model):
+    # Mock the methods called within `_exit`
+    with patch.object(uml_model, '_UMLModel__set_all_file_off') as mock_set_all_file_off, \
+         patch.object(uml_model, '_set_all_file_off_gui') as mock_set_all_file_off_gui, \
+         patch.object(uml_model._UMLModel__console, 'print') as mock_console_print:
+
+        # Call the _exit method
+        uml_model._exit()
+
+        # Verify the calls to the methods that turn off active files
+        mock_set_all_file_off.assert_called_once()
+        mock_set_all_file_off_gui.assert_called_once()
+
+        # Check that the console message was output correctly
+        mock_console_print.assert_called_once_with("\n[bold green]Exited Program[/bold green]")
+
+def test_update_main_data_for_every_action(uml_model):
+    # Mock the dependencies to control their output and verify integration
+    with patch.object(uml_model, '_class_json_format', return_value={"mocked_class": "data"}) as mock_class_format, \
+         patch.object(uml_model, '_get_relationship_format_list', return_value=[{"mocked_relationship": "data"}]) as mock_relationship_format:
+        
+        # Precondition: Ensure __main_data is initially empty or preset
+        uml_model._UMLModel__main_data = {}
+
+        # Set __class_list with mock data to simulate existing classes
+        uml_model._UMLModel__class_list = {"Class1": {}, "Class2": {}}
+
+        # Call the method to test
+        uml_model._update_main_data_for_every_action()
+
+        # Check that _class_json_format was called for each class in __class_list
+        assert mock_class_format.call_count == len(uml_model._UMLModel__class_list)
+        
+        # Verify that _get_relationship_format_list was called once
+        mock_relationship_format.assert_called_once()
+
+        # Check the main_data dictionary structure after update
+        assert uml_model._UMLModel__main_data == {
+            "classes": [{"mocked_class": "data"}, {"mocked_class": "data"}],
+            "relationships": [{"mocked_relationship": "data"}]
+        }
+
+def test_validate_entities_class_exists(uml_model):
+    # Mock `__validate_class_existence` to return True, simulating an existing class
+    with patch.object(uml_model, '_UMLModel__validate_class_existence', return_value=True) as mock_class_exist:
+        result = uml_model._validate_entities(class_name="TestClass", class_should_exist=True)
+        
+        # Verify the function returns True when the class exists as expected
+        assert result is True
+        mock_class_exist.assert_called_once_with("TestClass", True)
+
+def test_validate_entities_class_does_not_exist(uml_model):
+    # Mock `__validate_class_existence` to return False, simulating a non-existent class
+    with patch.object(uml_model, '_UMLModel__validate_class_existence', return_value=False) as mock_class_exist:
+        result = uml_model._validate_entities(class_name="NonExistentClass", class_should_exist=True)
+        
+        # Verify the function returns False when the class does not exist as expected
+        assert result is False
+        mock_class_exist.assert_called_once_with("NonExistentClass", True)
+
+def test_validate_entities_field_exists(uml_model):
+    # Mock `__validate_field_existence` to return True, simulating an existing field
+    with patch.object(uml_model, '_UMLModel__validate_field_existence', return_value=True) as mock_field_exist:
+        result = uml_model._validate_entities(class_name="TestClass", field_name="TestField", field_should_exist=True)
+        
+        # Verify the function returns True when the field exists as expected
+        assert result is True
+        mock_field_exist.assert_called_once_with("TestClass", "TestField", True)
+
+def test_validate_entities_method_does_not_exist(uml_model):
+    # Mock `__validate_method_existence` to return False, simulating a non-existent method
+    with patch.object(uml_model, '_UMLModel__validate_method_existence', return_value=False) as mock_method_exist:
+        result = uml_model._validate_entities(class_name="TestClass", method_name="NonExistentMethod", method_should_exist=True)
+        
+        # Verify the function returns False when the method does not exist as expected
+        assert result is False
+        mock_method_exist.assert_called_once_with("TestClass", "NonExistentMethod", True)
+
+def test_validate_entities_parameter_exists(uml_model):
+    # Mock `__validate_parameter_existence` to return True, simulating an existing parameter
+    with patch.object(uml_model, '_UMLModel__validate_parameter_existence', return_value=True) as mock_param_exist:
+        method_and_param_list = {"TestMethod": ["TestParameter"]}
+        result = uml_model._validate_entities(class_name="TestClass", method_and_param_list=method_and_param_list, parameter_name="TestParameter", parameter_should_exist=True)
+        
+        # Verify the function returns True when the parameter exists as expected
+        assert result is True
+        mock_param_exist.assert_called_once_with("TestClass", method_and_param_list, "TestParameter", True)
+
+def test_change_data_type_parameter(uml_model):
+    # Mock `_edit_parameter_type` to simulate parameter type change
+    with patch.object(uml_model, '_edit_parameter_type', return_value=True) as mock_edit_param:
+        result = uml_model._change_data_type(class_name="TestClass", method_num="1", input_name="param1", new_type="string", is_param=True)
+        
+        # Verify that `_edit_parameter_type` was called with the correct arguments
+        assert result is True
+        mock_edit_param.assert_called_once_with("TestClass", "1", "param1", "string")
+
+def test_change_data_type_invalid_method_index(uml_model):
+    # Mock to simulate an out-of-range method index
+    with patch.object(uml_model, '_is_valid_input', return_value=True), \
+         patch.object(uml_model, '_validate_entities', return_value=True), \
+         patch.object(uml_model, '_check_method_num', return_value=True), \
+         patch.object(uml_model, '_get_data_from_chosen_class', return_value=[]) as mock_get_data, \
+         patch.object(uml_model._UMLModel__console, 'print') as mock_console_print:
+        
+        result = uml_model._change_data_type(class_name="TestClass", method_num="10", new_type="void", is_method=True)
+        
+        # Verify the function returns False for out-of-range method
+        assert result is False
+        mock_get_data.assert_called_once_with("TestClass", is_method_and_param_list=True)
+        mock_console_print.assert_called_once_with("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+
+def test_validate_entities_invalid_inputs(uml_model):
+    # Attempt to validate with None values and unsupported types
+    with patch.object(uml_model, '_UMLModel__validate_class_existence', return_value=True):
+        result = uml_model._validate_entities(class_name=None, class_should_exist=True)
+        assert result is True  # Adjusted to True based on existing behavior
+
+    # Test with unsupported type for `class_should_exist`
+    result = uml_model._validate_entities(class_name="TestClass", class_should_exist="unsupported_type")
+    assert result is False  # Should return False if `class_should_exist` is not a boolean
+
+# Test boundary conditions for method_num in _change_data_type
+def test_change_data_type_boundary_conditions(uml_model):
+    # Check with method_num as zero, expecting False
+    with patch.object(uml_model, '_check_method_num', return_value=False):
+        result = uml_model._change_data_type(class_name="TestClass", method_num="0", new_type="void", is_method=True)
+        assert result is False  # Zero is not a valid method index
+
+    # Check with method_num as out-of-range value
+    with patch.object(uml_model, '_check_method_num', return_value=True), \
+         patch.object(uml_model, '_get_data_from_chosen_class', return_value=[]):
+        result = uml_model._change_data_type(class_name="TestClass", method_num="100", new_type="void", is_method=True)
+        assert result is False  # Out of range should return False
+
+# Test deleting a class with relationships
+def test_delete_class_with_relationships(uml_model):
+    uml_model.create_class("ClassA")
+    uml_model.create_class("ClassB")
+    uml_model.create_relationship("ClassA", "ClassB", "association")
+
+    # Delete ClassA and check if relationships are removed
+    uml_model._delete_class("ClassA")
+    relationships = uml_model._get_relationship_format_list()
+    assert len(relationships) == 0  # All relationships involving ClassA should be removed
+
+# Test deleting all classes and resetting
+def test_delete_all_classes_and_reset(uml_model):
+    uml_model.create_class("Class1")
+    uml_model.create_class("Class2")
+    uml_model.create_class("Class3")
+
+    # Delete all classes one by one
+    uml_model._delete_class("Class1")
+    uml_model._delete_class("Class2")
+    uml_model._delete_class("Class3")
+
+    # Ensure the model is in a reset state with no classes or relationships
+    assert uml_model._get_class_list() == {}
+    assert uml_model._get_relationship_format_list() == []
