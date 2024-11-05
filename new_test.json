@@ -33,7 +33,11 @@
                     "return_type": "void",
                     "params": []
                 }
-            ]
+            ],
+            "position": {
+                "x": 0,
+                "y": 0
+            }
         }
     ],
     "relationships": []

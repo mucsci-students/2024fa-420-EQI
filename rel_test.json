@@ -3,22 +3,38 @@
         {
             "name": "House",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": 2,
+                "y": 2
+            }
         },
         {
             "name": "Human",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": 4,
+                "y": 4
+            }
         },
         {
             "name": "Animal",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": 6,
+                "y": 6
+            }
         },
         {
             "name": "TEST",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": 8,
+                "y": 8
+            }
         }
     ],
     "relationships": [

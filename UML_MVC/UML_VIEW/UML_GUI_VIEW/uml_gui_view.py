@@ -15,8 +15,10 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
     _instance = None  # Class variable to hold the single instance
 
     def __new__(cls, *args, **kwargs):
-        if not cls._instance:
+        if cls._instance is None:
             cls._instance = super(MainWindow, cls).__new__(cls)
+        else:
+            raise RuntimeError("Only one instance of MainWindow is allowed!")
         return cls._instance
     
     """
@@ -32,10 +34,14 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         Parameters:
         - interface: The interface to communicate with UMLCoreManager (business logic layer).
         """
-        if hasattr(MainWindow, '_instance') and MainWindow._instance is not None:
-            return
         
         super().__init__()
+        
+        if hasattr(self, 'initialized'):  # Prevent reinitialization
+            return
+        
+        self.initialized = True  # Mark as initialized
+        
         self.interface = interface  # Interface to communicate with UMLCoreManager
 
         # Load the UI file to set up the layout and widgets of the main window
