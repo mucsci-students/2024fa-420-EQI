@@ -970,7 +970,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         else:
             file_base_name = os.path.basename(current_active_file_path)
             file_name_only = os.path.splitext(file_base_name)[0]
-            self.interface.save_gui(file_name_only, current_active_file_path)  
+            self.interface.save_gui(file_name_only, current_active_file_path, self.class_name_list)  
             
     def undo(self):
         self.input_handler.undo()

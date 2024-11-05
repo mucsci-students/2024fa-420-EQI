@@ -484,7 +484,7 @@ class UMLInterface:
         self.Model._save()
         
     # Save data GUI #
-    def save_gui(self, file_name, file_path):
+    def save_gui(self, file_name, file_path, class_name_list_from_gui):
         """
         Saves the UML diagram data to a specified file and path for GUI-based saving.
 
@@ -492,7 +492,7 @@ class UMLInterface:
             file_name: The name of the file to save.
             file_path: The path where the file will be saved.
         """
-        self.Model._save_gui(file_name, file_path)
+        self.Model._save_gui(file_name, file_path, class_name_list_from_gui)
         
     # Load data #
     def load(self):

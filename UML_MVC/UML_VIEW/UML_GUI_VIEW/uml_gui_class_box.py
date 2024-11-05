@@ -54,6 +54,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         self.handles_list: List = []
         self.connection_points_list: Dict = {}
         self.arrow_line_list: List = []
+        
+        self.box_position = {
+            "x" : 0, 
+            "y" : 0
+        }
 
         #################################################################
         ### UML CLASS BOX DEFAULT SETUP ###
@@ -150,11 +155,18 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         
         self.update_arrow_lines()
         
+        self.update_box_position()
+        
+    def update_box_position(self):
+        self.box_position["x"] = self.pos().x()
+        self.box_position["y"] = self.pos().y()
+        print(f"Current location: ({self.box_position["x"]} , {self.box_position["y"]})")
         
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionChange:
             # Update arrow positions when the position of the box changes
             self.update_arrow_lines()
+            self.update_box_position()
         return super().itemChange(change, value)
     
     def update_arrow_lines(self):

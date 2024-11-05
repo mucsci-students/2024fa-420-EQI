@@ -1642,7 +1642,7 @@ class UMLModel:
         self.__console.print(f"\n[bold green]Successfully saved data to [bold white]'{user_input}.json'![/bold white][/bold green]")
 
     # Save for GUI #
-    def _save_gui(self, file_name, full_path):
+    def _save_gui(self, file_name, full_path, class_name_list_from_gui):
         """
         Saves UML data through the GUI, saving to the specified file name and path.
         
@@ -1650,6 +1650,11 @@ class UMLModel:
             file_name (str): The name of the file to save.
             file_path (str): The file path for saving the data.
         """
+        # Update position
+        for class_name_gui, class_box in class_name_list_from_gui.items():
+            if class_name_gui in self.__class_list:
+                self.__class_list[class_name_gui]._set_position(class_box.box_position["x"], class_box.box_position["y"])
+                
         # Class and relationship data lists for storing in main data
         class_data_list = []
         relationship_data_list = []

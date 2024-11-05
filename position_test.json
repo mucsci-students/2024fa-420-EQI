@@ -1,0 +1,23 @@
+{
+    "classes": [
+        {
+            "name": "a",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 343.0,
+                "y": -453.0
+            }
+        },
+        {
+            "name": "b",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 336.0,
+                "y": -283.0
+            }
+        }
+    ],
+    "relationships": []
+}
