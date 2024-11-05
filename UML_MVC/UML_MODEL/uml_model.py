@@ -2133,7 +2133,7 @@ class UMLModel:
         """
         self.__class_list: Dict[str, Class] = {}
         self.__relationship_list: List = []
-        self.__main_data: Dict = {}
+        self.__main_data: Dict = {"classes": [], "relationships" : []}
     
     #################################################################
     ### UTILITY FUNCTIONS ###
