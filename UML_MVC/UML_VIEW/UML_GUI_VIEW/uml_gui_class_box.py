@@ -2,9 +2,6 @@ from PyQt5 import QtWidgets, QtGui
 from typing import Dict, List
 
 ###################################################################################################
-# # ADD ROOT PATH #
-# root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-# sys.path.append(root_path)
 
 from UML_ENUM_CLASS.uml_enum import BoxDefaultStat as Default
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_editable_text_item import UMLEditableTextItem as Text
