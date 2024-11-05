@@ -1813,6 +1813,7 @@ class UMLModel:
         """
         class_data = main_data["classes"]
         relationship_data = main_data["relationships"]
+        method_num = 0
         # Reset the current storage before loading new data
         self._reset_storage()
         # Set the new main data
@@ -1823,8 +1824,9 @@ class UMLModel:
             for class_name, data in each_pair.items():
                 field_list = data["fields"]
                 method_list = data["method_list"]
+                position = data["position"]
                 # Add classes, fields, methods, and parameters to the program state
-                graphical_view.add_class(class_name, is_loading=True)
+                graphical_view.add_class(class_name, x=position["x"], y=position["y"], is_loading=True)
                 for each_field in field_list:
                     field_name = each_field["name"]
                     field_type = each_field["type"]
@@ -1834,8 +1836,11 @@ class UMLModel:
                     return_type = each_element["return_type"]
                     parameter_list = each_element["params"]
                     graphical_view.add_method(class_name, return_type, method_name, is_loading=True)
-                    for param_name in parameter_list:
-                        graphical_view.add_param(class_name, method_name, param_name, is_loading=True)
+                    method_num += 1
+                    for param in parameter_list:
+                        param_type = param["type"]
+                        param_name = param["name"]
+                        graphical_view.add_param(class_name, method_num, param_type, param_name, is_loading=True)
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:
             graphical_view.add_relationship(

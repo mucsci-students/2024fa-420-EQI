@@ -356,7 +356,7 @@ class UMLInterface:
     ## PARAMETER RELATED ##
     
     # Add parameter interface #
-    def add_parameter(self, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None):
+    def add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
         """
         Adds a parameter to a UML method by delegating the operation to the model.
 
