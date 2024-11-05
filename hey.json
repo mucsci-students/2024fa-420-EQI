@@ -2,12 +2,22 @@
     "classes": [
         {
             "name": "Human",
-            "fields": [],
+            "fields": [
+                {
+                    "name": "mana",
+                    "type": "double"
+                }
+            ],
             "methods": []
         },
         {
             "name": "Animal",
-            "fields": [],
+            "fields": [
+                {
+                    "name": "health",
+                    "type": "int"
+                }
+            ],
             "methods": []
         }
     ],

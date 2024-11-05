@@ -241,6 +241,7 @@ class UMLInterface:
     
     def get_rel_type(self, source_class_name: str, destination_class_name: str):
         return self.Model._get_rel_type(source_class_name, destination_class_name)
+    
     ## CLASS RELATED ##
     
     # Add class interface #
@@ -609,10 +610,11 @@ class UMLInterface:
         self.Model._notify_observer()
     
     # Check for valid input
-    def is_valid_input(self, class_name=None, field_name=None, 
-                        method_name=None, parameter_name=None, 
-                        source_class=None, destination_class=None, 
-                        type=None, new_name=None):
+    def is_valid_input(self, class_name=None, field_name=None, method_name=None, 
+                       parameter_name=None, source_class=None, 
+                       destination_class=None, field_type=None, method_type=None, 
+                       rel_type=None, new_type=None, new_name=None, 
+                       parameter_type=None, return_type=None):
         """
         Check if the user input contains only letters, numbers, and underscores for all provided parameters.
 
@@ -632,7 +634,9 @@ class UMLInterface:
         return self.Model._is_valid_input(class_name=class_name, field_name=field_name,
                                           method_name=method_name, parameter_name=parameter_name,
                                           source_class=source_class, destination_class=destination_class,
-                                          type=type, new_name=new_name)
+                                          field_type=field_type, method_type=method_type,
+                                          rel_type=rel_type, new_type=new_type,
+                                          parameter_type=parameter_type, return_type=return_type, new_name=new_name)
         
     #################################################################
     

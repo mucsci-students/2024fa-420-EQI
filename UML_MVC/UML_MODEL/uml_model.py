@@ -8,6 +8,7 @@ to handle save/load functionality and provides static methods for creating UML c
 """
 ###################################################################################################
 
+import copy
 import re
 import os
 from typing import Dict, List
@@ -85,7 +86,7 @@ class UMLModel:
         return self.__relationship_list
     
     def _get_main_data(self) -> Dict:
-        return self.__main_data
+        return copy.deepcopy(self.__main_data)
     
     def _set_main_data(self, new_main_data) -> Dict:
         self.__main_data = new_main_data
@@ -426,7 +427,7 @@ class UMLModel:
         return True
 
     # Delete method #
-    def _delete_method(self, class_name: str, method_num: int, is_undo_or_redo: bool = False):
+    def _delete_method(self, class_name: str, method_num: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing method from a UML class and notifies observers.
 
@@ -843,7 +844,7 @@ class UMLModel:
         is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         if not is_class_and_method_exist:
             return False
-        
+
         # Check if method_num is numeric
         is_method_num_a_number = self._check_method_num(method_num)
         if not is_method_num_a_number:
@@ -860,6 +861,7 @@ class UMLModel:
             for param in new_param_name_list:
                 # Split param into type and name
                 parts = param.strip().split()
+
                 if len(parts) != 2:
                     self.__console.print(f"\n[bold red]Error: Invalid parameter format '{param}'. Expected format: 'type name'.[/bold red]")
                     return False
@@ -873,6 +875,10 @@ class UMLModel:
             chosen_pair = method_and_parameter_list[selected_index]
             # Extract the selected method and its parameter list #
             method, params_list = next(iter(chosen_pair.items()))
+            # Check to see if the method with the new parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, {method: new_params_obj_list})
+            if not is_method_valid_with_param:
+                return False
             params_list.clear()
         
             for param in new_params_obj_list:
@@ -1167,7 +1173,7 @@ class UMLModel:
                 each_relationship._set_destination_class(new_name)
                 
     # Get method and parameter list of a chosen class #
-    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[str, List[Parameter]] | None:
+    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[Method, List[Parameter]] | None:
         """
         Retrieves the method and parameter list of a specified class.
 
@@ -1762,8 +1768,16 @@ class UMLModel:
             for class_name, data in each_pair.items():
                 field_list = data["fields"]
                 method_list = data["method_list"]
+
+                # Check for position data in the loaded class information
+                position = data.get("position")
+
                 # Add classes, fields, methods, and parameters to the program state
                 self._add_class(class_name, is_loading=True)
+
+                if position:
+                    self.__class_list[class_name]._set_position(position["x"], position["y"])
+
                 for each_field in field_list:
                     field_name = each_field["name"]
                     field_type = each_field["type"]
@@ -1829,32 +1843,50 @@ class UMLModel:
     # Extract class, field, method, and parameters from json file #
     def _extract_class_data(self, class_data: List[Dict]) -> List[Dict[str, Dict[str, List | Dict]]]:
         """
-        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing.
+        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing,
+        including position data if available.
 
         Parameters:
             class_data (List[Dict]): A list of dictionaries representing class data loaded from JSON.
 
         Returns:
-            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, and parameters.
+            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, parameters, and position.
         """
         class_info_list: List[Dict[str, Dict[str, List | Dict]]] = []
-        # Loop through the class data to extract fields and methods
+        
+        # Loop through the class data to extract fields, methods, and position
         for class_element in class_data:
-            method_list = []
             class_name = class_element["name"]
             fields = [{"name": field["name"], "type": field["type"]} for field in class_element["fields"]]
+            
             # Extract methods and their parameters
+            method_list = []
             for method_element in class_element["methods"]:
-                temp_param_list: List[str] = []
-                for param_element in method_element["params"]:
-                    temp_param_list.append({"type" : param_element["type"], "name": param_element["name"]})
+                temp_param_list = [{"type": param["type"], "name": param["name"]} for param in method_element["params"]]
                 method_list.append({
                     "name": method_element["name"],
-                    "return_type" : method_element["return_type"],
+                    "return_type": method_element["return_type"],
                     "params": temp_param_list
                 })
-            class_info_list.append({class_name: {"fields": fields, "method_list": method_list}})
+            
+            # Directly assign position if it exists, else it will be None
+            position = class_element.get("position")
+            
+            # Prepare class data dictionary
+            class_data_dict = {
+                "fields": fields,
+                "method_list": method_list
+            }
+            
+            # Only include position if it exists
+            if position:
+                class_data_dict["position"] = position
+            
+            # Append the class data to the list
+            class_info_list.append({class_name: class_data_dict})
+        
         return class_info_list
+
     
     # Delete saved file #
     def _delete_saved_file(self):

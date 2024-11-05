@@ -1,0 +1,88 @@
+{
+    "classes": [
+        {
+            "name": "human",
+            "fields": [
+                {
+                    "name": "health",
+                    "type": "int"
+                },
+                {
+                    "name": "mana",
+                    "type": "int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "attack",
+                    "return_type": "void",
+                    "params": [
+                        {
+                            "name": "dmg",
+                            "type": "int"
+                        },
+                        {
+                            "name": "crit",
+                            "type": "float"
+                        }
+                    ]
+                },
+                {
+                    "name": "run",
+                    "return_type": "void",
+                    "params": [
+                        {
+                            "name": "stamina",
+                            "type": "int"
+                        },
+                        {
+                            "name": "energy",
+                            "type": "double"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "animal",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "race",
+                    "type": "string"
+                },
+                {
+                    "name": "age",
+                    "type": "int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "bite",
+                    "return_type": "void",
+                    "params": []
+                },
+                {
+                    "name": "lick",
+                    "return_type": "void",
+                    "params": []
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "source": "human",
+            "destination": "animal",
+            "type": "Aggregation"
+        },
+        {
+            "source": "animal",
+            "destination": "human",
+            "type": "Composition"
+        }
+    ]
+}

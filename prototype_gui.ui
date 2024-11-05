@@ -37,6 +37,9 @@
    <addaction name="Save"/>
    <addaction name="SaveAs"/>
    <addaction name="separator"/>
+   <addaction name="Undo"/>
+   <addaction name="Redo"/>
+   <addaction name="separator"/>
    <addaction name="toggle_mode"/>
    <addaction name="Help"/>
   </widget>
@@ -303,6 +306,30 @@
    </property>
    <property name="text">
     <string>Help</string>
+   </property>
+  </action>
+  <action name="Undo">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/undo-alt.png</normaloff>UML_ICONS/undo-alt.png</iconset>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="Redo">
+   <property name="icon">
+    <iconset>
+     <normaloff>UML_ICONS/redo.png</normaloff>UML_ICONS/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
    </property>
   </action>
  </widget>

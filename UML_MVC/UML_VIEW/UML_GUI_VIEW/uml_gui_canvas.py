@@ -7,6 +7,7 @@ from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 from UML_ENUM_CLASS.uml_enum import RelationshipType
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_custom_dialog import CustomInputDialog as Dialog
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_arrow_line import UMLArrow as ArrowLine
+from UML_MVC import uml_command_pattern as Command
 
 ###################################################################################################
 
@@ -32,6 +33,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
         # Interface to communicate with UMLCoreManager
         self.interface = interface  
+        self.model = self.interface.Controller._get_model_obj()
+        
+        self.input_handler = self.interface.Controller._get_input_handler()
         
         # Class name list
         self.class_name_list = {}
@@ -100,12 +104,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if not is_class_name_valid:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {input_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
-                is_class_added = self.interface.add_class(input_class_name)
-                if is_class_added:
-                    class_box = UMLClassBox(self.interface, class_name=input_class_name)
-                    self.class_name_list[input_class_name] = class_box
-                    self.scene().addItem(class_box)
-                else:
+                class_box = UMLClassBox(self.interface, class_name=input_class_name)
+                add_class_command = Command.AddClassCommand(self.model, class_name=input_class_name, view=self, class_box=class_box, is_gui=True)
+                is_class_added = self.input_handler.execute_command(add_class_command)
+
+                if not is_class_added:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
             
     def delete_class(self):
@@ -115,28 +118,9 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if self.selected_class:
             # Remove the class box
             input_class_name = self.selected_class.class_name_text.toPlainText()
-            is_class_deleted = self.interface.delete_class(input_class_name)
-            if is_class_deleted:
-                # Create a copy of the arrow_line_list to avoid modifying the list while iterating
-                arrow_lines = list(self.selected_class.arrow_line_list)
-                for arrow_line in arrow_lines:
-                    # Remove the arrow from the scene
-                    self.scene().removeItem(arrow_line)
-                    # Remove the arrow from the source class's arrow_line_list if it's not the selected class
-                    if arrow_line.source_class != self.selected_class:
-                        if arrow_line in arrow_line.source_class.arrow_line_list:
-                            arrow_line.source_class.arrow_line_list.remove(arrow_line)
-                    # Remove the arrow from the destination class's arrow_line_list if it's not the selected class
-                    if arrow_line.dest_class != self.selected_class:
-                        if arrow_line in arrow_line.dest_class.arrow_line_list:
-                            arrow_line.dest_class.arrow_line_list.remove(arrow_line)
-                    # Remove the arrow from the selected class's arrow_line_list
-                    self.selected_class.arrow_line_list.remove(arrow_line)
-                # Remove the class from the class_name_list and scene
-                self.class_name_list.pop(input_class_name, None)
-                self.scene().removeItem(self.selected_class)
-                self.selected_class = None
-            else:
+            delete_class_command = Command.DeleteClassCommand(self.model, class_name=input_class_name, view=self, class_box=self.selected_class, is_gui=True)
+            is_class_deleted = self.input_handler.execute_command(delete_class_command)
+            if not is_class_deleted:
                 QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' does not exist!")
         else:
             QtWidgets.QMessageBox.warning(None, "Warning", "No class selected!")
@@ -158,16 +142,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if not is_class_name_valid:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class name {new_class_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                     return
-                is_class_renamed = self.interface.rename_class(old_class_name, new_class_name)
+                rename_class_command = Command.RenameClassCommand(self.model, class_name=old_class_name, new_name=new_class_name, view=self, class_box=self.selected_class, is_gui=True)
+                is_class_renamed = self.input_handler.execute_command(rename_class_command)
                 if is_class_renamed:
-                    self.change_name_in_relationship_after_rename_class(old_class_name, new_class_name)
                     self.class_name_list[new_class_name] = self.class_name_list.pop(old_class_name)
-                    self.selected_class.class_name_text.setPlainText(new_class_name)
                     self.selected_class.update_box()
                 else:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"New class name'{new_class_name}' has already existed!")
             
-    def add_field(self, loaded_class_name=None, loaded_field_name=None, is_loading=False):
+    def add_field(self, loaded_class_name=None, loaded_field_type=None, loaded_field_name=None, is_loading=False):
         """
         Add a field to a UML class box, either during loading or interactively.
 
@@ -190,33 +173,52 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if isinstance(item, UMLClassBox) and item.class_name_text.toPlainText() == loaded_class_name:
                     selected_class_box = item  # Found the class box
                     # Add the field to the found class box
-                    is_field_added = self.interface.add_field(loaded_class_name, loaded_field_name)
+                    is_field_added = self.interface.add_field(loaded_class_name, loaded_field_type, loaded_field_name)
                     if is_field_added:
                         # Create a text item for the field and add it to the list of the found class box
-                        field_text = selected_class_box.create_text_item(loaded_field_name, is_field=True, selectable=False, color=selected_class_box.text_color)
-                        selected_class_box.field_list[loaded_field_name] = field_text  # Add the field to the internal list
-                        selected_class_box.field_name_list.append(loaded_field_name)  # Track the field name in the name list
+                        field_text = selected_class_box.create_text_item(loaded_field_type + " " + loaded_field_name, is_field=True, selectable=False, 
+                                                                         color=selected_class_box.text_color)
+                        field_key = (loaded_field_type, loaded_field_name)
+                        selected_class_box.field_list[field_key] = field_text  # Add the field to the internal list
+                        selected_class_box.field_key_list.append(loaded_field_name)  # Track the field name in the name list
                         selected_class_box.update_box()  # Update the box to reflect the changes
         else:
             if self.selected_class:
-                # Display a dialog asking the user for the new field name
-                field_name, ok = QtWidgets.QInputDialog.getText(None, "Add Field", "Enter field name:")
-                # If the user confirms and provides a valid name, create and add the field
-                if ok and field_name:
+                add_field_dialog = Dialog("Add Field")
+                add_field_dialog.add_field_popup()
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if add_field_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    field_type = add_field_dialog.input_widgets["field_type"].text()
+                    field_name = add_field_dialog.input_widgets["field_name"].text()
+                    
+                    if not field_type.strip() and not field_name.strip():
+                        return
+                    elif not field_name.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Field name is empty!")
+                        return
+                    elif not field_type.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Field type is empty!")
+                        return
+                    
+                    is_field_type_valid = self.interface.is_valid_input(field_type=field_type)
+                    if not is_field_type_valid:
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Field type {field_type} is invalid! Only allow a-zA-Z, number, and underscore!")
+                        return
                     is_field_name_valid = self.interface.is_valid_input(field_name=field_name)
                     if not is_field_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name {field_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
-                    selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_field_added = self.interface.add_field(selected_class_name, field_name)
-                    if is_field_added:
-                        # Create a text item for the field and add it to the list
-                        field_text = self.selected_class.create_text_item(field_name, is_field=True, selectable=False, color=self.selected_class.text_color)
-                        self.selected_class.field_list[field_name] = field_text  # Add the field to the internal list
-                        self.selected_class.field_name_list.append(field_name)  # Track the field name in the name list
-                        self.selected_class.update_box()  # Update the box to reflect the changes
-                    else:
+                    
+                    add_field_command = Command.AddFieldCommand(self.model, class_name=selected_class_name, type=field_type, 
+                                                                field_name=field_name, view=self, class_box=self.selected_class, is_gui=True)
+                    is_field_added = self.input_handler.execute_command(add_field_command)
+                    
+                    if not is_field_added:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name '{field_name}' has already existed!")
+                    
 
     def delete_field(self):
         """
@@ -231,21 +233,21 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. If no class or field is selected, display a warning.
         """
         if self.selected_class:
-            if self.selected_class.field_name_list:
+            if self.selected_class.field_key_list:
                 # Display a dialog asking the user to select a field to remove
-                field_name, ok = QtWidgets.QInputDialog.getItem(None, "Remove Field", "Select field to remove:", self.selected_class.field_name_list, 0, False)
+                field_name_list = [field_key[1] for field_key in self.selected_class.field_key_list]
+                field_name, ok = QtWidgets.QInputDialog.getItem(None, "Remove Field", "Select field to remove:", field_name_list, 0, False)
                 # If the user confirms, remove the selected field from the class
                 if ok and field_name:
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_field_deleted = self.interface.delete_field(selected_class_name, field_name)
-                    if is_field_deleted:
-                        self.selected_class.field_name_list.remove(field_name)  # Remove from the name list
-                        self.selected_class.scene().removeItem(self.selected_class.field_list.pop(field_name))  # Remove the text item from the scene
-                        self.selected_class.update_box()  # Update the box to reflect the changes
+                    
+                    delete_field_command = Command.DeleteFieldCommand(self.model, class_name=selected_class_name, field_name=field_name, 
+                                                                      view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(delete_field_command)
     
     def rename_field(self):
         if self.selected_class:
-            if self.selected_class.field_name_list: 
+            if self.selected_class.field_key_list: 
                 # Initialize the dialog
                 rename_field_dialog = Dialog("Rename Field")
                 rename_field_dialog.rename_field_popup(self.selected_class)
@@ -254,11 +256,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if rename_field_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
                     old_field_name = rename_field_dialog.input_widgets['old_field_name'].currentText()  # Use `currentText()` for QComboBox
                     new_field_name = rename_field_dialog.input_widgets['new_field_name'].text()  # Use `text()` for QLineEdit
+                    
+                    if not new_field_name.strip():
+                        return
 
                     # Check if the new field name already exists
-                    if new_field_name in self.selected_class.field_name_list:
+                    if new_field_name in self.selected_class.field_key_list:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name '{new_field_name}' has already existed!")
                         return
 
@@ -267,21 +273,41 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     if not is_field_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Field name {new_field_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
-
-                    # Proceed with renaming the field (example logic below)
-                    selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_field_renamed = self.interface.rename_field(selected_class_name, old_field_name, new_field_name)
+     
+                    rename_field_command = Command.RenameFieldCommand(self.model, class_name=selected_class_name, old_field_name=old_field_name, 
+                                                                      new_field_name=new_field_name, view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(rename_field_command)
                         
-                    if is_field_renamed:
-                        # Update the field name in the list and refresh the display
-                        if old_field_name in self.selected_class.field_list:
-                            self.selected_class.field_list[new_field_name] = self.selected_class.field_list.pop(old_field_name)  # Rename the field in the internal list
-                            self.selected_class.field_list[new_field_name].setPlainText(new_field_name)  # Set the new field name
-                            self.selected_class.field_name_list[self.selected_class.field_name_list.index(old_field_name)] = new_field_name  # Update the name list
-                            self.selected_class.update_box()  # Refresh the box display
+       
+    def edit_field_type(self):
+        if self.selected_class:
+            if self.selected_class.field_key_list: 
+                # Initialize the dialog
+                edit_field_type_dialog = Dialog("Edit Field Type")
+                edit_field_type_dialog.edit_field_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_field_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    field_name = edit_field_type_dialog.input_widgets['field_name'].currentText()  # Use `currentText()` for QComboBox
+                    new_field_type = edit_field_type_dialog.input_widgets['new_field_type'].text()  # Use `text()` for QLineEdit
+                    
+                    edit_field_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                input_name=field_name,
+                                new_type=new_field_type,
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_field=True
+                            )
+                    self.input_handler.execute_command(edit_field_type_command)
+        
             
-    def add_method(self, loaded_class_name=None, loaded_method_name=None, is_loading=False):
+    def add_method(self, loaded_class_name=None, loaded_return_type=None, loaded_method_name=None, is_loading=False):
         """
         Add a method to a UML class box, either during loading or interactively.
 
@@ -304,37 +330,58 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if isinstance(item, UMLClassBox) and item.class_name_text.toPlainText() == loaded_class_name:
                     selected_class_box = item  # Found the class box
                     # Add the method to the found class box
-                    is_method_added = self.interface.add_method(loaded_class_name, loaded_method_name)
+                    is_method_added = self.interface.add_method(loaded_class_name, loaded_return_type, loaded_method_name)
                     if is_method_added:
                         # Create a text item for the method and add it to the list of the found class box
-                        method_text = selected_class_box.create_text_item(loaded_method_name + "()", is_method=True, selectable=False, color=selected_class_box.text_color)
-                        selected_class_box.method_list[loaded_method_name] = method_text  # Add the method to the internal list
-                        selected_class_box.method_name_list[loaded_method_name] = []  # Track the method name in the name list
-                        if len(selected_class_box.method_name_list) == 1:  # If this is the first method, create a separator
+                        method_text = selected_class_box.create_text_item(loaded_return_type + " " + loaded_method_name + "()", is_method=True, selectable=False, color=selected_class_box.text_color)
+                        method_key = (loaded_return_type, loaded_method_name)
+                        method_entry = {
+                            "method_key": method_key,
+                            "method_text": method_text,
+                            "parameters": []
+                        }
+                        selected_class_box.method_list.append(method_entry)  # Add the method to the internal list
+                        if len(selected_class_box.method_list) == 1:  # If this is the first method, create a separator
                             selected_class_box.create_separator(is_first=False)
                         selected_class_box.update_box()  # Update the box to reflect the changes
         else:
             if self.selected_class:
-                # Display a dialog asking for the new method name
-                method_name, ok = QtWidgets.QInputDialog.getText(None, "Add Method", "Enter method name:")
-
-                # If the user confirms and provides a valid method name, add it to the UML box
-                if ok and method_name:
+                add_method_dialog = Dialog("Add Field")
+                add_method_dialog.add_method_popup()
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if add_method_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    method_type = add_method_dialog.input_widgets["method_type"].text()
+                    method_name = add_method_dialog.input_widgets["method_name"].text()
+                    
+                    if not method_type.strip() and not method_name.strip():
+                        return
+                    elif not method_name.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Method name is empty!")
+                        return
+                    elif not method_type.strip():
+                        QtWidgets.QMessageBox.warning(None, "Warning", "Method type is empty!")
+                        return
+                    
+                    is_method_type_valid = self.interface.is_valid_input(method_type=method_type)
+                    if not is_method_type_valid:
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method type {method_type} is invalid! Only allow a-zA-Z, number, and underscore!")
+                        return
                     is_method_name_valid = self.interface.is_valid_input(method_name=method_name)
                     if not is_method_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name {method_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
+                    
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_method_added = self.interface.add_method(selected_class_name, method_name)
-                    if is_method_added:
-                        method_text = self.selected_class.create_text_item(method_name + "()", is_method=True, selectable=False, color=self.selected_class.text_color)
-                        self.selected_class.method_list[method_name] = method_text  # Store the method text
-                        self.selected_class.method_name_list[method_name] = []  # Track the method's parameters
-                        if len(self.selected_class.method_name_list) == 1:  # If this is the first method, create a separator
-                            self.selected_class.create_separator(is_first=False)
-                        self.selected_class.update_box()  # Update the UML box
-                    else:
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has already existed!")
+                    
+                    add_method_command = Command.AddMethodCommand(self.model, class_name=selected_class_name, type=method_type, method_name=method_name, 
+                                                                  view=self, class_box=self.selected_class, is_gui=True)
+                    is_method_added = self.input_handler.execute_command(add_method_command)
+                    
+                    if not is_method_added:
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")
     
     def delete_method(self):
         """
@@ -352,16 +399,22 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         """
         if self.selected_class:
             if self.selected_class.method_list:
-                # Ask the user to select a method to remove
-                method_name, ok = QtWidgets.QInputDialog.getItem(None, "Remove Method", "Select method to remove:", self.selected_class.method_name_list, 0, False)
-
-                if ok and method_name:
+                delete_method_dialog = Dialog("Add Field")
+                delete_method_dialog.delete_method_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if delete_method_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_method_deleted = self.interface.delete_method(selected_class_name, method_name)
-                    if is_method_deleted:
-                        self.selected_class.method_name_list.pop(method_name)  # Remove from method list
-                        self.scene().removeItem(self.selected_class.method_list.pop(method_name))  # Remove the method text
-                        self.selected_class.update_box()  # Refresh the UML box
+                    
+                    # Extract the selected index from the display list
+                    raw_method_name = delete_method_dialog.input_widgets["raw_method_name"].currentText()
+                    selected_index = int(raw_method_name.split(":")[0].strip()) - 1
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    
+                    # Execute the delete command with the correct method index
+                    delete_method_command = Command.DeleteMethodCommand(self.model, class_name=selected_class_name, 
+                                                                        method_num=str(selected_index + 1), view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(delete_method_command)
 
     def rename_method(self):
         """
@@ -384,29 +437,59 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 # Execute the dialog and wait for user confirmation (OK or Cancel)
                 if rename_method_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
-                    # Get the old and new field names after the dialog is accepted
-                    old_method_name = rename_method_dialog.input_widgets['old_method_name'].currentText()  # Use `currentText()` for QComboBox
-                    new_method_name = rename_method_dialog.input_widgets['new_method_name'].text()  # Use `text()` for QLineEdit
-
-                    # Check if the new field name already exists
-                    method_names = list(self.selected_class.method_name_list.keys())
-                    if new_method_name in method_names:
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{new_method_name}' has already existed!")
+                    # Get new method name after the dialog is accepted
+                    new_method_name = rename_method_dialog.input_widgets["new_method_name"].text()  # Use `text()` for QLineEdit
+                    if not new_method_name.strip():
                         return
+                    old_method_name_widget = rename_method_dialog.input_widgets["raw_method_name"]
+                    selected_index = old_method_name_widget.currentIndex()
+                    method_keys_list = rename_method_dialog.input_widgets["method_keys_list"]
+                    
+                    # Check if the new method name already exists
+                    for each_key in method_keys_list:
+                        if each_key[1] == new_method_name:
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{new_method_name}' has already existed!")
+                            return
                 
                     is_method_name_valid = self.interface.is_valid_input(new_name=new_method_name)
                     if not is_method_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Method name {new_method_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
+                    
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_method_renamed = self.interface.rename_method(selected_class_name, old_method_name, new_method_name)
-                    if is_method_renamed:
-                        # Update the method name and refresh the UI
-                        if old_method_name in self.selected_class.method_list:
-                            self.selected_class.method_list[new_method_name] = self.selected_class.method_list.pop(old_method_name)  # Update the method name in the list
-                            self.selected_class.method_list[new_method_name].setPlainText(new_method_name + "()")  # Set the new name in the UML box
-                            self.selected_class.method_name_list[new_method_name] = self.selected_class.method_name_list.pop(old_method_name)  # Track the change
-                            self.selected_class.update_box()  # Refresh the UML box display
+                    
+                    rename_method_command = Command.RenameMethodCommand(self.model, class_name=selected_class_name, method_num=str(selected_index + 1), 
+                                                                        new_name=new_method_name, view=self, class_box=self.selected_class, is_gui=True)
+                    self.input_handler.execute_command(rename_method_command)
+                    
+                    
+    def edit_method_return_type(self):
+        if self.selected_class:
+            if self.selected_class.method_list: 
+                # Initialize the dialog
+                edit_method_return_type_dialog = Dialog("Edit Method Return Type")
+                edit_method_return_type_dialog.edit_method_return_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_method_return_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    method_num = edit_method_return_type_dialog.input_widgets['method_name'].currentIndex()
+                    new_method_return_type = edit_method_return_type_dialog.input_widgets['new_method_return_type'].text()
+                    
+                    edit_method_return_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                new_type=new_method_return_type,
+                                method_num=str(method_num + 1),
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_method=True
+                            )
+                    self.input_handler.execute_command(edit_method_return_type_command)
+                    
             
     def add_param(self,loaded_class_name=None, loaded_method_name=None, loaded_param_name=None, is_loading=False):
         """
@@ -434,8 +517,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     is_param_added = self.interface.add_parameter(loaded_class_name, loaded_method_name, loaded_param_name)
                     if is_param_added:
                         # Add the parameter to the selected method and update the UML box
-                        selected_class_box.method_name_list[loaded_method_name].append(loaded_param_name)  # Track the parameter
-                        selected_class_box.parameter_name_list.append(loaded_param_name)  # Add to the list of parameter names
+                        selected_class_box.method_key_list[loaded_method_name].append(loaded_param_name)  # Track the parameter
                         selected_class_box.update_box()  # Update the UML box
         else:
             if self.selected_class:
@@ -446,56 +528,79 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     # Execute the dialog and wait for user confirmation (OK or Cancel)
                     if add_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                        # Retrieve input values
+                        param_type = add_param_dialog.input_widgets["param_type"].text()
+                        param_name = add_param_dialog.input_widgets["new_param_name"].text()
+                        method_name = add_param_dialog.input_widgets["method_type"]
+                        method_name_widget = add_param_dialog.input_widgets["method_name_widget"]
+                        selected_class_name = self.selected_class.class_name_text.toPlainText()
                         
-                        # Get the old and new field names after the dialog is accepted
-                        method_name = add_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                        param_name = add_param_dialog.input_widgets['new_param_name'].text()  # Use `text()` for QLineEdit
-                        if param_name in self.selected_class.method_name_list[method_name]:
-                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{param_name}' has already existed!")
+                        if not param_type.strip() and not param_name.strip():
                             return
+                        elif not param_name.strip():
+                            QtWidgets.QMessageBox.warning(None, "Warning", "Parameter name is empty!")
+                            return
+                        elif not param_type.strip():
+                            QtWidgets.QMessageBox.warning(None, "Warning", "Parameter type is empty!")
+                            return
+                        
+                        # Get the selected index from the combo box
+                        selected_index = method_name_widget.currentIndex()
+                        
+                        # Validate parameter type and name
+                        is_param_type_valid = self.interface.is_valid_input(parameter_type=param_type)
+                        if not is_param_type_valid:
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter type '{param_type}' is invalid! Only letters, numbers, and underscores are allowed!")
+                            return
+                        
                         is_param_name_valid = self.interface.is_valid_input(parameter_name=param_name)
                         if not is_param_name_valid:
-                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {param_name} is invalid! Only allow a-zA-Z, number, and underscore!")
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{param_name}' is invalid! Only letters, numbers, and underscores are allowed!")
                             return
-                        selected_class_name = self.selected_class.class_name_text.toPlainText()
-                        is_param_added = self.interface.add_parameter(selected_class_name, method_name, param_name)
-                        if is_param_added:
-                            # Add the parameter to the selected method and update the UML box
-                            self.selected_class.method_name_list[method_name].append(param_name)  # Track the parameter
-                            self.selected_class.parameter_name_list.append(param_name)  # Add to the list of parameter names
-                            self.selected_class.update_box()  # Update the UML box
+                        
+                        method_entry = self.selected_class.method_list[selected_index]
+                        
+                        # Check if parameter name already exists in the selected method
+                        for param_tuple in method_entry["parameters"]:
+                            if param_tuple[1] == param_name:
+                                QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{param_name}' already exists in the selected method!")
+                                return
+                        
+                        # Get the method number (assuming method numbers start from 1)
+                        method_num = str(selected_index + 1)
+                        
+                        add_param_command = Command.AddParameterCommand(self.model,class_name=selected_class_name,
+                                                                        method_num=method_num,param_type=param_type,
+                                                                        param_name=param_name, view=self, class_box=self.selected_class, is_gui=True)
+                        is_param_added = self.input_handler.execute_command(add_param_command)
+                        
+                        if not is_param_added:
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_name}' has the same parameter list signature as an existing method in class!")
 
     def delete_param(self):
         """
         Remove a parameter from a selected method in the UML class.
-
-        This function allows the user to choose a method and a parameter to delete.
-        The parameter is removed from the method, and the UML class box is updated.
-
-        Steps:
-        1. Check if a class and method are selected.
-        2. Prompt the user to select a method and a parameter to delete.
-        3. Remove the parameter and update the UML class box.
         """
         if self.selected_class:
-            if self.selected_class.method_name_list:
-               # Initialize the dialog
+            if self.selected_class.method_list:
                 delete_param_dialog = Dialog("Delete Parameter")
                 delete_param_dialog.delete_param_popup(self.selected_class)
                 
-                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                # Execute dialog and wait for user confirmation
                 if delete_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
-                    
-                    # Get the old and new field names after the dialog is accepted
-                    method_name = delete_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                    param_name = delete_param_dialog.input_widgets['param_name'].currentText()  # Use `currentText()` for QComboBox
+                    param_name = delete_param_dialog.input_widgets["param_name_only"]
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_param_deleted = self.interface.delete_parameter(selected_class_name, method_name, param_name)
-                    if is_param_deleted:
-                        # Remove the parameter and update the UML box
-                        self.selected_class.method_name_list[method_name].remove(param_name)  # Remove from method's parameter list
-                        self.selected_class.parameter_name_list.remove(param_name)  # Remove from the global parameter list
-                        self.selected_class.update_box()  # Refresh the UML box
+                    selected_method_index = delete_param_dialog.input_widgets["method_name_widget"].currentIndex()
+                    selected_param_index = delete_param_dialog.input_widgets["param_name_widget"].currentIndex()
+                    
+                    delete_param_command = Command.DeleteParameterCommand(self.model, class_name=selected_class_name,
+                                                                          method_num=str(selected_method_index + 1), view=self, class_box=self.selected_class, 
+                                                                          selected_param_index=selected_param_index, param_name=param_name, is_gui=True)
+                    is_param_deleted = self.input_handler.execute_command(delete_param_command)
+                    method_entry = self.selected_class.method_list[selected_method_index]
+                    if not is_param_deleted:
+                        method_key = method_entry["method_key"]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
             
     def rename_param(self):
         """
@@ -510,7 +615,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Rename the parameter and update the UML class box.
         """
         if self.selected_class:
-            if self.selected_class.method_name_list:
+            if self.selected_class.method_list:
                 # Initialize the dialog
                 rename_param_dialog = Dialog("Rename Parameter")
                 rename_param_dialog.rename_param_popup(self.selected_class)
@@ -518,25 +623,32 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 # Execute the dialog and wait for user confirmation (OK or Cancel)
                 if rename_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
-                    # Get the old and new field names after the dialog is accepted
-                    method_name = rename_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                    old_param_name = rename_param_dialog.input_widgets['old_param_name'].currentText()  # Use `currentText()` for QComboBox
-                    new_param_name = rename_param_dialog.input_widgets['new_param_name'].text()  # Use `text()` for QLineEdit
-                    if new_param_name in self.selected_class.method_name_list:
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{new_param_name}' has already existed!")
+                    selected_method_index = rename_param_dialog.input_widgets['method_name_widget'].currentIndex()
+                    old_param_name = rename_param_dialog.input_widgets["param_name_only"]
+                    new_param_name = rename_param_dialog.input_widgets['new_param_name_widget'].text()  # Use `text()` for QLineEdit
+                    if not new_param_name.strip():
                         return
+                    method_entry = self.selected_class.method_list[selected_method_index]
+                    
+                    for each_tuple in method_entry["parameters"]:
+                        if new_param_name == each_tuple[1] :
+                            QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name '{new_param_name}' has already existed!")
+                            return
+                        
                     is_param_name_valid = self.interface.is_valid_input(new_name=new_param_name)
                     if not is_param_name_valid:
                         QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {new_param_name} is invalid! Only allow a-zA-Z, number, and underscore!")
                         return
+                    
                     selected_class_name = self.selected_class.class_name_text.toPlainText()
-                    is_param_renamed = self.interface.rename_parameter(selected_class_name, method_name, old_param_name, new_param_name)
-                    if is_param_renamed:
-                        # Update the parameter name and refresh the UML box
-                        param_list = self.selected_class.method_name_list[method_name]
-                        param_list[param_list.index(old_param_name)] = new_param_name  # Update in the method's parameter list
-                        self.selected_class.parameter_name_list[self.selected_class.parameter_name_list.index(old_param_name)] = new_param_name  # Track the change
-                        self.selected_class.update_box()  # Refresh the UML box
+                    
+                    rename_param_command = Command.RenameParameterCommand(self.model, class_name=selected_class_name, method_num=str(selected_method_index + 1),
+                                                                          view=self, class_box=self.selected_class, 
+                                                                          old_param_name=old_param_name, new_param_name=new_param_name, is_gui=True)
+                    is_param_renamed = self.input_handler.execute_command(rename_param_command)
+
+                    if not is_param_renamed:
+                        QtWidgets.QMessageBox.warning(None, "Rename Failed", "Failed to rename the parameter.")
 
     def replace_param(self):
         """
@@ -552,7 +664,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         """
         if self.selected_class:
             # Ensure there are methods to choose from
-            if self.selected_class.method_name_list:
+            if self.selected_class.method_list:
                 # Initialize the dialog
                 replace_param_dialog = Dialog("Rename Parameter")
                 replace_param_dialog.replace_param_list_popup(self.selected_class)
@@ -561,32 +673,82 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if replace_param_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
-                    method_name = replace_param_dialog.input_widgets['current_method'].currentText()  # Use `currentText()` for QComboBox
-                    new_param_string = replace_param_dialog.input_widgets['new_param_string'].text()  # Use `text()` for QLineEdit
-                    # Split the input string by commas to form a list of parameters
-                    new_param_list = [param.strip() for param in new_param_string.split(",") if param.strip()]
+                    new_param_string = replace_param_dialog.input_widgets['new_param_string']
+                    if not new_param_string.text().strip():
+                        return
+                    selected_method_index = replace_param_dialog.input_widgets['method_name_widget'].currentIndex()             
+                    method_entry = self.selected_class.method_list[selected_method_index]
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    new_param_list_str = [param.strip() for param in new_param_string.text().split(",") if param.strip()]
+                    
+                    new_param_list_obj = []
+                    for param in new_param_string.text().split(","):
+                        # Strip any leading or trailing whitespace from the parameter string
+                        param = param.strip()
+                        # Split once on the first space to separate the type and the name
+                        if " " in param:
+                            type_name = param.split(" ", 1)
+                            # Append the tuple (type, name) to the new_param_list
+                            new_param_list_obj.append((type_name[0].strip(), type_name[1].strip()))
+                            
+                    # Extract only the names from the new_param_list
+                    param_names_only = [param[1] for param in new_param_list_obj]
+                            
                     # Check for duplicate parameter names
-                    unique_param_names = list(set(new_param_list))
+                    unique_param_names = list(set(param_names_only))
+                    if len(unique_param_names) != len(param_names_only):
+                        duplicates = [param for param in param_names_only if param_names_only.count(param) > 1]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"New list contain duplicate{duplicates}!")
+                        return
+                        
                     for each_param in unique_param_names:
                         is_param_name_valid = self.interface.is_valid_input(parameter_name=each_param)
                         if not is_param_name_valid:
                             QtWidgets.QMessageBox.warning(None, "Warning", f"Parameter name {each_param} is invalid! Only allow a-zA-Z, number, and underscore!")
                             return
-                    if len(unique_param_names) != len(new_param_list):
-                        duplicates = [param for param in new_param_list if new_param_list.count(param) > 1]
-                        QtWidgets.QMessageBox.warning(None, "Warning", f"New list contain duplicate{duplicates}!")
-                    else:
-                        selected_class_name = self.selected_class.class_name_text.toPlainText()
-                        is_param_list_replaced = self.interface.replace_param_list_gui(selected_class_name, method_name, new_param_list)
-                        if is_param_list_replaced:
-                            # Clear the method's parameter list
-                            self.selected_class.method_name_list[method_name].clear()
-                            # Add new parameters to the method
-                            for new_param in new_param_list:
-                                self.selected_class.method_name_list[method_name].append(new_param)
-                                self.selected_class.parameter_name_list.append(new_param)
-                            # Update the box to reflect changes
-                            self.selected_class.update_box()
+                            
+                    print(new_param_list_obj)
+                    
+                    rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
+                                                                               method_num=str(selected_method_index + 1), view=self, 
+                                                                               class_box=self.selected_class,
+                                                                               new_param_list_obj=new_param_list_obj,
+                                                                               new_param_list_str=new_param_list_str, is_gui=True)
+                    is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
+                    
+                    if not is_param_list_replaced:
+                        method_key = method_entry["method_key"]
+                        QtWidgets.QMessageBox.warning(None, "Warning", f"Method name '{method_key[1]}' has the same parameter list signature as an existing method in class!")
+                        
+    def edit_param_type(self):
+        if self.selected_class:
+            if self.selected_class.method_list: 
+                # Initialize the dialog
+                edit_param_type_dialog = Dialog("Edit Method Return Type")
+                edit_param_type_dialog.edit_param_type_popup(self.selected_class)
+                
+                # Execute the dialog and wait for user confirmation (OK or Cancel)
+                if edit_param_type_dialog.exec_() == QtWidgets.QDialog.Accepted:
+                    
+                    # Get the old and new field names after the dialog is accepted
+                    selected_class_name = self.selected_class.class_name_text.toPlainText()
+                    method_num = edit_param_type_dialog.input_widgets['method_name_widget'].currentIndex()
+                    param_name = edit_param_type_dialog.input_widgets["param_name_only"]
+                    new_param_type = edit_param_type_dialog.input_widgets['new_param_type'].text()
+                    
+                    edit_param_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                class_name=selected_class_name,
+                                new_type=new_param_type,
+                                method_num=str(method_num + 1),
+                                input_name=param_name,
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_param=True
+                            )
+                    self.input_handler.execute_command(edit_param_type_command)
+    
             
     def add_relationship(self, loaded_source_class=None, loaded_dest_class=None, loaded_type=None, is_loading=False):
         """
@@ -633,7 +795,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 )
                 if is_rel_added:
                     arrow_line = ArrowLine(source_class_obj, dest_class_obj, loaded_type)
-                    self.track_relationship(loaded_source_class, loaded_dest_class, arrow_line)
+                    value = {"dest_class" : loaded_dest_class, 
+                            "arrow_list" : arrow_line}
+                    if loaded_source_class not in self.relationship_track_list:
+                        self.relationship_track_list[loaded_source_class] = []
+                    self.relationship_track_list[loaded_source_class].append(value)
                     self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
                     # Update the class boxes
                     source_class_obj.update_box()
@@ -652,18 +818,14 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     dest_class = add_rel_dialog.input_widgets["destination_class"].currentText()  # Use `currentText()` 
                     type = add_rel_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
                     source_class = self.selected_class.class_name_text.toPlainText()
-                    # Add the relationship via the interface
-                    is_rel_added = self.interface.add_relationship_gui(source_class_name=source_class, destination_class_name=dest_class, type=type)
-                    if is_rel_added:
-                        self.selected_class.is_source_class = True
-                        source_class_obj = self.selected_class
-                        dest_class_obj = self.class_name_list[dest_class]
-                        arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
-                        self.track_relationship(source_class, dest_class, arrow_line)
-                        self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
-                        # # Update the class box
-                        self.selected_class.update_box()
-                    else:
+                    
+                    add_rel_command = Command.AddRelationshipCommand(self.model, source_class=source_class,
+                                                                    view=self, class_box=self.selected_class,
+                                                                    dest_class=dest_class, 
+                                                                    rel_type=type, is_gui=True)
+                    is_rel_added = self.input_handler.execute_command(add_rel_command)
+                    
+                    if not is_rel_added:
                         QtWidgets.QMessageBox.warning(None, "Warning", "Relationship has already existed!")
 
     def delete_relationship(self):
@@ -688,27 +850,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                 if delete_rel_dialog.exec_() == QtWidgets.QDialog.Accepted:
                     
                     # Get the old and new field names after the dialog is accepted
-                    dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()` 
-                    # Delete the relationship if found
-                    is_rel_deleted = self.interface.delete_relationship(source_class, dest_class)
-                    if not is_rel_deleted:
-                        return
-                    for each_tuple in self.relationship_track_list[source_class]:
-                        if each_tuple[0] == dest_class:
-                            self.scene().removeItem(each_tuple[1])
-                            self.relationship_track_list[source_class].remove(each_tuple)
-                            break
-                    if len(self.relationship_track_list[source_class]) == 0:
-                        self.selected_class.is_source_class = False
-                        
-    def track_relationship(self, source_class, dest_class, arrow_line):
-        """
-        Keep track of relationships between source class and destination class.
-        """
-        value = (dest_class, arrow_line)
-        if source_class not in self.relationship_track_list:
-            self.relationship_track_list[source_class] = []
-        self.relationship_track_list[source_class].append(value)
+                    dest_class = delete_rel_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()`
+                     
+                    delete_rel_command = Command.DeleteRelationshipCommand(self.model, source_class=source_class,
+                                                                           view=self, class_box=self.selected_class, 
+                                                                           dest_class=dest_class, is_gui=True)
+                    self.input_handler.execute_command(delete_rel_command)
 
         # This is for checking the list in the terminal
         print(f"Current relationship tracking: {self.relationship_track_list}")
@@ -737,23 +884,35 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     
                     # Get the old and new field names after the dialog is accepted
                     dest_class = change_rel_type_dialog.input_widgets["destination_class_list_of_current_source_class"].currentText()  # Use `currentText()` 
-                    type = change_rel_type_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
-                    for current_dest_class, arrow_line in self.relationship_track_list[source_class]:
-                        if current_dest_class == dest_class:
-                            if type == arrow_line.arrow_type:
-                                QtWidgets.QMessageBox.warning(None, "Warning", f"New relationship type is identical to current type {type}!")
+                    new_type = change_rel_type_dialog.input_widgets["type"].currentText()  # Use `currentText()` 
+
+                    relationships = self.relationship_track_list.get(source_class)
+                    for relationship in relationships:
+                        if relationship["dest_class"] == dest_class:
+                            arrow_line = relationship["arrow_list"]
+                            print(f"Current Type: {arrow_line.arrow_type}, New Type: {new_type}")  # Debugging output
+
+                            # Normalize and compare the relationship types
+                            if new_type.strip().lower() == arrow_line.arrow_type.strip().lower():
+                                QtWidgets.QMessageBox.warning(None, "Warning", f"New relationship type is identical to current type {new_type}!")
                                 return
-                            else:
-                                self.interface.change_type(source_class, dest_class, type)
-                                self.scene().removeItem(arrow_line)
-                                self.relationship_track_list[source_class].remove((current_dest_class, arrow_line))
-                                source_class_obj = self.selected_class
-                                dest_class_obj = self.class_name_list[dest_class]
-                                arrow_line = ArrowLine(source_class_obj, dest_class_obj, type)
-                                self.track_relationship(source_class, dest_class, arrow_line)
-                                self.scene().addItem(arrow_line)  # Add the arrow to the scene to display it
-                                
-                                
+                            
+                            change_rel_type_command = Command.ChangeTypeCommand(
+                                self.model, 
+                                source_class=source_class, 
+                                dest_class=dest_class,  # Use dest_class directly
+                                new_type=new_type,
+                                arrow_line=arrow_line, 
+                                view=self, 
+                                class_box=self.selected_class, 
+                                is_gui=True, 
+                                is_rel=True
+                            )
+                            
+                            is_rel_type_changed = self.input_handler.execute_command(change_rel_type_command)
+                            if not is_rel_type_changed:
+                                return
+                        
     #################################################################
     def open_folder_gui(self):
         """
@@ -811,7 +970,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         else:
             file_base_name = os.path.basename(current_active_file_path)
             file_name_only = os.path.splitext(file_base_name)[0]
-            self.interface.save_gui(file_name_only, current_active_file_path)     
+            self.interface.save_gui(file_name_only, current_active_file_path)  
+            
+    def undo(self):
+        self.input_handler.undo()
+        self.scene().update()
+    
+    def redo(self):
+        self.input_handler.redo()   
+        self.scene().update()
     
     def clear_current_scene(self):
         """
@@ -855,40 +1022,46 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
             # FIELD OPTIONS
             self.add_context_menu_action(contextMenu, "Add Field", self.add_field, enabled=True)
-            if self.selected_class.field_name_list:
+            if self.selected_class.field_key_list:
                 self.add_context_menu_action(contextMenu, "Delete Field", self.delete_field, enabled=True)
                 self.add_context_menu_action(contextMenu, "Rename Field", self.rename_field, enabled=True)
+                self.add_context_menu_action(contextMenu, "Edit Field Type", self.edit_field_type, enabled=True)
             else:
                 self.add_context_menu_action(contextMenu, "Delete Field", self.delete_field, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Field", self.rename_field, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Field Type", self.edit_field_type, enabled=False)
 
             self.add_context_menu_separator(contextMenu)
 
             # METHOD OPTIONS
             self.add_context_menu_action(contextMenu, "Add Method", self.add_method, enabled=True)
-            if self.selected_class.method_name_list:
+            if self.selected_class.method_list:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=True)
                 self.add_context_menu_action(contextMenu, "Rename Method", self.rename_method, enabled=True)
+                self.add_context_menu_action(contextMenu, "Edit Method Type", self.edit_method_return_type, enabled=True)
                 self.add_context_menu_separator(contextMenu)
                 self.add_context_menu_action(contextMenu, "Add Parameter", self.add_param, enabled=True)
                 # PARAMETER OPTIONS
-                if self.selected_class.parameter_name_list:
+                if self.selected_class.param_num > 0:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=True)
                     self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=True)
-                    self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=True)
+                    self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=True)
                 else:
                     self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)
-                    self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False)
-                    self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=False)
+                    self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False) 
+                    self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=False)
+                self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=True)
             else:
                 self.add_context_menu_action(contextMenu, "Delete Method", self.delete_method, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Method", self.rename_method, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Method Type", self.edit_method_return_type, enabled=False)
                 self.add_context_menu_separator(contextMenu)
                 self.add_context_menu_action(contextMenu, "Add Parameter", self.add_param, enabled=False)
                 self.add_context_menu_action(contextMenu, "Delete Parameter", self.delete_param, enabled=False)
                 self.add_context_menu_action(contextMenu, "Rename Parameter", self.rename_param, enabled=False)
+                self.add_context_menu_action(contextMenu, "Edit Param Type", self.edit_param_type, enabled=False)
                 self.add_context_menu_action(contextMenu, "Replace Parameter", self.replace_param, enabled=False)
-
+                
             self.add_context_menu_separator(contextMenu)
 
             # RELATIONSHIP OPTIONS
