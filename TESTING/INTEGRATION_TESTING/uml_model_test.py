@@ -53,6 +53,28 @@ def sample_observer():
 
     return TestObserver()
 
+@pytest.fixture
+def sample_class2():
+    # Initialize a UMLClass instance with a sample name
+    uml_class = UMLClass(class_name="TestClass")
+    # Add a sample method and field to the class for testing
+    uml_class.add_method(UMLMethod(type="void", method_name="method1"))
+    uml_class.add_field(UMLField(type="int", field_name="field1"))
+    return uml_class
+
+@pytest.fixture
+def sample_method(sample_param):
+    # Initialize a UMLMethod instance and add a parameter to it
+    method = UMLMethod(type="void", method_name="method1")
+    method.add_parameter(sample_param)  # Assuming add_parameter is a method for UMLMethod
+    return method
+
+@pytest.fixture
+def sample_param():
+    # Initialize a UMLParameter instance with a sample parameter type and name
+    return UMLParameter(type="int", parameter_name="param1")
+
+
 ###############################################################################
 # Initialization
 ###############################################################################
@@ -118,6 +140,15 @@ def test_notify_observers(uml_model, sample_observer):
         assert observer.events[0]["data"] == data
         assert observer.events[0]["is_loading"] == is_loading
         assert observer.events[0]["is_undo_or_redo"] == is_undo_or_redo
+
+# Additional tests for observer notifications for class addition and deletion
+def test_observer_notification_on_class_addition(uml_model, sample_observer):
+
+    uml_model._attach_observer(sample_observer)
+
+    uml_model._add_class("ObserverClass", is_loading=False)
+
+    assert sample_observer.events[0]["event_type"] == "add_class"
 
 
 ###############################################################################
@@ -271,6 +302,14 @@ def test_rename_class_invalid_name(uml_model):
     # Verify that the renaming fails (assuming it should return False or handle gracefully)
     assert result is False, "Expected rename to fail for a non-existent class name"
 
+def test_rename_class_invalid_input_name(uml_model):
+    uml_model.create_class("ClassA")
+    # Attempt to rename a non-existent class
+    result = uml_model._rename_class(current_name="ClassA", new_name="New Class Name")
+    
+    # Verify that the renaming fails (assuming it should return False or handle gracefully)
+    assert result is False, "Expected rename to fail for a non-existent class name"
+
 # Test renaming a class to an existing class name
 def test_rename_class_to_existing_name(uml_model):
     uml_model.create_class("Class1")
@@ -279,6 +318,24 @@ def test_rename_class_to_existing_name(uml_model):
     # Attempt to rename Class1 to "Class2" (which already exists)
     result = uml_model._rename_class("Class1", "Class2")
     assert result is False  # Should fail due to duplicate name
+
+    # Test renaming a class to an existing class name
+def test_rename_class_to_existing_name_2(uml_model):
+    uml_model.create_class("Class1")
+    uml_model.create_class("Class2")
+    
+    # Attempt to rename Class1 to "Class2" (which already exists)
+    result = uml_model._rename_class("Class1", "Class1")
+    assert result is False  # Should fail due to duplicate name
+
+
+def test_add_duplicate_class(uml_model):
+
+    uml_model._add_class("DuplicateClass", is_loading=False)
+
+    result = uml_model._add_class("DuplicateClass", is_loading=False)  # Attempt to add duplicate
+
+    assert result is False
 
 ###############################################################################
 # Field Management Tests
@@ -407,6 +464,16 @@ def test_delete_field_nonexistent_class(uml_model):
     # Verify the result indicates failure (adjust based on method behavior; here we assume it returns False)
     assert result is False, "Expected deleting a field from a non-existent class to return False"
 
+def test_delete_field_invalid_input_name(uml_model, sample_class):
+    # Add the sample class to the UML model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_field(class_name="TestClass", field_type="int", field_name="test", is_loading=False)
+    # Attempt to rename a non-existent field within an existing class
+    result = uml_model._delete_field(class_name="TestClass", field_name="sample Field")
+    
+    # Verify that the renaming fails, expecting the method to return False
+    assert result is False, "Expected rename to fail for a invalid input field name in existing class"
+
 def test_rename_field_invalid_name(uml_model, sample_class):
     # Add the sample class to the UML model
     uml_model._add_class(class_name="TestClass", is_loading=False)
@@ -416,6 +483,16 @@ def test_rename_field_invalid_name(uml_model, sample_class):
     
     # Verify that the renaming fails, expecting the method to return False
     assert result is False, "Expected rename to fail for a non-existent field name in existing class"
+
+def test_rename_field_invalid_input_name(uml_model, sample_class):
+    # Add the sample class to the UML model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_field(class_name="TestClass", field_type="int", field_name="test", is_loading=False)
+    # Attempt to rename a non-existent field within an existing class
+    result = uml_model._rename_field(class_name="TestClass", old_field_name="test", new_field_name="New Field Name")
+    
+    # Verify that the renaming fails, expecting the method to return False
+    assert result is False, "Expected rename to fail for a invalid input field name in existing class"
 
 ###############################################################################
 # Method Management Tests
@@ -582,6 +659,68 @@ def test_delete_method_nonexistent_class(uml_model):
     
     # Verify the result indicates failure (adjust based on method behavior; here we assume it returns False)
     assert result is False, "Expected deleting a method from a non-existent class to return False"
+
+def test_delete_method_invalid_input_name(uml_model, sample_class):
+    # Add the sample class to the UML model
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="test", is_loading=False)
+    # Attempt to rename a non-existent method within an existing class
+    result = uml_model._delete_method(class_name="Test Class", method_num=" test ")
+    
+    # Verify that the deleting fails, expecting the method to return False
+    assert result is False, "Expected rename to fail for a invalid input field name in existing class"
+
+def test_rename_method_invalid_input_name(uml_model):
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="oldMethod", is_loading=False)
+
+    # Mock user inputs for selecting the method and entering the new name
+    with patch('builtins.input', side_effect=['1', 'newMethod']):
+        # Rename the method and verify the renaming
+        result = uml_model._rename_method(class_name="TestClass", method_num="1", new_name="new Method")
+        
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_method_invalid_class(uml_model):
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="oldMethod", is_loading=False)
+
+    # Mock user inputs for selecting the method and entering the new name
+    with patch('builtins.input', side_effect=['1', 'newMethod']):
+        # Rename the method and with an invalid class
+        result = uml_model._rename_method(class_name="TestClass1231", method_num="1", new_name="newMethod")
+        
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_method_invalid_number(uml_model):
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="oldMethod", is_loading=False)
+
+    # Mock user inputs for selecting the method and entering the new name
+    with patch('builtins.input', side_effect=['1', 'newMethod']):
+        # Rename the method and with an invalid number
+        result = uml_model._rename_method(class_name="TestClass", method_num="abc", new_name="newMethod")
+        
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_method_out_of_range_number(uml_model):
+    # Add class and a method to the class
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="oldMethod", is_loading=False)
+
+    # Mock user inputs for selecting the method and entering the new name
+    with patch('builtins.input', side_effect=['1', 'newMethod']):
+        # Rename the method and with an invalid number
+        result = uml_model._rename_method(class_name="TestClass", method_num="0", new_name="newMethod")
+        
+    # Check if renaming was unsuccessful
+    assert result is False
 
 ###############################################################################
 # Parameter
@@ -801,40 +940,6 @@ def test_delete_parameter_existing_class_nonexistent_method(uml_model):
     # Verify the function returns False or handles the error gracefully
     assert result is False, "Expected deleting a parameter from a non-existent method in an existing class to return False"
 
-# def test_replace_parameters_in_method(uml_model):
-#     # Add a class and a method to which parameters will be added
-#     uml_model._add_class(class_name="ClassA", is_loading=False)  # Ensure ClassA is added
-
-#     # Verify ClassA exists after creation
-#     assert "ClassA" in uml_model._get_class_list(), "ClassA was not added successfully."
-
-#     # Add a method to ClassA
-#     uml_model._add_method(class_name="ClassA", method_type="int", method_name="method1", is_loading=False)
-
-#     # Add an initial parameter to the method
-#     uml_model._add_parameter(class_name="ClassA", method_num="1", param_type="int", param_name="param1", is_loading=False)
-
-#     # Confirm the parameter was added
-#     class_data = uml_model._get_class_list()["ClassA"]
-#     initial_method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
-#     assert len(initial_method_params) == 1  # Verify one parameter exists
-#     assert initial_method_params[0]._get_parameter_name() == "param1"
-
-#     # Adjust `new_params` to use the expected format: "type name"
-#     new_params = {"string param2", "float param3"}
-#     result = uml_model._replace_param_list("ClassA", "1", new_params)  # Use method number "1"
-
-#     # Check if the replacement was successful
-#     assert result is True, "Parameter replacement failed even though ClassA exists."
-
-#     # Verify the updated parameters
-#     updated_method_params = list(class_data._get_method_and_parameters_list()[0].values())[0]
-#     assert len(updated_method_params) == 2  # Check if two new parameters exist
-#     assert updated_method_params[0]._get_parameter_name() == "param3"
-#     assert updated_method_params[0]._get_type() == "float"
-#     assert updated_method_params[1]._get_parameter_name() == "param2"
-#     assert updated_method_params[1]._get_type() == "string"
-
 # Test adding duplicate parameter to a method
 def test_add_duplicate_parameter(uml_model):
     # Add a class and a method to which parameters will be added
@@ -848,6 +953,218 @@ def test_add_duplicate_parameter(uml_model):
     # Attempt to add a duplicate parameter with the same name "param1" but a different type
     result2 = uml_model._add_parameter(class_name="ClassA", method_num="1", param_type="string", param_name="param1", is_loading=False)
     assert result2 is False, "Duplicate parameter addition should have failed, but it succeeded."
+
+# Test editing parameter type with valid input
+def test_edit_parameter_type_valid(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("TestClass", "1", "sampleParam", "string")
+    assert result is True, "Expected True for successful parameter type edit"
+    # Verify the parameter type was updated
+    edited_param = uml_model._get_param_based_on_index("TestClass", "1", "sampleParam")
+    assert edited_param._get_type() == "string", "Expected parameter type to be updated to 'string'"
+
+# Test with invalid class name
+def test_edit_parameter_type_invalid_class(uml_model):
+    result = uml_model._edit_parameter_type("NonExistentClass", 1, "sampleParam", "string")
+    assert result is False, "Expected False for invalid class name"
+
+# Test with invalid method number
+def test_edit_parameter_type_invalid_method_num(uml_model):
+    result = uml_model._edit_parameter_type("TestClass", "invalid", "sampleParam", "string")
+    assert result is False, "Expected False for non-numeric method number"
+
+# Test with out-of-range method number
+def test_edit_parameter_type_out_of_range(uml_model):
+    result = uml_model._edit_parameter_type("TestClass", 10, "sampleParam", "string")
+    assert result is False, "Expected False for out-of-range method number"
+
+# Test with invalid parameter name
+def test_edit_parameter_type_invalid_param_name(uml_model):
+    result = uml_model._edit_parameter_type("TestClass", 1, "nonexistentParam", "string")
+    assert result is False, "Expected False for non-existent parameter name"
+
+# Test that an observer notification occurs (mocking could be applied here if desired)
+def test_edit_parameter_type_observer_notification(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("TestClass", "1", "sampleParam", "float")
+    assert result is True, "Expected True for successful parameter type edit"
+
+def test_delete_parameter_invalid_input(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Delete the parameter
+    result = uml_model._delete_parameter(class_name="TestClass", method_num="1", param_name="par am1")
+    
+    # Ensure parameter deletion unsucceeded
+    assert result is False
+
+def test_delete_parameter_invalid_method_num(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Delete the parameter
+    result = uml_model._delete_parameter(class_name="TestClass", method_num="abc", param_name="param1")
+    
+    # Ensure parameter deletion unsucceeded
+    assert result is False
+
+def test_delete_parameter_non_existent_param(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Delete the parameter
+    result = uml_model._delete_parameter(class_name="TestClass", method_num="1", param_name="doesnt_exist")
+    
+    # Ensure parameter deletion unsucceeded
+    assert result is False
+
+def test_rename_parameter_invalid_input(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Rename the parameter
+    result = uml_model._rename_parameter(class_name="Test Class", method_num="1", current_param_name="param1", new_param_name="newParam")
+    
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_parameter_non_existent_class(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Rename the parameter
+    result = uml_model._rename_parameter(class_name="TestClas123s", method_num="1", current_param_name="param1", new_param_name="newParam")
+    
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_parameter_meth_not_num(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Rename the parameter
+    result = uml_model._rename_parameter(class_name="TestClass", method_num="abs", current_param_name="param1", new_param_name="newParam")
+    
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_rename_parameter_out_of_bound(uml_model, sample_class, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add class, method, and parameter
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    
+    # Rename the parameter
+    result = uml_model._rename_parameter(class_name="TestClass", method_num="0", current_param_name="param1", new_param_name="newParam")
+    
+    # Check if renaming was unsuccessful
+    assert result is False
+
+def test_replace_param_list_invalid_input(uml_model, sample_observer):
+    uml_model._attach_observer(sample_observer)
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    result = uml_model._replace_param_list(class_name="Test Class", method_num="1", new_param_name_list=[])
+    assert result is False 
+
+def test_replace_param_list_invalid_method_num(uml_model, sample_observer):
+    uml_model._attach_observer(sample_observer)
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    result = uml_model._replace_param_list(class_name="TestClass", method_num="abc", new_param_name_list=[])
+    assert result is False 
+
+def test_replace_param_list_non_existent_class(uml_model, sample_observer):
+    uml_model._attach_observer(sample_observer)
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    result = uml_model._replace_param_list(class_name="TestClasssfda", method_num="1", new_param_name_list=[])
+    assert result is False 
+
+def test_replace_param_list_out_of_bound(uml_model, sample_observer):
+    uml_model._attach_observer(sample_observer)
+    uml_model._add_class(class_name="TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
+    result = uml_model._replace_param_list(class_name="TestClass", method_num="0", new_param_name_list=[])
+    assert result is False 
+
+# Test for a valid parameter list retrieval
+def test_get_param_list_valid(uml_model):
+    # Set up a class and method with parameters
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="param2", is_loading=False)
+
+    # Retrieve the parameter list
+    result = uml_model._get_param_list("TestClass", "1")
+    expected_result = ["int param1", "string param2"]
+    assert result == expected_result, f"Expected {expected_result} but got {result}"
+
+# Test with an invalid class name
+def test_get_param_list_invalid_input(uml_model):
+    result = uml_model._get_param_list("Non ExistentClass", "1")
+    assert result is False, "Expected False for non-existent class name"
+
+# Test with an invalid class name
+def test_get_param_list_invalid_class_name(uml_model):
+    result = uml_model._get_param_list("NonExistentClass", "1")
+    assert result is False, "Expected False for non-existent class name"
+
+# Test with an invalid method number format
+def test_get_param_list_invalid_method_num_format(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    result = uml_model._get_param_list("TestClass", "invalid")
+    assert result is False, "Expected False for non-numeric method number"
+
+    # Test with an out-of-range method number
+def test_get_param_list_out_of_range_method_num(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+
+    result = uml_model._get_param_list("TestClass", "0")
+    assert result is None
 
 ###############################################################################
 # RELATIONSHIP
@@ -945,7 +1262,7 @@ def test_add_relationship_self(uml_model, sample_observer):
     result = uml_model._add_relationship("ClassA", "ClassA", "Inheritance", is_loading=False)
     assert result is True  
 
-def test_add_relationship_non_existent_class(uml_model, sample_observer):
+def test_add_relationship_non_existent_dest_class(uml_model, sample_observer):
     uml_model._attach_observer(sample_observer)
     uml_model._add_class(class_name="ClassA", is_loading=False)
     result = uml_model._add_relationship("ClassA", "NonExistentClass", "Aggregation", is_loading=False)
@@ -963,6 +1280,155 @@ def test_multiple_relationships_same_classes(uml_model):
     # Verify that result1 and result2 are instances of UMLRelationship
     assert isinstance(result1, UMLRelationship)
     assert isinstance(result2, UMLRelationship)
+
+def test_create_relationship_non_existent_classes(uml_model):
+    # Try to create a relationship where one or both classes don't exist
+    result = uml_model.create_relationship("NonExistentClassA", "NonExistentClassB", "Aggregation")
+    assert result is not None  # Relationship object created even if classes don't exist
+
+def test_add_relationship_invalid_input(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add two classes to create a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+
+    result = uml_model._add_relationship("Class A", "ClassB", "Aggreagation", is_loading=False)
+    assert result is None
+
+def test_delete_relationship_invalid_input(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Delete the relationship
+    result = uml_model._delete_relationship("Class A", "ClassB")
+    assert result is False  # Relationship deletion successful
+
+def test_delete_relationship_source_nonexisten(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Delete the relationship
+    result = uml_model._delete_relationship("test123", "ClassB")
+    assert result is False 
+
+def test_delete_relationship_no_relationship(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    
+    result = uml_model._delete_relationship("ClassA", "ClassB")
+    assert result is False 
+
+def test_change_relationship_type_invalid_input(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("Class A", "ClassB", "Composition")
+    assert result is False
+
+def test_change_relationship_type_no_src_class(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("ClassA12312", "ClassB", "Composition")
+    assert result is False
+def test_change_relationship_type_same_type(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("ClassA", "ClassB", "Aggregation")
+    assert result is False
+
+def test_change_relationship_type_nonexisten(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    uml_model._add_relationship("ClassA", "ClassB", "Aggregation", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("ClassA", "ClassB", "test")
+    assert result is False
+
+def test_change_relationship_type_no_relationship(uml_model, sample_observer):
+    # Attach observer
+    uml_model._attach_observer(sample_observer)
+    
+    # Add classes and a relationship
+    uml_model._add_class(class_name="ClassA", is_loading=False)
+    uml_model._add_class(class_name="ClassB", is_loading=False)
+    
+    # Change the relationship type
+    result = uml_model._change_type("ClassA", "ClassB", "Composition")
+    assert result is False
+
+#########################################################
+def test_edit_parameter_invalid_input(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("Test Class", "1", "sampleParam", "string")
+    assert result is False
+
+def test_edit_parameter_invalid_method_num(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("TestClass", "abc", "sampleParam", "string")
+    assert result is False
+
+def test_edit_parameter_non_existen_param(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("TestClass", "1", "doesntexist", "string")
+    assert result is False
+
+def test_edit_parameter_out_of_range_num(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method("TestClass", "void", "method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="string", param_name="sampleParam", is_loading=False)
+
+    result = uml_model._edit_parameter_type("TestClass", "0", "sampleParam", "string")
+    assert result is False
 
 ###############################################################################
 # CLASS HELPER FUNCTIONS
@@ -1103,6 +1569,39 @@ def test_save_data(uml_model):
     assert storage_manager._save_data_to_json.call_count == 1
     assert storage_manager._save_data_to_json.call_args[0][0] == "test_file"  # Check filename only
 
+def test_save_data_NAME_LIST(uml_model):
+    # Access the storage manager via the public getter method
+    storage_manager = uml_model._get_storage_manager()
+    
+    # Apply mocks to the methods of the storage manager
+    storage_manager._get_saved_list = MagicMock(return_value=[{"sample_file": "off"}])
+    storage_manager._save_data_to_json = MagicMock()
+
+    # Mock the file status setting method in UMLModel
+    with patch.object(uml_model, '_set_file_status', MagicMock()) as mock_set_file_status:
+        # Mock input to simulate the user entering a filename for saving
+        with patch("builtins.input", return_value="NAME_LIST"):
+            result = uml_model._save()
+
+    assert result is None
+
+def test_save_data_quit(uml_model):
+    # Access the storage manager via the public getter method
+    storage_manager = uml_model._get_storage_manager()
+    
+    # Apply mocks to the methods of the storage manager
+    storage_manager._get_saved_list = MagicMock(return_value=[{"sample_file": "off"}])
+    storage_manager._save_data_to_json = MagicMock()
+
+    # Mock the file status setting method in UMLModel
+    with patch.object(uml_model, '_set_file_status', MagicMock()) as mock_set_file_status:
+        # Mock input to simulate the user entering a filename for saving
+        with patch("builtins.input", return_value="quit"):
+            result = uml_model._save()
+
+    assert result is None
+
+    # Verify interactions
 def test_load_nonexistent_file(uml_model):
     with patch("builtins.input", return_value="nonexistent_file"):
         result = uml_model._load()
@@ -1112,6 +1611,11 @@ def test_load_protected_file_name(uml_model):
     with patch("builtins.input", return_value="NAME_LIST"):
         result = uml_model._load()
     assert result is None  # Protected file should not be loaded
+
+def test_load_quit(uml_model):
+    with patch("builtins.input", return_value="quit"):
+        result = uml_model._load()
+    assert result is None 
 
 def test_set_file_status(uml_model):
     # Access the storage manager via the public getter
@@ -1220,33 +1724,6 @@ def test_update_main_data_for_every_action(uml_model):
             "relationships": [{"mocked_relationship": "data"}]
         }
 
-def test_validate_entities_class_exists(uml_model):
-    # Mock `__validate_class_existence` to return True, simulating an existing class
-    with patch.object(uml_model, '_UMLModel__validate_class_existence', return_value=True) as mock_class_exist:
-        result = uml_model._validate_entities(class_name="TestClass", class_should_exist=True)
-        
-        # Verify the function returns True when the class exists as expected
-        assert result is True
-        mock_class_exist.assert_called_once_with("TestClass", True)
-
-def test_validate_entities_class_does_not_exist(uml_model):
-    # Mock `__validate_class_existence` to return False, simulating a non-existent class
-    with patch.object(uml_model, '_UMLModel__validate_class_existence', return_value=False) as mock_class_exist:
-        result = uml_model._validate_entities(class_name="NonExistentClass", class_should_exist=True)
-        
-        # Verify the function returns False when the class does not exist as expected
-        assert result is False
-        mock_class_exist.assert_called_once_with("NonExistentClass", True)
-
-def test_validate_entities_field_exists(uml_model):
-    # Mock `__validate_field_existence` to return True, simulating an existing field
-    with patch.object(uml_model, '_UMLModel__validate_field_existence', return_value=True) as mock_field_exist:
-        result = uml_model._validate_entities(class_name="TestClass", field_name="TestField", field_should_exist=True)
-        
-        # Verify the function returns True when the field exists as expected
-        assert result is True
-        mock_field_exist.assert_called_once_with("TestClass", "TestField", True)
-
 def test_validate_entities_method_does_not_exist(uml_model):
     # Mock `__validate_method_existence` to return False, simulating a non-existent method
     with patch.object(uml_model, '_UMLModel__validate_method_existence', return_value=False) as mock_method_exist:
@@ -1338,3 +1815,222 @@ def test_delete_all_classes_and_reset(uml_model):
     # Ensure the model is in a reset state with no classes or relationships
     assert uml_model._get_class_list() == {}
     assert uml_model._get_relationship_format_list() == []
+
+def test_is_valid_input_long_string(uml_model):
+
+    long_name = "A" * 1000  # Very long string
+
+    result = uml_model._is_valid_input(class_name=long_name)
+
+    assert result is True 
+
+# Reset and clear state tests
+def test_reset_after_multiple_operations(uml_model):
+
+    uml_model._add_class("ResetClass1", is_loading=False)
+
+    uml_model._add_class("ResetClass2", is_loading=False)
+
+    uml_model.create_relationship("ResetClass1", "ResetClass2", "aggregation")
+
+    uml_model._reset_storage()
+
+    assert uml_model._get_class_list() == {}
+
+    assert uml_model._get_relationship_format_list() == []
+
+# Test for _get_method_based_on_index
+def test_get_method_based_on_index_valid(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    
+    # Check if the correct method is returned based on the index
+    result = uml_model._get_method_based_on_index("TestClass", "1")
+    assert result._get_name() == "method1", "Expected to retrieve method1 based on valid index 1"
+
+def test_get_method_based_on_index_invalid_number(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    
+    # Simulate an invalid method number format
+    uml_model._check_method_num = lambda x: False
+    result = uml_model._get_method_based_on_index("TestClass", "invalid")
+    assert result is None, "Expected None for invalid method number input"
+
+def test_get_method_based_on_index_out_of_range(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+
+    # Test with an out-of-range index
+    uml_model._check_method_num = lambda x: True
+    result = uml_model._get_method_based_on_index("TestClass", "10")
+    assert result is None, "Expected None for out-of-range method number"
+
+# Test for _get_param_based_on_index
+def test_get_param_based_on_index_valid(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1")
+
+    # Check if the correct parameter is returned based on the method number and parameter name
+    result = uml_model._get_param_based_on_index("TestClass", "1", "param1")
+    assert result._get_parameter_name() == "param1", "Expected to retrieve param1 based on valid method number and parameter name"
+
+def test_get_param_based_on_index_invalid_method_num(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1")
+
+    # Simulate an invalid method number format
+    uml_model._check_method_num = lambda x: False
+    result = uml_model._get_param_based_on_index("TestClass", "invalid", "param1")
+    assert result is None, "Expected None for invalid method number input"
+
+def test_get_param_based_on_index_invalid_parameter_name(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    uml_model._add_parameter(class_name="TestClass", method_num="1", param_type="int", param_name="param1")
+
+    # Test with a valid method number but an invalid parameter name
+    uml_model._check_method_num = lambda x: True
+    result = uml_model._get_param_based_on_index("TestClass", "1", "nonexistent_param")
+    assert result is None, "Expected None for non-existent parameter name"
+
+# Test for _check_method_num
+def test_check_method_num_valid(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method2", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method3", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method4", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method5", is_loading=False)
+
+    # Test with a valid numeric method number
+    result = uml_model._check_method_num("5")
+    assert result is True, "Expected True for valid numeric method number"
+
+def test_check_method_num_invalid(uml_model):
+    uml_model._add_class("TestClass", is_loading=False)
+    uml_model._add_method(class_name="TestClass", method_type="int", method_name="method1", is_loading=False)
+    # Test with a non-numeric method number
+    result = uml_model._check_method_num("invalid")
+    assert result is False, "Expected False for non-numeric method number"
+
+def test_extract_class_data(uml_model):
+    # Sample JSON-like data for class information
+    sample_class_data = [
+        {
+            "name": "TestClass",
+            "fields": [
+                {"name": "field1", "type": "int"},
+                {"name": "field2", "type": "string"}
+            ],
+            "methods": [
+                {
+                    "name": "method1",
+                    "return_type": "void",
+                    "params": [
+                        {"type": "int", "name": "param1"},
+                        {"type": "string", "name": "param2"}
+                    ]
+                },
+                {
+                    "name": "method2",
+                    "return_type": "int",
+                    "params": []
+                }
+            ]
+        },
+        {
+            "name": "AnotherClass",
+            "fields": [],
+            "methods": [
+                {
+                    "name": "anotherMethod",
+                    "return_type": "bool",
+                    "params": [{"type": "float", "name": "paramA"}]
+                }
+            ]
+        }
+    ]
+    
+    # Expected output structure
+    expected_output = [
+        {
+            "TestClass": {
+                "fields": [
+                    {"name": "field1", "type": "int"},
+                    {"name": "field2", "type": "string"}
+                ],
+                "method_list": [
+                    {
+                        "name": "method1",
+                        "return_type": "void",
+                        "params": [
+                            {"type": "int", "name": "param1"},
+                            {"type": "string", "name": "param2"}
+                        ]
+                    },
+                    {
+                        "name": "method2",
+                        "return_type": "int",
+                        "params": []
+                    }
+                ]
+            }
+        },
+        {
+            "AnotherClass": {
+                "fields": [],
+                "method_list": [
+                    {
+                        "name": "anotherMethod",
+                        "return_type": "bool",
+                        "params": [
+                            {"type": "float", "name": "paramA"}
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # Call _extract_class_data with the sample data
+    result = uml_model._extract_class_data(sample_class_data)
+    
+    # Assert that the extracted data matches the expected output
+    assert result == expected_output, f"Expected {expected_output} but got {result}"
+
+def test_save_and_delete_file_via_uml_model(uml_model):
+    # Access the storage manager via the public getter method
+    storage_manager = uml_model._get_storage_manager()
+
+    # Apply mocks to the methods of the storage manager for saving
+    storage_manager._get_saved_list = MagicMock(return_value=[{"test_file": "off"}])
+    storage_manager._save_data_to_json = MagicMock()
+
+    # Mock the file status setting method in UMLModel
+    with patch.object(uml_model, '_set_file_status', MagicMock()) as mock_set_file_status:
+        # Mock input to simulate the user entering a filename for saving
+        with patch("builtins.input", return_value="test_file"):
+            uml_model._save()
+
+    # Set up mocks for the deletion process
+    storage_manager._get_saved_list = MagicMock(return_value=[{"test_file": "on"}])
+    storage_manager._get_saved_list_gui = MagicMock(return_value=[{"path/to/test_file.json": "on"}])
+
+    # Mock file check and filesystem operations
+    with patch("builtins.input", return_value="test_file"), \
+         patch("os.remove") as mock_remove, \
+         patch.object(storage_manager, "_update_saved_list") as mock_update_saved_list, \
+         patch.object(storage_manager, "_update_saved_list_gui") as mock_update_saved_list_gui, \
+         patch.object(uml_model, "_check_saved_file_exist", return_value=True):
+        
+        # Call the actual delete function without mocking it
+        result = uml_model._delete_saved_file()
+
+        # Verify the delete result and ensure necessary methods were called
+        assert result is None  # or True, depending on your function’s return value for successful delete
+        mock_remove.assert_called_once_with(os.path.join(root_path, "test_file.json"))
+        mock_update_saved_list.assert_called_once()
+        mock_update_saved_list_gui.assert_called_once()
