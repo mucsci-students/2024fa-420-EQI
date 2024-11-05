@@ -1,7 +1,4 @@
-import sys
-import os
-from PyQt5 import QtWidgets, QtGui, QtCore
-from functools import partial
+from PyQt5 import QtWidgets, QtGui
 from typing import Dict, List
 
 ###################################################################################################

@@ -13,5 +13,11 @@
     },
     {
         "sprint3_format": "off"
+    },
+    {
+        "test_cli_command": "off"
+    },
+    {
+        "test1234": "off"
     }
 ]

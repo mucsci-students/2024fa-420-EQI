@@ -932,7 +932,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Validate that the selected file is a JSON file.
         4. If valid, load the selected JSON file into the interface.
         """
-        self.clear_current_scene()  # Clear the scene before loading a new file
         # Show an open file dialog and store the selected file path
         full_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", os.getcwd(), "JSON Files (*.json)")
         # Check if the user canceled the dialog (full_path will be empty if canceled)
@@ -942,7 +941,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if not full_path.endswith('.json'):
             QtWidgets.QMessageBox.warning(None, "Warning", "The selected file is not a JSON file. Please select a valid JSON file.")
             return
-        
+        self.clear_current_scene()  # Clear the scene before loading a new file
         # If a valid file is selected, proceed to load it into the interface
         if full_path:
             file_base_name = os.path.basename(full_path)  # Extract the file name from the full path
