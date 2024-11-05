@@ -77,6 +77,8 @@ class DeleteClassCommand(Command):
         self.view = view
         self.class_box = class_box
         self.is_gui = is_gui
+        self.cli_class_list = None
+        self.cli_main_data = None
 
         # Store the state of the class before deletion
         self.stored_fields = []          # List of tuples: (field_type, field_name)
@@ -85,6 +87,7 @@ class DeleteClassCommand(Command):
         self.stored_relationships = {}   # List of arrow_line objects
 
     def execute(self, is_undo_or_redo=False):
+        self.cli_main_data = self.uml_model._get_main_data()
         if self.is_gui:
             # 0. Store relationship
             self.stored_relationships = self.view.relationship_track_list
@@ -150,7 +153,7 @@ class DeleteClassCommand(Command):
         if self.is_gui:
             if self.class_name in self.view.class_name_list:
                 return False
-             # 1. Re-execute the AddClassCommand to add the class back
+            # 1. Re-execute the AddClassCommand to add the class back
             add_class_command = AddClassCommand(
                 uml_model=self.uml_model,
                 class_name=self.class_name,
@@ -235,7 +238,94 @@ class DeleteClassCommand(Command):
                         is_gui=True
                     )
                     add_relationship_command.execute(is_undo_or_redo=True)
+        else:
+            # 1. Re-execute the AddClassCommand to add the class back
+            if self.class_name in self.uml_model._get_class_list():
+                return False
+            main_data = self.cli_main_data
+            class_data = main_data["classes"]
+            relationship_data = main_data["relationships"]
+            extracted_class_data = self.uml_model._extract_class_data(class_data)
+ 
+            for each_pair in extracted_class_data:
+                for class_name, data in each_pair.items():
+                    field_list = data["fields"]
+                    method_list = data["method_list"]
 
+                    if class_name != self.class_name:
+                        continue
+                    add_class_command = AddClassCommand(
+                        uml_model=self.uml_model,
+                        class_name=self.class_name,
+                        view=self.view,
+                        class_box=self.class_box,
+                    )
+                    add_class_command.execute(is_undo_or_redo=True)
+                    
+                    # self.uml_model._add_class(self.class_name, is_undo_or_redo=True)
+                    
+                    for each_field in field_list:
+                        field_name = each_field["name"]
+                        field_type = each_field["type"]
+                        # 2. Re-execute all AddFieldCommands to restore fields
+                        add_field_command = AddFieldCommand(
+                            uml_model=self.uml_model,
+                            class_name=self.class_name,
+                            type=field_type,
+                            field_name=field_name,
+                            view=self.view,
+                            class_box=self.class_box,
+                        )
+                        add_field_command.execute(is_undo_or_redo=True)
+                            
+                        # self.uml_model._add_field(self.class_name, field_type, field_name, is_undo_or_redo=True)
+                        
+                    method_num = "0"
+                    i = 0
+                    for each_element in method_list:
+                        i = i + 1
+                        method_num = f"{i}"
+                        method_name = each_element["name"]
+                        return_type = each_element["return_type"]
+                        parameter_list = each_element["params"]
+                        
+                        # 3. Re-execute all AddMethodCommands to restore methods
+                        add_method_command = AddMethodCommand(
+                            uml_model=self.uml_model,
+                            class_name=self.class_name,
+                            type=return_type,
+                            method_name=method_name,
+                            view=self.view,
+                            class_box=self.class_box,
+                        )
+                        add_method_command.execute(is_undo_or_redo=True)
+                            
+                        # self.uml_model._add_method(class_name, return_type, method_name, is_loading=True)
+                        
+                        for param in parameter_list:
+                            param_type = param["type"]
+                            param_name = param["name"]
+                            # 4. Re-execute all AddParameterCommands for each method
+                            add_param_command = AddParameterCommand(
+                                uml_model=self.uml_model,
+                                class_name=self.class_name,
+                                method_num=method_num,
+                                param_type=param_type,
+                                param_name=param_name,
+                                view=self.view,
+                                class_box=self.class_box,
+                            )
+                            add_param_command.execute(is_undo_or_redo=True)
+                                
+                            # self.uml_model._add_parameter(class_name, method_num, param_type, param_name, is_loading=True)
+                            
+            # Recreate relationships from the loaded data
+        for each_dictionary in relationship_data:
+            if each_dictionary["source"] == self.class_name:
+                self.uml_model._add_relationship(each_dictionary["source"], each_dictionary["destination"], each_dictionary["type"], is_loading=True, is_gui=False)
+            if each_dictionary["destination"] == self.class_name:
+                self.uml_model._add_relationship(each_dictionary["source"], each_dictionary["destination"], each_dictionary["type"], is_loading=True, is_gui=False)
+                
         self.stored_fields = []
         self.stored_methods = []
         self.stored_parameters = {}
@@ -404,8 +494,11 @@ class AddMethodCommand(Command):
         return is_method_added
 
     def undo(self):
-        is_method_deleted = self.uml_model._delete_method(self.class_name, str(self.method_num), is_undo_or_redo=True)
-        if is_method_deleted and self.is_gui:
+        method_and_parameter_list = self.uml_model._get_data_from_chosen_class(self.class_name, is_method_and_param_list=True)
+        current_method_index_cli = len(method_and_parameter_list)
+        is_method_deleted_cli = self.uml_model._delete_method(self.class_name, str(current_method_index_cli), is_undo_or_redo=True)
+        if self.is_gui:
+            is_method_deleted_gui = self.uml_model._delete_method(self.class_name, str(self.method_num), is_undo_or_redo=True)
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
             # Check if the item is still in the scene before removing
@@ -413,7 +506,8 @@ class AddMethodCommand(Command):
                 self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
             self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
             self.class_box.update_box()  # Refresh the UML box
-        return is_method_deleted
+            return is_method_deleted_gui
+        return is_method_deleted_cli
     
 class DeleteMethodCommand(Command):
     def __init__(self, uml_model, class_name, method_num, view=None, class_box=None, is_gui=False):

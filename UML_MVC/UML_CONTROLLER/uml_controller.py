@@ -329,8 +329,8 @@ class UMLController:
             self.__model._new_file()
         
         # Sort the list of classes alphabetically
-        elif command == InterfaceOptions.SORT.value:
-            self.__model._sort_class_list()
+        # elif command == InterfaceOptions.SORT.value:
+        #     self.__model._sort_class_list()
         
         # Handle unknown command
         else:

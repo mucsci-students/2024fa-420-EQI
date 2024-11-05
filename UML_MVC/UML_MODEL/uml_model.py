@@ -77,7 +77,7 @@ class UMLModel:
     # Getters #
         
     def _get_class_list(self) -> Dict[str, Class]:
-        return self.__class_list
+        return copy.deepcopy(self.__class_list)
     
     def _get_storage_manager(self) -> Storage:
         return self.__storage_manager
@@ -1034,7 +1034,7 @@ class UMLModel:
         return True
         
     # Change type #
-    def _change_type(self, source_class_name: str, destination_class_name: str, new_type: str):
+    def _change_type(self, source_class_name: str, destination_class_name: str, new_type: str, is_undo_or_redo: bool=False):
         """
         Changes the type of an existing relationship between two UML classes. Notifies observers of the type modification event.
 
@@ -1066,7 +1066,7 @@ class UMLModel:
         current_relationship._set_type(new_type)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.EDIT_REL_TYPE.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type})
+        self._notify_observers(event_type=InterfaceOptions.EDIT_REL_TYPE.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
         return True
          
     #################################################################    
@@ -2133,7 +2133,7 @@ class UMLModel:
         """
         self.__class_list: Dict[str, Class] = {}
         self.__relationship_list: List = []
-        self.__main_data: Dict = {}
+        self.__main_data: Dict = {"classes": [], "relationships" : []}
     
     #################################################################
     ### UTILITY FUNCTIONS ###
@@ -2157,7 +2157,7 @@ class UMLModel:
         return False
     
     # Update main data for every action #
-    def _update_main_data_for_every_action(self):
+    def _update_main_data_for_every_action(self, is_undo_or_redo: bool=None):
         """
         Updates the main data by fetching and formatting all classes and relationships, ensuring the state is kept up to date after every change.
         """
@@ -2168,7 +2168,7 @@ class UMLModel:
         for class_name in self.__class_list:
             class_data_format = self._class_json_format(class_name)
             class_data_list.append(class_data_format)
-        main_data["classes"] = class_data_list
+            main_data["classes"] = class_data_list
         main_data["relationships"] = relationship_data_list
     
     # Validate entities (Class, Field, Method, Parameter) #
@@ -2223,19 +2223,19 @@ class UMLModel:
         return True
     
     # Sort class list alphabetically #
-    def _sort_class_list(self):
-        """
-        Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
-        """
-        class_list = self.__class_list
-        if len(class_list) == 0:
-            self.__console.print("\n[bold red]No class to sort![/bold red]")
-            return
-        # Sort classes alphabetically by their names
-        self.__class_list = dict(sorted(self.__class_list.items()))
-        self._update_main_data_for_every_action()
-        # Display updated UML data
-        self.__user_view._display_uml_data(self.__main_data)
+    # def _sort_class_list(self):
+    #     """
+    #     Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
+    #     """
+    #     class_list = self.__class_list
+    #     if len(class_list) == 0:
+    #         self.__console.print("\n[bold red]No class to sort![/bold red]")
+    #         return
+    #     # Sort classes alphabetically by their names
+    #     self.__class_list = dict(sorted(self.__class_list.items()))
+    #     self._update_main_data_for_every_action()
+    #     # Display updated UML data
+    #     self.__user_view._display_uml_data(self.__main_data)
         
     def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, field_type=None, method_type=None, rel_type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
         """
@@ -2320,6 +2320,6 @@ class UMLModel:
         elif is_param:
             return self._edit_parameter_type(class_name, method_num, input_name, new_type)
         elif is_rel:
-            return self._change_type(source_class_name=source_class, destination_class_name=dest_class, new_type=new_type)
+            return self._change_type(source_class_name=source_class, destination_class_name=dest_class, new_type=new_type, is_undo_or_redo=is_undo_or_redo)
                            
 ###################################################################################################

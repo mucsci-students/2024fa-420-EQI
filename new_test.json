@@ -1,44 +1,4 @@
 {
-    "classes": [
-        {
-            "name": "human",
-            "fields": [
-                {
-                    "name": "health",
-                    "type": "int"
-                },
-                {
-                    "name": "mana",
-                    "type": "int"
-                }
-            ],
-            "methods": [
-                {
-                    "name": "get_health",
-                    "return_type": "int",
-                    "params": []
-                },
-                {
-                    "name": "attack",
-                    "return_type": "void",
-                    "params": []
-                },
-                {
-                    "name": "sprint",
-                    "return_type": "void",
-                    "params": []
-                },
-                {
-                    "name": "walk",
-                    "return_type": "void",
-                    "params": []
-                }
-            ],
-            "position": {
-                "x": 0,
-                "y": 0
-            }
-        }
-    ],
+    "classes": [],
     "relationships": []
 }

@@ -671,7 +671,9 @@ class UMLInterface:
             
             # Handle the 'help' command to show the menu again
             if command == InterfaceOptions.HELP.value:
+                print("\n")
                 self.View._prompt_menu()
+                continue
             # Handle the 'exit' command to break out of the loop
             elif command == InterfaceOptions.EXIT.value:
                 break
