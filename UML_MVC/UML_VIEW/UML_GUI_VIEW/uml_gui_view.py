@@ -11,6 +11,14 @@ from UML_MVC.uml_observer import UMLObserver as Observer
 ###################################################################################################
 
 class MainWindow(QtWidgets.QMainWindow, Observer):
+    
+    _instance = None  # Class variable to hold the single instance
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(MainWindow, cls).__new__(cls)
+        return cls._instance
+    
     """
     Main application window that loads the UI and sets up interactions.
     Inherits from QMainWindow for managing the graphical interface and from Observer to receive updates
@@ -24,6 +32,9 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         Parameters:
         - interface: The interface to communicate with UMLCoreManager (business logic layer).
         """
+        if hasattr(MainWindow, '_instance') and MainWindow._instance is not None:
+            return
+        
         super().__init__()
         self.interface = interface  # Interface to communicate with UMLCoreManager
 
