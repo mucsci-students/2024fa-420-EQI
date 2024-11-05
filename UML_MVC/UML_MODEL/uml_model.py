@@ -2223,19 +2223,19 @@ class UMLModel:
         return True
     
     # Sort class list alphabetically #
-    def _sort_class_list(self):
-        """
-        Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
-        """
-        class_list = self.__class_list
-        if len(class_list) == 0:
-            self.__console.print("\n[bold red]No class to sort![/bold red]")
-            return
-        # Sort classes alphabetically by their names
-        self.__class_list = dict(sorted(self.__class_list.items()))
-        self._update_main_data_for_every_action()
-        # Display updated UML data
-        self.__user_view._display_uml_data(self.__main_data)
+    # def _sort_class_list(self):
+    #     """
+    #     Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
+    #     """
+    #     class_list = self.__class_list
+    #     if len(class_list) == 0:
+    #         self.__console.print("\n[bold red]No class to sort![/bold red]")
+    #         return
+    #     # Sort classes alphabetically by their names
+    #     self.__class_list = dict(sorted(self.__class_list.items()))
+    #     self._update_main_data_for_every_action()
+    #     # Display updated UML data
+    #     self.__user_view._display_uml_data(self.__main_data)
         
     def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, field_type=None, method_type=None, rel_type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
         """
