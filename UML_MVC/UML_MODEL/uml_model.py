@@ -855,6 +855,8 @@ class UMLModel:
         selected_index = int(method_num) - 1
 
         if 0 <= selected_index < len(method_and_parameter_list):
+            if len(new_param_name_list) == 0:
+                return True
             # Prepare new parameter list
             new_params_obj_list = []
             for param in new_param_name_list:
