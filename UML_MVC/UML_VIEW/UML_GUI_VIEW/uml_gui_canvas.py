@@ -111,6 +111,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
                 if not is_class_added:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
+        
             
     def delete_class(self):
         """
@@ -1149,6 +1150,14 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             self.last_mouse_pos = event.pos()
             self.setCursor(QtCore.Qt.ClosedHandCursor)
             event.accept()
+            
+        if self.selected_class and event.buttons() == QtCore.Qt.LeftButton:
+            # Execute the move command here
+            new_x = self.selected_class.pos().x()
+            new_y = self.selected_class.pos().y()
+            move_unit_command = Command.MoveUnitCommand(class_box=self.selected_class, new_x=new_x, new_y=new_y)
+            move_unit_command.execute()
+            self.input_handler.execute_command(move_unit_command)
 
         # Call the parent class's mousePressEvent for default behavior
         super().mousePressEvent(event)
@@ -1176,7 +1185,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             # Request an update of the view
             self.viewport().update()
             event.accept()
-
+            
         # Call the parent class's mouseMoveEvent to ensure default behavior
         super().mouseMoveEvent(event)
 
@@ -1198,6 +1207,14 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             # Restore the cursor to the default arrow
             self.setCursor(QtCore.Qt.ArrowCursor)
             event.accept()
+            
+        if self.selected_class and event.buttons() == QtCore.Qt.LeftButton:
+            # Execute the move command here
+            new_x = self.selected_class.pos().x()
+            new_y = self.selected_class.pos().y()
+            move_unit_command = Command.MoveUnitCommand(class_box=self.selected_class, new_x=new_x, new_y=new_y)
+            move_unit_command.execute()
+            self.input_handler.execute_command(move_unit_command)
 
         # Call the parent class's mouseReleaseEvent to ensure default behavior
         super().mouseReleaseEvent(event)

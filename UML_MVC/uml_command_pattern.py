@@ -9,6 +9,40 @@ class Command(ABC):
     @abstractmethod
     def undo(self):
         pass
+    
+class MoveUnitCommand(Command):
+    def __init__(self, class_box, new_x, new_y):
+        self.class_box = class_box
+        self.new_x = new_x
+        self.new_y = new_y
+        # Store the initial position
+        self.prev_x_pos = class_box.pos().x()
+        self.prev_y_pos = class_box.pos().y()
+        
+    def execute(self, is_undo_or_redo=False):
+        if self.class_box:
+            if is_undo_or_redo:
+                # When redoing, we should set it to the new position
+                self.class_box.setPos(self.new_x, self.new_y)
+                self.class_box.update_box()
+            else:
+                # Move the class box to the new position
+                self.class_box.setPos(self.new_x, self.new_y)
+                # Update the previous position to the current one after moving
+                self.prev_x_pos = self.class_box.pos().x()
+                self.prev_y_pos = self.class_box.pos().y()
+                self.class_box.update_box()
+            return True
+        return False
+        
+    def undo(self):
+        if self.class_box:
+            # Move back to the previous position
+            self.class_box.setPos(self.prev_x_pos, self.prev_y_pos)
+            self.class_box.update_box()
+            return True
+        return False
+
 
 class AddClassCommand(Command):
     def __init__(self, uml_model, class_name, view=None, class_box=None, is_gui=False):
@@ -1153,11 +1187,9 @@ class InputHandler:
             command = self.command_list[self.pointer]
             command.undo()
             self.pointer -= 1
-            # print(f"Pointer after undo: {self.pointer}")
 
     def redo(self):
         if self.pointer < len(self.command_list) - 1:
             self.pointer += 1
-            # print(f"Pointer after redo: {self.pointer}")
             command = self.command_list[self.pointer]
             command.execute(is_undo_or_redo=True)
