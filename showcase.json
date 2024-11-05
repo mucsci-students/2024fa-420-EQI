@@ -1,0 +1,53 @@
+{
+    "classes": [
+      {
+        "name": "Car",
+        "fields": [
+          { "name": "make", "type": "string" },
+          { "name": "model", "type": "string" },
+          { "name": "year", "type": "int" }
+        ],
+        "methods": [
+          {
+            "name": "drive",
+            "return_type": "void",
+            "params": []
+          },
+          {
+            "name": "stop",
+            "return_type": "void",
+            "params": []
+          }
+        ],
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "name": "Engine",
+        "fields": [
+          { "name": "horsepower", "type": "int" },
+          { "name": "type", "type": "string" }
+        ],
+        "methods": [
+          {
+            "name": "start",
+            "return_type": "void",
+            "params": []
+          },
+          {
+            "name": "stop",
+            "return_type": "void",
+            "params": []
+          }
+        ],
+        "position": { "x": 2, "y": 2 }
+      }
+    ],
+    "relationships": [
+      {
+        "source": "Car",
+        "destination": "Engine",
+        "type": "Composition"
+      }
+    ]
+  }
+  
