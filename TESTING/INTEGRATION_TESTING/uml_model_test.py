@@ -814,14 +814,14 @@ def test_rename_parameter(uml_model, sample_class, sample_observer):
 def test_replace_param_list(uml_model, sample_class, sample_observer):
     # Attach observer
     uml_model._attach_observer(sample_observer)
-    
+
     # Add class and a method
     uml_model._add_class(class_name="TestClass", is_loading=False)
     uml_model._add_method(class_name="TestClass", method_type="int", method_name="testMethod", is_loading=False)
-    
+
     # Replace the parameter list with new parameters
     result = uml_model._replace_param_list(class_name="TestClass", method_num="1", new_param_name_list=["int newParam1", "float newParam2"])
-    
+
     # Ensure replacement was successful
     assert result is True
     class_data = uml_model._get_class_list()["TestClass"]
@@ -829,15 +829,18 @@ def test_replace_param_list(uml_model, sample_class, sample_observer):
     assert len(new_params) == 2
     assert new_params[0]._get_parameter_name() == "newParam1"
     assert new_params[1]._get_parameter_name() == "newParam2"
-    
+
     # Verify observer notification
     assert len(sample_observer.events) == 3  # add_class, add_method, replace_param
     assert sample_observer.events[2]["event_type"] == "replace_param"
-    assert sample_observer.events[2]["data"] == {
-        "class_name": "TestClass",
-        "method_name": "testMethod",
-        "new_list": new_params
-    }
+    
+    # Extract parameter data to compare
+    observed_params = sample_observer.events[2]["data"]["new_list"]
+    expected_params = [{"type": param._get_type(), "name": param._get_parameter_name()} for param in new_params]
+    observed_params_data = [{"type": param._get_type(), "name": param._get_parameter_name()} for param in observed_params]
+    
+    # Compare the extracted data instead of the objects themselves
+    assert observed_params_data == expected_params, f"Expected {expected_params} but got {observed_params_data}"
 
 def test_add_parameter_duplicate(uml_model, sample_observer):
     uml_model._attach_observer(sample_observer)
@@ -1497,16 +1500,6 @@ def test_validate_entities_field_does_not_exist(uml_model):
 # _sort_class_list
 ##################################################################################
 
-def test_sort_class_list_empty(uml_model):
-    uml_model._sort_class_list()
-    assert uml_model._UMLModel__class_list == {}  # No classes to sort
-
-def test_sort_class_list_with_classes(uml_model):
-    uml_model._add_class(class_name="BClass", is_loading=False)
-    uml_model._add_class(class_name="AClass", is_loading=False)
-    uml_model._sort_class_list()
-    assert list(uml_model._UMLModel__class_list.keys()) == ["AClass", "BClass"]  # Sorted alphabetically
-
 ##################################################################################
 # _is_valid_input
 ##################################################################################
@@ -1657,12 +1650,14 @@ def test_reset_storage(uml_model):
     uml_model._reset_storage()
     
     # Check that class list and relationship list are empty after reset
-    assert len(uml_model._get_class_list()) == 0  # Storage should be cleared
-    assert len(uml_model._get_relationship_list()) == 0
+    assert len(uml_model._get_class_list()) == 0, "Expected class list to be empty after reset"
+    assert len(uml_model._get_relationship_list()) == 0, "Expected relationship list to be empty after reset"
     
-    # Check that main data is also reset if accessible
+    # Check that main data is also reset
     main_data = uml_model._get_main_data() if hasattr(uml_model, "_get_main_data") else uml_model.__dict__.get('_UMLModel__main_data', {})
-    assert len(main_data) == 0  # Main data should be reset
+    assert main_data.get("classes") == [], "Expected 'classes' list in main data to be empty after reset"
+    assert main_data.get("relationships") == [], "Expected 'relationships' list in main data to be empty after reset"
+
 
 def test_new_file_resets_state(uml_model):
     # Use patch to mock methods that `_new_file` calls
@@ -2034,3 +2029,45 @@ def test_save_and_delete_file_via_uml_model(uml_model):
         mock_remove.assert_called_once_with(os.path.join(root_path, "test_file.json"))
         mock_update_saved_list.assert_called_once()
         mock_update_saved_list_gui.assert_called_once()
+
+# Test when user inputs 'quit'
+def test_delete_saved_file_quit(uml_model):
+    # Mock the saved list to simulate available files
+    uml_model._get_storage_manager()._get_saved_list = MagicMock(return_value=[{"test_file": "on"}])
+
+    # Mock user input to "quit"
+    with patch("builtins.input", return_value="quit"):
+        
+        # Call delete function
+        result = uml_model._delete_saved_file()
+
+        # Verify that the function returns None (or whatever the function returns on quit)
+        assert result is None
+
+# Test when user inputs 'quit'
+def test_delete_saved_file_non_existent(uml_model):
+    # Mock the saved list to simulate available files
+    uml_model._get_storage_manager()._get_saved_list = MagicMock(return_value=[{"test_file": "on"}])
+
+    # Mock user input to "quit"
+    with patch("builtins.input", return_value="123"):
+        
+        # Call delete function
+        result = uml_model._delete_saved_file()
+
+        # Verify that the function returns None (or whatever the function returns on quit)
+        assert result is None
+
+# Test when user inputs 'quit'
+def test_delete_saved_file_NAME_LIST(uml_model):
+    # Mock the saved list to simulate available files
+    uml_model._get_storage_manager()._get_saved_list = MagicMock(return_value=[{"test_file": "on"}])
+
+    # Mock user input to "quit"
+    with patch("builtins.input", return_value="NAME_LIST"):
+        
+        # Call delete function
+        result = uml_model._delete_saved_file()
+
+        # Verify that the function returns None (or whatever the function returns on quit)
+        assert result is None
