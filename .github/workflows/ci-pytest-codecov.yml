@@ -29,7 +29,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=TESTING --cov-report=xml  # Running tests with coverage in the TESTING folder
+          pytest TESTING --cov=UML_MVC --cov-report=xml  # Running tests with coverage in the TESTING folder
 
       - name: Upload coverage to Codecov
         run: |
