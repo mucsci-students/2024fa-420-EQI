@@ -56,6 +56,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
         # Track selected class or arrow
         self.selected_class = False
+        
+        self.move_start_pos = None
 
     #################################################################
     ## GRID VIEW RELATED ##
@@ -1140,6 +1142,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         item = self.itemAt(event.pos())
         if isinstance(item, UMLClassBox):
             self.selected_class = item
+            self.move_start_pos = item.pos()  # Store the initial position
         else:
             self.selected_class = None
 
@@ -1150,14 +1153,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             self.last_mouse_pos = event.pos()
             self.setCursor(QtCore.Qt.ClosedHandCursor)
             event.accept()
-            
-        if self.selected_class and event.buttons() == QtCore.Qt.LeftButton:
-            # Execute the move command here
-            new_x = self.selected_class.pos().x()
-            new_y = self.selected_class.pos().y()
-            move_unit_command = Command.MoveUnitCommand(class_box=self.selected_class, new_x=new_x, new_y=new_y)
-            move_unit_command.execute()
-            self.input_handler.execute_command(move_unit_command)
 
         # Call the parent class's mousePressEvent for default behavior
         super().mousePressEvent(event)
@@ -1208,13 +1203,23 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             self.setCursor(QtCore.Qt.ArrowCursor)
             event.accept()
             
-        if self.selected_class and event.buttons() == QtCore.Qt.LeftButton:
-            # Execute the move command here
+        if self.selected_class and event.button() == QtCore.Qt.LeftButton:
+            # Capture the new position after the move
             new_x = self.selected_class.pos().x()
             new_y = self.selected_class.pos().y()
-            move_unit_command = Command.MoveUnitCommand(class_box=self.selected_class, new_x=new_x, new_y=new_y)
-            move_unit_command.execute()
-            self.input_handler.execute_command(move_unit_command)
+            old_x = self.move_start_pos.x()
+            old_y = self.move_start_pos.y()
+            
+            # Only create and execute the command if the position has changed
+            if (new_x, new_y) != (old_x, old_y):
+                move_unit_command = Command.MoveUnitCommand(
+                    class_box=self.selected_class, 
+                    old_x=old_x, 
+                    old_y=old_y, 
+                    new_x=new_x, 
+                    new_y=new_y
+                )
+                self.input_handler.execute_command(move_unit_command)
 
         # Call the parent class's mouseReleaseEvent to ensure default behavior
         super().mouseReleaseEvent(event)
