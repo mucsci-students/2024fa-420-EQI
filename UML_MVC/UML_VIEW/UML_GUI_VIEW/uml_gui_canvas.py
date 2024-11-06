@@ -56,6 +56,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
         # Track selected class or arrow
         self.selected_class = False
+        
+        self.move_start_pos = None
 
     #################################################################
     ## GRID VIEW RELATED ##
@@ -86,14 +88,15 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
     
     #################################################################
     ## CLASS OPERATION ##
-    def add_class(self, loaded_class_name=None, is_loading=False):
+    def add_class(self, loaded_class_name=None, x=None, y=None, is_loading=False):
         """
         Add a sample UML class box to the scene.
         """
         if is_loading:
             is_class_added = self.interface.add_class(loaded_class_name)
             if is_class_added:
-                class_box = UMLClassBox(self.interface, class_name=loaded_class_name)
+                class_box = UMLClassBox(self.interface, class_name=loaded_class_name, x=x, y=y)
+                class_box.set_box_position()
                 self.class_name_list[loaded_class_name] = class_box
                 self.scene().addItem(class_box)
         else:
@@ -110,6 +113,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
                 if not is_class_added:
                     QtWidgets.QMessageBox.warning(None, "Warning", f"Class '{input_class_name}' has already existed!")
+        
             
     def delete_class(self):
         """
@@ -180,7 +184,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                                                                          color=selected_class_box.text_color)
                         field_key = (loaded_field_type, loaded_field_name)
                         selected_class_box.field_list[field_key] = field_text  # Add the field to the internal list
-                        selected_class_box.field_key_list.append(loaded_field_name)  # Track the field name in the name list
+                        selected_class_box.field_key_list.append(field_key)  # Track the field name in the name list
                         selected_class_box.update_box()  # Update the box to reflect the changes
         else:
             if self.selected_class:
@@ -491,7 +495,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     self.input_handler.execute_command(edit_method_return_type_command)
                     
             
-    def add_param(self,loaded_class_name=None, loaded_method_name=None, loaded_param_name=None, is_loading=False):
+    def add_param(self,loaded_class_name=None, loaded_method_num=None, loaded_param_type=None, loaded_param_name=None, is_loading=False):
         """
         Add a parameter to a method in the UML class, either during loading or interactively.
 
@@ -514,10 +518,13 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             for item in self.scene().items():
                 if isinstance(item, UMLClassBox) and item.class_name_text.toPlainText() == loaded_class_name:
                     selected_class_box = item  # Found the class box
-                    is_param_added = self.interface.add_parameter(loaded_class_name, loaded_method_name, loaded_param_name)
+                    is_param_added = self.interface.add_parameter(loaded_class_name, str(loaded_method_num), loaded_param_type, loaded_param_name)
                     if is_param_added:
-                        # Add the parameter to the selected method and update the UML box
-                        selected_class_box.method_key_list[loaded_method_name].append(loaded_param_name)  # Track the parameter
+                        # Append the parameter to the method's parameter list
+                        param_tuple = (loaded_param_type, loaded_param_name)
+                        method_entry = selected_class_box.method_list[int(loaded_method_num) - 1]
+                        method_entry["parameters"].append(param_tuple)
+                        selected_class_box.param_num = len(method_entry["parameters"])
                         selected_class_box.update_box()  # Update the UML box
         else:
             if self.selected_class:
@@ -928,7 +935,6 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         3. Validate that the selected file is a JSON file.
         4. If valid, load the selected JSON file into the interface.
         """
-        self.clear_current_scene()  # Clear the scene before loading a new file
         # Show an open file dialog and store the selected file path
         full_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", os.getcwd(), "JSON Files (*.json)")
         # Check if the user canceled the dialog (full_path will be empty if canceled)
@@ -938,7 +944,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if not full_path.endswith('.json'):
             QtWidgets.QMessageBox.warning(None, "Warning", "The selected file is not a JSON file. Please select a valid JSON file.")
             return
-        
+        self.clear_current_scene()  # Clear the scene before loading a new file
         # If a valid file is selected, proceed to load it into the interface
         if full_path:
             file_base_name = os.path.basename(full_path)  # Extract the file name from the full path
@@ -970,7 +976,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         else:
             file_base_name = os.path.basename(current_active_file_path)
             file_name_only = os.path.splitext(file_base_name)[0]
-            self.interface.save_gui(file_name_only, current_active_file_path)  
+            self.interface.save_gui(file_name_only, current_active_file_path, self.class_name_list)  
             
     def undo(self):
         self.input_handler.undo()
@@ -1136,6 +1142,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         item = self.itemAt(event.pos())
         if isinstance(item, UMLClassBox):
             self.selected_class = item
+            self.move_start_pos = item.pos()  # Store the initial position
         else:
             self.selected_class = None
 
@@ -1173,7 +1180,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             # Request an update of the view
             self.viewport().update()
             event.accept()
-
+            
         # Call the parent class's mouseMoveEvent to ensure default behavior
         super().mouseMoveEvent(event)
 
@@ -1195,6 +1202,24 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             # Restore the cursor to the default arrow
             self.setCursor(QtCore.Qt.ArrowCursor)
             event.accept()
+            
+        if self.selected_class and event.button() == QtCore.Qt.LeftButton:
+            # Capture the new position after the move
+            new_x = self.selected_class.pos().x()
+            new_y = self.selected_class.pos().y()
+            old_x = self.move_start_pos.x()
+            old_y = self.move_start_pos.y()
+            
+            # Only create and execute the command if the position has changed
+            if (new_x, new_y) != (old_x, old_y):
+                move_unit_command = Command.MoveUnitCommand(
+                    class_box=self.selected_class, 
+                    old_x=old_x, 
+                    old_y=old_y, 
+                    new_x=new_x, 
+                    new_y=new_y
+                )
+                self.input_handler.execute_command(move_unit_command)
 
         # Call the parent class's mouseReleaseEvent to ensure default behavior
         super().mouseReleaseEvent(event)

@@ -250,7 +250,7 @@ class UMLView(Observer):
             ["new", "Open new file"],
 
             ["[bold yellow]Other Commands[/bold yellow]", ""],
-            ["sort", "Sort the class list alphabetically"],
+            # ["sort", "Sort the class list alphabetically"],
             ["help", "View instructions"],
             ["exit", "Exit the program"]
         ]

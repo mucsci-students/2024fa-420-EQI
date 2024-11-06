@@ -356,7 +356,7 @@ class UMLInterface:
     ## PARAMETER RELATED ##
     
     # Add parameter interface #
-    def add_parameter(self, class_name: str = None, method_num: int = None, param_type: str = None, param_name: str = None):
+    def add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
         """
         Adds a parameter to a UML method by delegating the operation to the model.
 
@@ -484,7 +484,7 @@ class UMLInterface:
         self.Model._save()
         
     # Save data GUI #
-    def save_gui(self, file_name, file_path):
+    def save_gui(self, file_name, file_path, class_name_list_from_gui):
         """
         Saves the UML diagram data to a specified file and path for GUI-based saving.
 
@@ -492,7 +492,7 @@ class UMLInterface:
             file_name: The name of the file to save.
             file_path: The path where the file will be saved.
         """
-        self.Model._save_gui(file_name, file_path)
+        self.Model._save_gui(file_name, file_path, class_name_list_from_gui)
         
     # Load data #
     def load(self):
@@ -671,7 +671,9 @@ class UMLInterface:
             
             # Handle the 'help' command to show the menu again
             if command == InterfaceOptions.HELP.value:
+                print("\n")
                 self.View._prompt_menu()
+                continue
             # Handle the 'exit' command to break out of the loop
             elif command == InterfaceOptions.EXIT.value:
                 break

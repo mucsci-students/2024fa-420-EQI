@@ -1,13 +1,7 @@
-import sys
-import os
-from PyQt5 import QtWidgets, QtGui, QtCore
-from functools import partial
+from PyQt5 import QtWidgets, QtGui
 from typing import Dict, List
 
 ###################################################################################################
-# # ADD ROOT PATH #
-# root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-# sys.path.append(root_path)
 
 from UML_ENUM_CLASS.uml_enum import BoxDefaultStat as Default
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_editable_text_item import UMLEditableTextItem as Text
@@ -20,8 +14,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
     It contains attributes like class name, fields, methods, parameters, 
     and provides handles for resizing the box.
     """
-    def __init__(self, interface, class_name="ClassName", 
-                 field_list=None, method_list=None, parent=None):
+    def __init__(self, interface, class_name="ClassName", x=None, y=None, parent=None):
         """
         Initialize the UMLTestBox with default settings, including the class name, fields, methods, and handles.
         
@@ -43,7 +36,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         #################################################################
         ### FIELD, METHOD, PARAMETER, HANDLE AND CONNECT POINT LIST ###
         # Initialize lists for fields, methods, parameters, and resize handles.
-        self.field_list: Dict = field_list if field_list is not None else {}
+        self.field_list: Dict = {}
         self.field_key_list: List = []
         
         self.method_list: List = []
@@ -54,6 +47,11 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         self.handles_list: List = []
         self.connection_points_list: Dict = {}
         self.arrow_line_list: List = []
+        
+        self.box_position = {
+            "x" : x, 
+            "y" : y
+        } 
 
         #################################################################
         ### UML CLASS BOX DEFAULT SETUP ###
@@ -150,11 +148,26 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         
         self.update_arrow_lines()
         
+        self.update_box_position()
         
+    def update_box_position(self):
+        self.box_position["x"] = self.pos().x()
+        self.box_position["y"] = self.pos().y()
+        print(f"Current location: ({self.box_position["x"]} , {self.box_position["y"]})")
+        
+    def set_box_position(self):
+        # Retrieve the desired x and y positions from the box_position dictionary
+        new_x = self.box_position.get("x", 0)  # Default to 0 if 'x' not found
+        new_y = self.box_position.get("y", 0)  # Default to 0 if 'y' not found
+        
+        # Set the new position using setPos()
+        self.setPos(new_x, new_y)
+
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionChange:
             # Update arrow positions when the position of the box changes
             self.update_arrow_lines()
+            self.update_box_position()
         return super().itemChange(change, value)
     
     def update_arrow_lines(self):

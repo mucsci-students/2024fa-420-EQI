@@ -26,12 +26,19 @@ def main():
         
         # GUI View
         gui_view = GUIView(interface)  # Pass the interface to the GUI view
+        # gui_view2 = GUIView(interface)  # For testing Singleton, if we have multiple window, then it won't let us run program
         
         # Show GUI
         gui_view.show()
-        
+
         # Start GUI event loop
         sys.exit(app.exec_())
+        
+        
+    # cli_view = CLIView()
+    # interface = Interface(cli_view)
+    # interface.attach_observer(cli_view)
+    # interface.main_program_loop()
 
 if __name__ == "__main__":
     main()

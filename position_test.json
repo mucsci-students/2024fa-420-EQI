@@ -1,0 +1,138 @@
+{
+    "classes": [
+        {
+            "name": "Human",
+            "fields": [
+                {
+                    "name": "health",
+                    "type": "int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "attack",
+                    "return_type": "void",
+                    "params": [
+                        {
+                            "name": "dmg",
+                            "type": "int"
+                        },
+                        {
+                            "name": "speed",
+                            "type": "double"
+                        },
+                        {
+                            "name": "attack_name",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "run",
+                    "return_type": "void",
+                    "params": []
+                },
+                {
+                    "name": "attack",
+                    "return_type": "int",
+                    "params": [
+                        {
+                            "name": "enemy_dmg",
+                            "type": "int"
+                        },
+                        {
+                            "name": "enemy_name",
+                            "type": "string"
+                        },
+                        {
+                            "name": "enemy_status",
+                            "type": "string"
+                        }
+                    ]
+                }
+            ],
+            "position": {
+                "x": -461.0,
+                "y": -224.0
+            }
+        },
+        {
+            "name": "Animal",
+            "fields": [
+                {
+                    "name": "race",
+                    "type": "string"
+                },
+                {
+                    "name": "age",
+                    "type": "int"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "bite",
+                    "return_type": "void",
+                    "params": []
+                },
+                {
+                    "name": "sprint",
+                    "return_type": "void",
+                    "params": []
+                }
+            ],
+            "position": {
+                "x": -301.0,
+                "y": 111.0
+            }
+        },
+        {
+            "name": "b",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 381.0,
+                "y": -197.0
+            }
+        },
+        {
+            "name": "c",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 359.0,
+                "y": 163.0
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "source": "Human",
+            "destination": "Animal",
+            "type": "Realization"
+        },
+        {
+            "source": "Human",
+            "destination": "b",
+            "type": "Aggregation"
+        },
+        {
+            "source": "Human",
+            "destination": "c",
+            "type": "Realization"
+        },
+        {
+            "source": "c",
+            "destination": "b",
+            "type": "Composition"
+        },
+        {
+            "source": "c",
+            "destination": "Animal",
+            "type": "Inheritance"
+        }
+    ]
+}
