@@ -1,17 +1,8 @@
 import pytest
-import coverage
 
 def run_tests():
-    # Start coverage analysis
-    cov = coverage.Coverage()
-    cov.start()
-
-    # Run pytest with arguments to produce an XML report
+    # Run pytest with arguments for coverage, setting the output to XML
     result = pytest.main(["--cov=TESTING", "--cov-report=xml"])
-
-    # Stop and save coverage data
-    cov.stop()
-    cov.save()
 
     # Exit with the same code as pytest to signal success/failure
     exit(result)
