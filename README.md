@@ -127,3 +127,4 @@ This project utilizes several design patterns to promote efficient, maintainable
 
 ### 4. Singleton
 - **Purpose**: Ensures a class has only one instance and provides a global point of access to that instance
+    - path: 2024FA-420-EQI/UML_MVC/UML_VIEW/uml_gui_view.py
