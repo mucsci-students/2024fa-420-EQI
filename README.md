@@ -127,4 +127,13 @@ This project utilizes several design patterns to promote efficient, maintainable
 
 ### 4. Singleton
 - **Purpose**: Ensures a class has only one instance and provides a global point of access to that instance
+
+- **Components**:
+
+    - **MainWindow**: The MainWindow class uses the Singleton pattern to limit the application to a single main window instance. This centralizes all GUI interactions, preventing multiple conflicting windows and ensuring unified control over the interface.
+
+- **Implementation**:
+
+    - **Private Instance Variable**: _instance holds the single instance of MainWindow.
+    - **Custom __new__ Method**: Overrides the default constructor to check if _instance is None before creating a new instance, raising an error if a second instance is attempted.
     - path: 2024FA-420-EQI/UML_MVC/UML_VIEW/uml_gui_view.py
