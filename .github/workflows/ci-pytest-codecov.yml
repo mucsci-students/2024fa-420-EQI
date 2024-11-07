@@ -1,0 +1,36 @@
+name: CI - Run Pytest and Codecov
+
+on:
+  push:
+    branches:
+      - develop  # Run on push to develop branch
+      - '**'     # Optionally run on all branches
+  pull_request:
+    branches:
+      - develop  # Run on pull requests to the develop branch
+      - '**'     # Optionally run on all branches
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'  # Use Python 3.12.*
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          pytest TESTING --cov=UML_MVC --cov-report=xml  # Running tests with coverage in the TESTING folder
+
+      - name: Upload coverage to Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}

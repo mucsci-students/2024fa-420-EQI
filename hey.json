@@ -1,0 +1,33 @@
+{
+    "classes": [
+        {
+            "name": "Human",
+            "fields": [
+                {
+                    "name": "mana",
+                    "type": "double"
+                }
+            ],
+            "methods": [],
+            "position": {
+                "x": 10,
+                "y": 10
+            }
+        },
+        {
+            "name": "Animal",
+            "fields": [
+                {
+                    "name": "health",
+                    "type": "int"
+                }
+            ],
+            "methods": [],
+            "position": {
+                "x": 12,
+                "y": 12
+            }
+        }
+    ],
+    "relationships": []
+}

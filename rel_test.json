@@ -3,54 +3,55 @@
         {
             "name": "House",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": -69.0,
+                "y": -15.0
+            }
         },
         {
             "name": "Human",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": -297.0,
+                "y": 167.0
+            }
         },
         {
             "name": "Animal",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": -101.0,
+                "y": -290.0
+            }
         },
         {
             "name": "TEST",
             "fields": [],
-            "methods": []
+            "methods": [],
+            "position": {
+                "x": -420.0,
+                "y": -173.0
+            }
         }
     ],
     "relationships": [
         {
-            "source": "Human",
-            "destination": "Human",
-            "type": "Aggregation"
-        },
-        {
-            "source": "Human",
-            "destination": "Animal",
-            "type": "Composition"
-        },
-        {
-            "source": "Animal",
+            "source": "House",
             "destination": "Animal",
             "type": "Realization"
         },
         {
-            "source": "Animal",
+            "source": "House",
             "destination": "Human",
+            "type": "Composition"
+        },
+        {
+            "source": "House",
+            "destination": "TEST",
             "type": "Inheritance"
-        },
-        {
-            "source": "House",
-            "destination": "Animal",
-            "type": "Realization"
-        },
-        {
-            "source": "House",
-            "destination": "Human",
-            "type": "Composition"
         }
     ]
 }

@@ -8,6 +8,7 @@ to handle save/load functionality and provides static methods for creating UML c
 """
 ###################################################################################################
 
+import copy
 import re
 import os
 from typing import Dict, List
@@ -18,7 +19,7 @@ from UML_CORE.UML_PARAMETER.uml_parameter import UMLParameter as Parameter
 from UML_CORE.UML_RELATIONSHIP.uml_relationship import UMLRelationship as Relationship
 from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager as Storage
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions, RelationshipType
-from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_grid import GridGraphicsView as GUIView
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUIView
 # Get the root directory where the main.py file exists
 root_directory = os.path.dirname(os.path.abspath(__file__))  # This gets the current script's directory
 root_directory = os.path.abspath(os.path.join(root_directory, "..", ".."))  # Move to the root directory (where main.py is)
@@ -43,7 +44,7 @@ class UMLModel:
         for managing UML classes, relationships, and observers. Also initializes the storage manager 
         for saving/loading UML diagrams.
 
-        Args:
+        Parameters:
             view: The view instance that presents data to the user.
             console: The console instance for displaying output via Rich.
         """
@@ -54,6 +55,7 @@ class UMLModel:
         self.__relationship_list: List[Relationship] = []
         self.__main_data: Dict = {"classes":[], "relationships":[]}
         self._observers = [] # For observer design pattern
+        self._current_number_of_method = 0
                     
     #################################################################
       
@@ -66,16 +68,16 @@ class UMLModel:
         if observer in self._observers:
             self._observers.remove(observer)
     
-    def _notify_observers (self, event_type=None, data=None, is_loading=None):
+    def _notify_observers (self, event_type=None, data=None, is_loading=None, is_undo_or_redo: bool = None):
         for observer in self._observers:
-            observer._update(event_type, data, is_loading)
+            observer._update(event_type, data, is_loading, is_undo_or_redo)
     
     #################################################################
         
     # Getters #
         
     def _get_class_list(self) -> Dict[str, Class]:
-        return self.__class_list
+        return copy.deepcopy(self.__class_list)
     
     def _get_storage_manager(self) -> Storage:
         return self.__storage_manager
@@ -84,7 +86,10 @@ class UMLModel:
         return self.__relationship_list
     
     def _get_main_data(self) -> Dict:
-        return self.__main_data
+        return copy.deepcopy(self.__main_data)
+    
+    def _set_main_data(self, new_main_data) -> Dict:
+        self.__main_data = new_main_data
     
     def _get_user_view(self):
         return self.__user_view
@@ -99,18 +104,18 @@ class UMLModel:
     
     # Field creation method #
     @staticmethod
-    def create_field(field_name: str) -> Field:
-        return Field(field_name)
+    def create_field(field_type: str, field_name: str) -> Field:
+        return Field(field_type, field_name)
     
     # Method creation method #
     @staticmethod
-    def create_method(method_name: str) -> Method:
-        return Method(method_name)
+    def create_method(method_type: str, method_name: str) -> Method:
+        return Method(method_type, method_name)
     
     # Parameter creation method #
     @staticmethod
-    def create_parameter(parameter_name: str) -> Parameter:
-        return Parameter(parameter_name)
+    def create_parameter(param_type:str, parameter_name: str) -> Parameter:
+        return Parameter(param_type, parameter_name)
     
     # Relationship creation method #
     @staticmethod
@@ -132,20 +137,18 @@ class UMLModel:
     ## CLASS RELATED ##
     
     # Add class #
-    def _add_class(self, class_name: str, is_loading: bool) -> bool:
+    def _add_class(self, class_name: str, is_loading: bool = False, is_undo_or_redo: bool = False) -> bool:
         """
         Adds a new UML class to the class list. If the class already exists, no action is taken.
         Notifies observers of the addition event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be added.
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name):
+            return False
         # Check if the class already exists
         is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=False)
         # If the class already exists, exit the function
@@ -156,23 +159,21 @@ class UMLModel:
         self.__class_list[class_name] = new_class
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_CLASS.value, data={"class_name": class_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_CLASS.value, data={"class_name": class_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
     
     # Delete class #
-    def _delete_class(self, class_name: str):
+    def _delete_class(self, class_name: str, is_undo_or_redo: bool = False):
         """
         Deletes a UML class from the class list. Also removes any relationships involving the class.
         Notifies observers of the deletion event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name):
+            return False
         # Check if the class exists
         is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         # If the class does not exist, exit the function
@@ -184,29 +185,23 @@ class UMLModel:
         self.__clean_up_relationship(class_name)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_CLASS.value, data={"class_name": class_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_CLASS.value, data={"class_name": class_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Rename class #
-    def _rename_class(self, current_name: str, new_name: str):
+    def _rename_class(self, current_name: str, new_name: str, is_undo_or_redo: bool = False):
         """
         Renames an existing UML class. Updates any associated relationships and notifies observers
         of the renaming event.
 
-        Args:
+        Parameters:
             current_name (str): The current name of the class.
             new_name (str): The new name for the class.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(current_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current class name [bold white]'{current_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New class name [bold white]'{new_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=current_name, new_name=new_name):
+            return False
+
         # Check if renaming is possible (class name validation)
         is_able_to_rename = self.__check_class_rename(current_name, new_name)
         if not is_able_to_rename:
@@ -219,401 +214,718 @@ class UMLModel:
         self.__update_name_in_relationship(current_name, new_name)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_CLASS.value, data={"old_name": current_name, "new_name": new_name})
+        self._notify_observers(event_type=InterfaceOptions.RENAME_CLASS.value, data={"old_name": current_name, "new_name": new_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     ## FIELD RELATED ##
     
     # Add field #
-    def _add_field(self, class_name: str, field_name: str, is_loading: bool):
+    def _add_field(self, class_name: str=None, field_type: str=None, field_name: str=None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a new field to a UML class. Notifies observers of the field addition event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to which the field will be added.
+            type (str): Data type of the field
             field_name (str): The name of the field to be added.
             is_loading (bool): Flag indicating whether the operation is part of loading saved data.
+            type: str
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Field name [bold white]'{field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=field_name, field_type=field_type,):
+            return False
         # Check if both the class and the field do not already exist
         is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=field_name, class_should_exist=True, field_should_exist=False)
         if not is_class_and_field_exist:
             return False
         # Retrieve the class and add the new field to its field list
-        class_object = self.__class_list[class_name]
-        field_list = class_object._get_class_field_list()
-        new_field = self.create_field(field_name)
+        field_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
+        new_field = self.create_field(field_type, field_name)
         field_list.append(new_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "field_name": field_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_FIELD.value, data={"class_name": class_name, "type": field_type, 
+                                                                                  "field_name": field_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Delete field #
-    def _delete_field(self, class_name: str, field_name: str):
+    def _delete_field(self, class_name: str, field_name: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing field from a UML class. Notifies observers of the field deletion event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class from which the field will be deleted.
             field_name (str): The name of the field to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=field_name):
+            return False
         # Check if both the class and the field exist
         is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=field_name, class_should_exist=True, field_should_exist=True)
         if not is_class_and_field_exist:
             return False
         # Remove the field from the class's field list
-        class_object = self.__class_list[class_name]
-        field_list = class_object._get_class_field_list()
-        chosen_field = self.__get_chosen_field_or_method(class_name, field_name, is_field=True)
+        field_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
+        chosen_field = self._get_chosen_field_or_method(class_name, field_name, is_field=True)
         field_list.remove(chosen_field)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_FIELD.value, data={"class_name": class_name, "field_name": field_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_FIELD.value, data={"class_name": class_name, "field_name": field_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Rename field #
-    def _rename_field(self, class_name: str, current_field_name: str, new_field_name: str):
+    def _rename_field(self, class_name: str, old_field_name: str=None, new_field_name: str=None, is_undo_or_redo: bool = False):
         """
         Renames an existing field in a UML class. Notifies observers of the field renaming event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the field.
             current_field_name (str): The current name of the field.
             new_field_name (str): The new name for the field.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current Field name [bold white]'{current_field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_field_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New field name [bold white]'{new_field_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(class_name=class_name, field_name=old_field_name, new_name=new_field_name):
+            return False
         # Check if renaming is possible (field name validation)
-        is_able_to_rename = self.__check_field_or_method_rename(class_name, current_field_name, new_field_name, is_field=True)
+        is_able_to_rename = self.__check_field_or_method_rename(class_name, old_field_name, new_field_name, is_field=True)
         if not is_able_to_rename:
             return False
         # Rename the field in the class
-        chosen_field = self.__get_chosen_field_or_method(class_name, current_field_name, is_field=True)
+        chosen_field = self._get_chosen_field_or_method(class_name, old_field_name, is_field=True)
         chosen_field._set_name(new_field_name)
+        
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_FIELD.value, data={"class_name": class_name, "old_field_name": current_field_name, "new_field_name": new_field_name})
+        self._notify_observers(event_type=InterfaceOptions.RENAME_FIELD.value, data={"class_name": class_name, "old_field_name": old_field_name, 
+                                                                                     "new_field_name": new_field_name}, is_undo_or_redo=is_undo_or_redo)
         return True
-        
-    ## METHOD RELATED ##
     
+    ## METHOD RELATED ##
+
     # Add method #
-    def _add_method(self, class_name: str, method_name: str, is_loading: bool):
+    def _add_method(self, class_name: str = None, method_type: str = None, method_name: str = None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
-        Adds a new method to a UML class. Notifies observers of the method addition event.
+        Adds a new method to a UML class and notifies observers.
 
-        Args:
-            class_name (str): The name of the class to which the method will be added.
+        Parameters:
+            class_name (str): The name of the class where the method will be added.
+            type (str): The return type of the method (e.g., int, void).
             method_name (str): The name of the method to be added.
-            is_loading (bool): Flag indicating whether the operation is part of loading saved data.
+            is_loading (bool): A flag indicating if the method addition is part of loading saved data.
+
+        Returns:
+            bool: True if the method was successfully added, False otherwise.
         """
-        # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if the class exists and the method does not already exist
-        is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=False)
+        # Check if input values are valid (e.g., not None or empty strings) #
+        if not self._is_valid_input(class_name=class_name, method_name=method_name, method_type=method_type):
+            return False
+
+        # Ensure the class exists and the method does not already exist #
+        is_class_and_method_exist = self._validate_entities(
+            class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=False)
         if not is_class_and_method_exist:
             return False
-        # Add the new method to the class's method list
-        class_object = self.__class_list[class_name]
-        method_list = class_object._get_class_method_list()
-        new_method = self.create_method(method_name)
-        method_list.append(new_method)
-        # Initialize an empty parameter list for the new method
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        method_and_parameter_list[method_name] = []
-        # Update main data and notify observers
+
+        # Retrieve the method list for the class and create the new method #
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        new_method = self.create_method(method_type, method_name)
+        method_and_pram_list_element = {new_method: []}  # Create a dictionary with method and an empty parameter list
+
+        # If not loading, check if a method with the same signature already exists #
+        if not is_loading:
+            is_new_method_valid = self._check_method_param_list(class_name, method_and_pram_list_element)
+            if not is_new_method_valid:
+                return False
+            
+        # Add the new method and its empty parameter list to the method_and_parameter_list #
+        method_and_parameter_list.append(method_and_pram_list_element)
+        self._current_number_of_method = self._current_number_of_method + 1
+        # Notify observers and update internal data #
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_METHOD.value, data={"class_name": class_name, "method_name": method_name}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_METHOD.value,
+                               data={"class_name": class_name, "type": method_type, "method_name": method_name}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
+    
+    def _get_method_based_on_index(self, class_name: str, method_num: str):
+        is_method_num_valid = self._check_method_num(method_num)
+        if not is_method_num_valid:
+            return None
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        selected_index = int(method_num) - 1  # Convert to zero-based index
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            method = next(iter(chosen_pair))  # Extract the method object
+            return method
+        else:
+            self.__console.print("\n[bold red]Method number out of range! Please enter a valid number.[/bold red]")
+            return None
         
+    def _get_param_based_on_index(self, class_name: str, method_num: str, parameter_name: str):
+        is_method_num_valid = self._check_method_num(method_num)
+        if not is_method_num_valid:
+            return None
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        selected_index = int(method_num) - 1  # Convert to zero-based index
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract the selected method and its parameter list #
+            param_list = next(iter(chosen_pair.values()))
+
+            for each_parameter in param_list:
+                if each_parameter._get_parameter_name() == parameter_name:
+                    return each_parameter
+        return None
+
+    def _check_method_param_list(self, class_name: str, new_method_and_params: dict):
+        """
+        Checks if a method with the same signature (name and parameter types) already exists in the class.
+
+        Parameters:
+            class_name (str) : class which the method is being added to
+            new_method_and_params (dict): A dictionary representing the new method and its parameter list.
+
+        Returns:
+            bool: True if no method with the same signature exists, False otherwise.
+        """
+        # Loop through each method in the existing method list #
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+
+        for method_and_parameter in method_and_parameter_list:
+            # Loops through each method and gets the met
+            for method, param_list in method_and_parameter.items():
+                # Gets the new method from the parameter
+                new_method = next(iter(new_method_and_params))
+                # Compare method names #
+                if method._get_name() == new_method._get_name():
+                    # Retrieve parameter types for both methods (existing and new) #
+                    first_param_type_list = [param._get_type() for param in param_list]
+                    second_param_type_list = [param._get_type() for param in new_method_and_params[new_method]]
+
+                    # If parameter lists match, the new method is a duplicate #
+                    if first_param_type_list == second_param_type_list:
+                        self.__console.print(f"\n[bold red]New method [bold white]'{new_method._get_name()}'[/bold white] "
+                                             f"has the same parameter list signature as an existing method in class [bold white]'{class_name}'[/bold white]![bold red]")
+                        return False
+        return True
+    
+    # Check if the input for the method number is a number or not
+    def _check_method_num(self, method_num: str):
+        """
+        Checks if the input for the method number is a number or no
+
+        Parameters:
+            method_num (str): The input for the method number.
+
+        Returns:
+            bool: True the input method_num contains only numbers, False otherwise.
+        """
+
+        # Checks if the input is only numbers, prints error if it is not
+        if not method_num.isnumeric():
+            self.__console.print(f"\n[bold red]Input [bold white]'{method_num}'[/bold white] invalid input for a method number![/bold red]")
+            return False
+        return True
+
     # Delete method #
-    def _delete_method(self, class_name: str, method_name: str):
+    def _delete_method(self, class_name: str, method_num: str, is_undo_or_redo: bool = False):
         """
-        Deletes an existing method from a UML class. Notifies observers of the method deletion event.
+        Deletes an existing method from a UML class and notifies observers.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class from which the method will be deleted.
-            method_name (str): The name of the method to be deleted.
-        """
-        # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if both the class and the method exist
-        is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
-        if not is_class_and_method_exist:
-            return False
-        # Remove the method from the class's method list
-        class_object = self.__class_list[class_name]
-        method_list = class_object._get_class_method_list()
-        method_and_parameter_list = class_object._get_method_and_parameters_list()
-        method_and_parameter_list.pop(method_name)
-        chosen_method = self.__get_chosen_field_or_method(class_name, method_name, is_field=False)
-        method_list.remove(chosen_method)
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_METHOD.value, data={"class_name": class_name, "method_name": method_name})
-        return True
-        
-    # Rename method #
-    def _rename_method(self, class_name: str, current_method_name: str, new_method_name: str):
-        """
-        Renames an existing method in a UML class. Notifies observers of the method renaming event.
+            method_num (int): The number (index of method in array + 1) of the method that should be deleted.
 
-        Args:
-            class_name (str): The name of the class containing the method.
-            current_method_name (str): The current name of the method.
-            new_method_name (str): The new name for the method.
+        Returns:
+            bool: True if the method was successfully deleted, False otherwise.
         """
-        # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current method name [bold white]'{current_method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New method name [bold white]'{new_method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if renaming is possible (method name validation)
-        is_able_to_rename = self.__check_field_or_method_rename(class_name, current_method_name, new_method_name, is_field=False)
-        if not is_able_to_rename:
+        # Check if the class name is valid #
+        if not self._is_valid_input(class_name=class_name):
             return False
-        # Rename the method in the class and update the method list
-        class_object = self.__class_list[class_name]
-        method_and_parameter_list = class_object._get_method_and_parameters_list()
-        method_and_parameter_list[new_method_name] = method_and_parameter_list.pop(current_method_name)
-        chosen_method = self.__get_chosen_field_or_method(class_name, current_method_name, is_field=False)
-        chosen_method._set_name(new_method_name)
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_METHOD.value, data={"class_name": class_name, "old_method_name": current_method_name, "new_method_name": new_method_name})
-        return True
+
+        # Ensure that the class exists #
+        is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_exist:
+            return False
+
+        # Check to see if the method_num entered is actually a number, will print error if it is not
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+        
+        # Get method and parameter list from chosen class
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        
+        # Convert the input to an index #
+        selected_index = int(method_num) - 1
+
+        if 0 <= selected_index < len(method_and_parameter_list):
+            # Get the pair of method, param_list from the index given #
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract method and param_list (key and value) from the dictionary
+            method, param_list = next(iter(chosen_pair.items()))
+            # Remove method
+            method_and_parameter_list.remove(chosen_pair)
+            # Update observers and main data
+            self._update_main_data_for_every_action()
+            self._notify_observers(event_type=InterfaceOptions.DELETE_METHOD.value,
+                                   data={"class_name": class_name, "method_name": method._get_name()}, is_undo_or_redo=is_undo_or_redo)
+            self._current_number_of_method = self._current_number_of_method - 1
+            return True
+        else:
+            # If the number is not in the range of [1, num of methods] then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
+
+    # Rename method #
+    def _rename_method(self, class_name: str, method_num: str, new_name: str, is_undo_or_redo: bool = False):
+        """
+        Renames an existing method in a UML class and notifies observers.
+
+        Parameters:
+            class_name (str): The name of the class containing the method to rename.
+            method_num (str): The number of the method to be renamed.
+            new_name (str): The name that the method should be renamed to.
+
+        Returns:
+            bool: True if the method was successfully renamed, False otherwise.
+        """
+        # Check if the class name is valid #
+        if not self._is_valid_input(class_name=class_name, new_name=new_name):
+            return False
+
+        # Ensure the class exists #
+        is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_exist:
+            return False
+
+        # Ensure the input is a valid number (numeric input check) #
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+        
+        # Get the correct method and parameter list based on the class
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+
+        # Convert the input to an index and validate the selection #
+        selected_index = int(method_num) - 1
+
+        if 0 <= selected_index < len(method_and_parameter_list):
+            # Get the pair of method, param_list from the index given #
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract method and param_list (key and value) from the dictionary
+            method, param_list = next(iter(chosen_pair.items()))
+            # Get the method name that will be changed (so it can be given to the observer)
+            old_method_name = method._get_name()
+            # Create a copy of the parameter list and make an object that represents the method with the added parameter
+            copy_method = self.create_method(method._get_type(), new_name)
+            method_with_new_name = {copy_method: param_list}
+            # Check to see if the method with the new parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_name)
+            if not is_method_valid_with_param:
+                return False
+            # Set the new method name and update observers #
+            method._set_name(new_name)
+            self._update_main_data_for_every_action()
+            self._notify_observers(event_type=InterfaceOptions.RENAME_METHOD.value,
+                                   data={"class_name": class_name, "old_method_name": old_method_name, "new_method_name": new_name}, is_undo_or_redo=is_undo_or_redo)
+            return True
+        else:
+            # If the number is not in the range of [1, num of methods] then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
+
 
     ## PARAMETER RELATED ##
     
-    # Add parameter #
-    def _add_parameter(self, class_name: str, method_name: str, parameter_name: str, is_loading: bool):
+    # Add parameter wrapper #
+    def _add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None, is_loading: bool = False, is_undo_or_redo: bool = False):
         """
-        Adds a new parameter to a method in a UML class. Notifies observers of the parameter addition event.
+        Adds a parameter to a chosen method of a UML class. Notifies observers of the parameter addition event.
 
         Args:
-            class_name (str): The name of the class containing the method.
-            method_name (str): The name of the method to which the parameter will be added.
-            parameter_name (str): The name of the parameter to be added.
-            is_loading (bool): Flag indicating whether the operation is part of loading saved data.
+            class_name (str): The name of the class containing the method where the parameter will be added.
+            method_num(int): The number of the method to be deleted.
+            param_type(str): The type of the parameter to be added.
+            param_name(str): The name of the parameter to be added.
+            is_loading (bool): A flag indicating if the method addition is part of loading saved data.
+
+        Returns:
+            bool: True if the parameter was successfully added, False otherwise.
         """
-        # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Parameter name [bold white]'{parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if the class, method, and parameter do not already exist
-        is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
-        if not is_class_and_method_and_parameter_exist:
+        # Check if the input class name is valid #
+        if not self._is_valid_input(class_name=class_name, parameter_name=param_name, parameter_type=param_type):
             return False
-        # Add the new parameter to the method's parameter list
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        new_parameter = self.create_parameter(parameter_name)
-        method_and_parameter_list[method_name].append(new_parameter)
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_PARAM.value, data={"class_name": class_name, "method_name": method_name, "param_name": parameter_name}, is_loading=is_loading)
-        return True
         
+        # Ensure the class exists 
+        is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_exist:
+            return False
+        
+        # Get the method and parameter list depending on class
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        
+        
+        if is_loading:
+            # Convert method_num to str, so it can be checked to see if it is numeric for the function check_method_num
+            # Required when we are loading file
+            str_method_num = f"{method_num}"
+            is_method_num_a_number = self._check_method_num(str_method_num)
+            if not is_method_num_a_number:
+                return False
+        else:
+            is_method_num_a_number = self._check_method_num(method_num)
+            if not is_method_num_a_number:
+                return False
+        
+        # Convert the input to an index and validate the selection #
+        selected_index = int(method_num) - 1
+
+        # Ensure the selected index is valid #
+        if 0 <= selected_index < len(method_and_parameter_list):
+            # Get the pair of method, param_list from the index given #
+            chosen_pair = method_and_parameter_list[selected_index]
+
+            # Extract the selected method and its parameter list #
+            method, param_list = next(iter(chosen_pair.items()))
+
+            # Check if the parameter already exists in the method #
+            is_param_exist = self._validate_entities(
+                class_name=class_name, method_and_param_list=chosen_pair, 
+                parameter_name=param_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False
+            )
+            if not is_param_exist:
+                return False
+            
+             # Create a copy of the parameter list and make an object that represents the method with the added parameter
+            new_param = self.create_parameter(param_type, param_name)
+            new_param_list = param_list.copy()
+            new_param_list.append(new_param)
+            method_with_new_param = {method: new_param_list}
+
+            # Check to see if the method with the new parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
+            if not is_method_valid_with_param:
+                return False
+
+            # If not a duplicate, add the new parameter to the method's parameter list
+            param_list.append(new_param)
+
+            # Update main data and notify observers #
+            self._update_main_data_for_every_action()
+            if not is_loading:
+                self._notify_observers(event_type=InterfaceOptions.ADD_PARAM.value,
+                                   data={"class_name": class_name, "method_name": method._get_name(), "param_name": param_name, "type": param_type}, is_undo_or_redo=is_undo_or_redo)
+
+            return True
+        else:
+            # If the number is in the range of [1, num of methods], if not then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
+          
     # Delete parameter #
-    def _delete_parameter(self, class_name: str, method_name: str, parameter_name: str):
+    def _delete_parameter(self, class_name: str,  method_num: str, param_name: str, is_undo_or_redo: bool = False):
         """
         Deletes an existing parameter from a method in a UML class. Notifies observers of the parameter deletion event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
-            method_name (str): The name of the method from which the parameter will be deleted.
-            parameter_name (str): The name of the parameter to be deleted.
+            method_num (str): The number of the method from which the parameter will be deleted.
+            param_name (str): The name of the parameter to be deleted.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Parameter name [bold white]'{parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if the class, method, and parameter exist
-        is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True)
+        if not self._is_valid_input(class_name=class_name,parameter_name=param_name):
+            return False
+        
+        # Check if the class exists
+        is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name,class_should_exist=True)
         if not is_class_and_method_and_parameter_exist:
             return False
-        # Remove the parameter from the method's parameter list
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        chosen_parameter = self.__get_chosen_parameter(class_name, method_name, parameter_name)
-        method_and_parameter_list[method_name].remove(chosen_parameter)
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "param_name": parameter_name})
-        return True
+        
+        # Get the method and parameter list based on the class
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+
+        # Check if the method_num input is numeric or not
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+
+        # Convert the input to an index and validate the selection #
+        selected_index = int(method_num) - 1
+
+        # Ensure the selected index is valid #
+        if 0 <= selected_index < len(method_and_parameter_list):
+            # Get correct pair based on index
+            chosen_pair = method_and_parameter_list[selected_index]
+
+            # Extract the selected method and its parameter list #
+            method, param_list = next(iter(chosen_pair.items()))
+            # Check if the parameter already exists in the method #
+            is_param_exist = self._validate_entities(
+                class_name=class_name, method_and_param_list=chosen_pair, 
+                parameter_name=param_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True
+            )
+            if not is_param_exist:
+                return False
+            
+            # Create a copy of the method without the new parameter
+            chosen_parameter = self.__get_chosen_parameter(class_name, selected_index, param_name)
+            new_param_list = param_list.copy()
+            new_param_list.remove(chosen_parameter)
+            method_with_new_param = {method: new_param_list}
+
+            # Check to see if the method without the parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
+            if not is_method_valid_with_param:
+                return False
+
+            # If not a duplicate, delete the parameter from the method's parameter list
+            param_list.remove(chosen_parameter)
+
+            # Update main data and notify observers #
+            self._update_main_data_for_every_action()
+            self._notify_observers(event_type=InterfaceOptions.DELETE_PARAM.value,
+                                   data={"class_name": class_name, "method_name": method._get_name(), 
+                                         "param_type": chosen_parameter._get_type() , "param_name": param_name}, is_undo_or_redo=is_undo_or_redo)
+
+            return True
+        else:
+            # If the number is in the range of [1, num of methods], if not then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
+
+    # Edit parameter type #
+    def _edit_parameter_type(self, class_name: str, method_num: int, param_name: str, new_type: str, is_undo_or_redo: bool = False):
+        """
+        Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
+
+        Parameters:
+            class_name (str): The name of the class containing the method.
+            method_num (int): The number of the method whose parameter will change.
+            param_name (str): The name of the parameter whose type will change.
+            new_type (str): The new type which the parameter's type should be changed to.
+        """
+        # Check valid input #
+        if not self._is_valid_input(class_name=class_name, parameter_name=param_name, new_type=new_type):
+            return False
+        # Check if the class exists
+        is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_and_method_and_parameter_exist:
+            return False
+        
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+
+        # Check if the method number is numeric
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+
+        # Get index of the method
+        selected_index = int(method_num) - 1
+
+        # Ensure the selected index is valid #
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+
+            # Extract the selected method and its parameter list #
+            method, param_list = next(iter(chosen_pair.items()))
+            # Check if the parameter already exists in the method #
+            is_param_exist = self._validate_entities(
+                class_name=class_name, method_and_param_list=chosen_pair, 
+                parameter_name=param_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True
+            )
+            if not is_param_exist:
+                return False
+            
+            # Create a copy of the new method and its parameter list with the type changed
+            chosen_parameter = self.__get_chosen_parameter(class_name, selected_index, param_name)
+            old_param_type = chosen_parameter._get_type()
+
+            new_param_list = []
+            for param in param_list:
+                if param._get_parameter_name() == param_name:
+                    new_param = self.create_parameter(param_name, new_type)
+                    new_param_list.append(new_param)
+                else:
+                    new_param_list.append(param)
+            method_with_new_param = {method: new_param_list}
+
+            # Check to see if the method without the parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, method_with_new_param)
+            if not is_method_valid_with_param:
+                return False
+            
+            # If not a duplicate, then change type
+            for param in param_list:
+                if param._get_parameter_name() == param_name:
+                    param._set_type(new_type)
+
+            # Update main data and notify observers #
+            self._update_main_data_for_every_action()
+            self._notify_observers(event_type=InterfaceOptions.EDIT_PARAM_TYPE.value,
+                                   data={"class_name": class_name, "method_name": method._get_name(), "old_param_type": old_param_type , 
+                                         "param_name": param_name, "new_param_type": new_type}, is_undo_or_redo=is_undo_or_redo)
+
+            return True
+        else:
+            # If the number is in the range of [1, num of methods], if not then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
 
     # Rename parameter #
-    def _rename_parameter(self, class_name: str, method_name: str, current_parameter_name: str, new_parameter_name: str):
+    def _rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str, is_undo_or_redo: bool = False):
         """
         Renames an existing parameter in a method of a UML class. Notifies observers of the parameter renaming event.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
-            method_name (str): The name of the method containing the parameter.
+            method_num (str): The number of the method containing the parameter.
             current_parameter_name (str): The current name of the parameter.
             new_parameter_name (str): The new name for the parameter.
         """
         # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(current_parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Current parameter name [bold white]'{new_parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_parameter_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]New parameter name [bold white]'{new_parameter_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        
-        # Validate that the class, method, and current parameter exist, and that the new parameter does not already exist
-        is_class_and_method_and_current_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=current_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True)
-        is_new_parameter_exist = self._validate_entities(class_name=class_name, method_name=method_name, parameter_name=new_parameter_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False)
-        if not is_class_and_method_and_current_parameter_exist or not is_new_parameter_exist:
+        if not self._is_valid_input(class_name=class_name, parameter_name=current_param_name, new_name=new_param_name):
             return False
-        # Rename the parameter
-        chosen_parameter = self.__get_chosen_parameter(class_name, method_name, current_parameter_name)
-        chosen_parameter._set_parameter_name(new_parameter_name)
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.RENAME_PARAM.value, data={"class_name": class_name, "method_name": method_name, "old_param_name": current_parameter_name, "new_param_name": new_parameter_name})
-        return True
         
-    # Replace parameter list #
-    def _replace_param_list(self, class_name: str, method_name: str):
-        """
-        Replaces the parameter list for a method in a UML class. The user is prompted to enter the new parameter names.
+        # Check if the class exists
+        is_class_and_method_and_parameter_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_and_method_and_parameter_exist:
+            return False
+            
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
 
-        Args:
-            class_name (str): The name of the class containing the method.
-            method_name (str): The name of the method whose parameter list will be replaced.
-        """
-        # Check valid input #
-        is_input_valid = self._is_valid_input(class_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Class name [bold white]'{class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(method_name)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Method name [bold white]'{method_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check if the class and method exist
-        is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
+        # Check if the method number is numeric
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+
+        # Get the index of the method
+        selected_index = int(method_num) - 1
+
+        # Ensure the selected index is valid #
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            
+            # Extract the selected method and its parameter list #
+            method, param_list = next(iter(chosen_pair.items()))
+            method_name = method._get_name()
+            
+            # Check if the current parameter exists in the method #
+            is_param_exist = self._validate_entities(
+                class_name=class_name, method_and_param_list=chosen_pair, 
+                parameter_name=current_param_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=True
+            )
+            # Check if the new parameter name already exists
+            is_new_param_exist = self._validate_entities(
+                class_name=class_name, method_and_param_list=chosen_pair, 
+                parameter_name=new_param_name, class_should_exist=True, method_should_exist=True, parameter_should_exist=False
+            )
+            if not is_param_exist or not is_new_param_exist:
+                return False
+            
+            chosen_parameter = self.__get_chosen_parameter(class_name, selected_index, current_param_name)
+            # Rename the parameter
+            chosen_parameter._set_parameter_name(new_param_name)
+            # Update main data and notify observers
+            self._update_main_data_for_every_action()
+            self._notify_observers(event_type=InterfaceOptions.RENAME_PARAM.value, data={"class_name": class_name, "method_name": method_name, 
+                                                                                         "old_param_name": current_param_name, "new_param_name": new_param_name}, is_undo_or_redo=is_undo_or_redo)
+            return True
+        else:
+            # If the number is in the range of [1, num of methods], if not then return error
+            self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+            return False
+        
+    def _replace_param_list(self, class_name: str, method_num: str, new_param_name_list: List[str], is_undo_or_redo: bool = False):
+        # Check valid input for class_name and method_num
+        if not self._is_valid_input(class_name=class_name):
+            return False
+        
+        # Validate class and method existence
+        is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
         if not is_class_and_method_exist:
-            return 
-        # Prompt the user to input new parameter names
-        self.__console.print("\n[bold yellow]Enter the names for the new parameter list, each name must be separated by spaces:[/bold yellow]\n\n[bold white]==>[/bold white] ")
-        user_input = input()
-        new_param_name_list = user_input.split()
-        # Check for duplicate parameter names
-        unique_param_names = list(set(new_param_name_list))
-        for param in unique_param_names:
-            # Check valid input #
-            is_input_valid = self._is_valid_input(param)
-            if not is_input_valid:
-                self.__console.print(f"\n[bold red]Parameter name [bold white]'{param}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-                return
-        if len(unique_param_names) != len(new_param_name_list):
-            self.__console.print("\n[bold red]Duplicate parameters detected:[/bold red]")
-            duplicates = [param for param in new_param_name_list if new_param_name_list.count(param) > 1]
-            self.__console.print(f"\n[bold red]Duplicates: [bold white]{set(duplicates)}[/bold white][/bold red]")
-            self.__console.print("\n[bold red]Please modify the parameter list manually to ensure uniqueness.[/bold red]")
-            return 
-        # Create parameter objects for the new list and replace the old list
-        new_param_list: List[Parameter] = []
-        for param_name in new_param_name_list:
-            new_param = self.create_parameter(param_name)
-            new_param_list.append(new_param)
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        method_and_parameter_list[method_name] = new_param_list
-        # Update main data and notify observers
-        self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "new_list": new_param_list})
-        return 
+            return False
+
+        # Check if method_num is numeric
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+        
+        # Get the method and parameter list
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
     
+        selected_index = int(method_num) - 1
+
+        if 0 <= selected_index < len(method_and_parameter_list):
+            if len(new_param_name_list) == 0:
+                return True
+            # Prepare new parameter list
+            new_params_obj_list = []
+            for param in new_param_name_list:
+                # Split param into type and name
+                parts = param.strip().split()
+
+                if len(parts) != 2:
+                    self.__console.print(f"\n[bold red]Error: Invalid parameter format '{param}'. Expected format: 'type name'.[/bold red]")
+                    return False
+                param_type, param_name = parts
+                # Validate each component
+                if not self._is_valid_input(parameter_type=param_type, parameter_name=param_name):
+                    return False
+                new_param = self.create_parameter(param_type, param_name)
+                new_params_obj_list.append(new_param)
+                
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract the selected method and its parameter list #
+            method, params_list = next(iter(chosen_pair.items()))
+            # Check to see if the method with the new parameter is a duplicate
+            is_method_valid_with_param = self._check_method_param_list(class_name, {method: new_params_obj_list})
+            if not is_method_valid_with_param:
+                return False
+            params_list.clear()
+        
+            for param in new_params_obj_list:
+                params_list.append(param)
+            
+            self._update_main_data_for_every_action()
+            self._notify_observers(
+                event_type=InterfaceOptions.REPLACE_PARAM.value,
+                data={"class_name": class_name, "method_name": method._get_name(), "new_list": new_params_obj_list}, is_undo_or_redo=is_undo_or_redo
+            )
+            return True
+        else:
+            self.__console.print(f"\n[bold red]Error: Method number '{method_num}' is out of range.[/bold red]")
+            return False
+        
+    def _get_param_list(self, class_name: str, method_num: str):
+        # Check valid input for class_name and method_num
+        if not self._is_valid_input(class_name=class_name):
+            return False
+        
+        # Validate class and method existence
+        is_class_and_method_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+        if not is_class_and_method_exist:
+            return False
+        
+        # Check if method_num is numeric
+        is_method_num_a_number = self._check_method_num(method_num)
+        if not is_method_num_a_number:
+            return False
+        
+        # Get the method and parameter list
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+    
+        selected_index = int(method_num) - 1
+
+        if 0 <= selected_index < len(method_and_parameter_list):
+            chosen_pair = method_and_parameter_list[selected_index]
+            # Extract the selected method and its parameter list #
+            method, params_list = next(iter(chosen_pair.items()))
+            param_string_list = []
+            for param in params_list:
+                param_format = param._get_type() + " " + param._get_parameter_name()
+                param_string_list.append(param_format)
+            return param_string_list
+
     def _replace_param_list_gui(self, class_name: str, method_name: str, new_param_name_list: List):
         # Check if the class and method exist
         is_class_and_method_exist = self._validate_entities(class_name=class_name, method_name=method_name, class_should_exist=True, method_should_exist=True)
@@ -623,84 +935,21 @@ class UMLModel:
         for param_name in new_param_name_list:
             new_param = self.create_parameter(param_name)
             new_param_list.append(new_param)
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
+        method_and_parameter_list = self._get_method_and_parameter_list_of_chosen_class(class_name)
         method_and_parameter_list[method_name] = new_param_list
         # Update main data and notify observers
         self._update_main_data_for_every_action()
         self._notify_observers(event_type=InterfaceOptions.REPLACE_PARAM.value, data={"class_name": class_name, "method_name": method_name, "new_list": new_param_list})
         return True
         
-
     ## RELATIONSHIP RELATED ##
-    
-    # Add relationship wrapper #
-    def _add_relationship_wrapper(self, is_loading: bool):
-        """
-        Wrapper method for adding a new relationship between UML classes. Prompts the user to input 
-        the source class, destination class, and relationship type.
-
-        Args:
-            is_loading (bool): Flag indicating whether the operation is part of loading saved data.
-        """
-        if len(self.__class_list) == 0:
-            self.__console.print("\n[bold red]No class exists![/bold red]")
-            return
-        # Prompt the user for input
-        self.__console.print("\n[bold yellow]Type [bold white]'<source_class> <destination_class> <type>'[/bold white] or type [bold white]'quit'[/bold white] to return to main menu[/bold yellow]")
-        self.__user_view._display_type_enum()
-        self.__user_view._display_class_names(self.__main_data)
-        self.__user_view._display_relationships(self.__main_data)
-        self.__console.print("\n[bold yellow]==>[/bold yellow] ", end="")
-        user_input: str = input()
-        if user_input == "quit":
-            self.__console.print("\n[bold green]Canceled adding relationship[/bold green]")
-            return
-        # Parse user input and validate the relationship
-        user_input_component = user_input.split()
-        source_class_name = user_input_component[0]
-        destination_class_name = user_input_component[1] if len(user_input_component) > 1 else None
-        type = user_input_component[2] if len(user_input_component) > 2 else None
-        # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(type)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Type name [bold white]'{type}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        if source_class_name and destination_class_name and type:
-            # Validate class and relationship existence
-            is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
-            is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
-            if not is_source_class_exist or not is_destination_class_exist:
-                return
-            # Check if the relationship already exists
-            is_relationship_exist = self._relationship_exist(source_class_name, destination_class_name)
-            if is_relationship_exist:
-                self.__console.print(f"\n[bold red]Relationship between class [bold white]'{source_class_name}'[/bold white] and class [bold white]'{destination_class_name}'[/bold white] already exists![/bold red]")
-                return
-            # Validate relationship type
-            is_type_exist = self.__validate_type_existence(type, should_exist=True)
-            if not is_type_exist:
-                return
-            # Add the new relationship
-            self._add_relationship(source_class_name, destination_class_name, type, is_loading)
-        else:
-            self.__console.print("\n[bold red]Wrong format! Please try again![/bold red]")
             
     # Add relationship #
-    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool, is_gui: bool=None):
+    def _add_relationship(self, source_class_name: str, destination_class_name: str, rel_type: str, is_loading: bool = False, is_gui: bool = False, is_undo_or_redo: bool = False):
         """
         Adds a new relationship between two UML classes. Notifies observers of the relationship addition event.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             rel_type (str): The type of the relationship (e.g., aggregation, composition).
@@ -720,33 +969,53 @@ class UMLModel:
             is_type_exist = self.__validate_type_existence(rel_type, should_exist=True)
             if not is_type_exist:
                 return False
+        else:
+            # Check valid input #
+            if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, rel_type=rel_type):
+                return 
+            if source_class_name and destination_class_name and rel_type:
+                # Validate class and relationship existence
+                is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
+                is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
+                if not is_source_class_exist or not is_destination_class_exist:
+                    return False
+                # Check if the relationship already exists
+                is_relationship_exist = self._relationship_exist(source_class_name, destination_class_name)
+                if is_relationship_exist:
+                    self.__console.print(f"\n[bold red]Relationship between class [bold white]'{source_class_name}'[/bold white] and class [bold white]'{destination_class_name}'[/bold white] already exists![/bold red]")
+                    return False
+                # Validate relationship type
+                is_type_exist = self.__validate_type_existence(rel_type, should_exist=True)
+                if not is_type_exist:
+                    return False
         # Create a new relationship and add it to the relationship list
         new_relationship = self.create_relationship(source_class_name, destination_class_name, rel_type)
         self.__relationship_list.append(new_relationship)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.ADD_REL.value, data={"source": source_class_name, "dest": destination_class_name, "type": rel_type}, is_loading=is_loading)
+        self._notify_observers(event_type=InterfaceOptions.ADD_REL.value, data={"source": source_class_name, "dest": destination_class_name, 
+                                                                                "type": rel_type}, is_loading=is_loading, is_undo_or_redo=is_undo_or_redo)
         return True
+    
+    def _get_rel_type(self, source_class_name: str, destination_class_name: str):
+        for relationship in self.__relationship_list:
+            if (relationship._get_source_class() == source_class_name and
+                relationship._get_destination_class() == destination_class_name):
+                return relationship._get_type()
+        return None
         
     # Delete relationship #
-    def _delete_relationship(self, source_class_name: str, destination_class_name: str) -> bool | str:
+    def _delete_relationship(self, source_class_name: str, destination_class_name: str, is_undo_or_redo: bool = False) -> bool | str:
         """
         Deletes an existing relationship between two UML classes. Notifies observers of the relationship deletion event.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
         """
         # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name):
+            return False
         # Validate class existence and relationship
         is_source_class_exist = self.__validate_class_existence(source_class_name, should_exist=True)
         is_destination_class_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
@@ -763,34 +1032,22 @@ class UMLModel:
         self.__relationship_list.remove(current_relationship)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.DELETE_REL.value, data={"source": source_class_name, "dest": destination_class_name})
+        self._notify_observers(event_type=InterfaceOptions.DELETE_REL.value, data={"source": source_class_name, "dest": destination_class_name}, is_undo_or_redo=is_undo_or_redo)
         return True
         
     # Change type #
-    def _change_type(self, source_class_name: str, destination_class_name: str, new_type: str):
+    def _change_type(self, source_class_name: str, destination_class_name: str, new_type: str, is_undo_or_redo: bool=False):
         """
         Changes the type of an existing relationship between two UML classes. Notifies observers of the type modification event.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             new_type (str): The new type for the relationship (e.g., change from aggregation to composition).
         """
         # Check valid input #
-        is_source_valid = self._is_valid_input(source_class_name)
-        if not is_source_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{source_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_dest_valid = self._is_valid_input(destination_class_name)
-        if not is_dest_valid:
-            self.__console.print(f"\n[bold red]Source class name [bold white]'{destination_class_name}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
-        # Check valid input #
-        is_input_valid = self._is_valid_input(new_type)
-        if not is_input_valid:
-            self.__console.print(f"\n[bold red]Type name [bold white]'{new_type}'[/bold white] is invalid! Only allow a-zA-Z, number, and underscore![/bold red]")
-            return
+        if not self._is_valid_input(source_class=source_class_name, destination_class=destination_class_name, new_name=new_type):
+            return False
         is_source_class_name_exist = self.__validate_class_existence(source_class_name, should_exist=True)
         is_destination_class_name_exist = self.__validate_class_existence(destination_class_name, should_exist=True)
         if not is_source_class_name_exist or not is_destination_class_name_exist:
@@ -811,7 +1068,7 @@ class UMLModel:
         current_relationship._set_type(new_type)
         # Update main data and notify observers
         self._update_main_data_for_every_action()
-        self._notify_observers(event_type=InterfaceOptions.TYPE_MOD.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type})
+        self._notify_observers(event_type=InterfaceOptions.EDIT_REL_TYPE.value, data={"source": source_class_name, "dest": destination_class_name, "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
         return True
          
     #################################################################    
@@ -824,7 +1081,7 @@ class UMLModel:
         """
         Checks if the specified class name exists in the class list.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to check.
 
         Returns:
@@ -838,7 +1095,7 @@ class UMLModel:
         Validates the existence of a class name based on the expected existence (should_exist).
         If the class should exist but does not, or if it should not exist but does, the method prints an error message.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to validate.
             should_exist (bool): True if the class is expected to exist, False if it should not exist.
 
@@ -863,7 +1120,7 @@ class UMLModel:
         Checks whether the class can be renamed by validating the existence of both the current class name and
         the new class name. Ensures that the current class exists and the new class name does not exist.
 
-        Args:
+        Parameters:
             current_class_name (str): The current name of the class.
             new_class_name (str): The proposed new name for the class.
 
@@ -886,7 +1143,7 @@ class UMLModel:
         Cleans up relationships by removing any relationships where the specified class is either the source or 
         destination. This is useful when deleting a class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to clean relationships for.
         """
         # Create a new list that excludes relationships with dest or source equal to class_name
@@ -902,7 +1159,7 @@ class UMLModel:
         """
         Updates the source or destination class name in existing relationships when a class is renamed.
 
-        Args:
+        Parameters:
             current_name (str): The current class name.
             new_name (str): The new class name to update in relationships.
         """
@@ -918,11 +1175,11 @@ class UMLModel:
                 each_relationship._set_destination_class(new_name)
                 
     # Get method and parameter list of a chosen class #
-    def _get_method_and_parameter_list(self, class_name: str) -> Dict[str, List[Parameter]] | None:
+    def _get_data_from_chosen_class(self, class_name: str, is_field_list: bool=None, is_method_and_param_list: bool=None) -> Dict[Method, List[Parameter]] | None:
         """
         Retrieves the method and parameter list of a specified class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to retrieve the method and parameter list for.
 
         Returns:
@@ -931,7 +1188,12 @@ class UMLModel:
         is_class_name_exist = self.__validate_class_existence(class_name, should_exist=True)
         if not is_class_name_exist:
             return None
-        return self.__class_list[class_name]._get_method_and_parameters_list()
+        if is_field_list:
+            return self.__class_list[class_name]._get_class_field_list()
+        # elif is_method_list:
+        #     return self.__class_list[class_name]._get_class_method_list()
+        elif is_method_and_param_list:
+            return self.__class_list[class_name]._get_method_and_parameters_list()
     
     ## FIELD AND METHOD RELATED ##
     
@@ -940,7 +1202,7 @@ class UMLModel:
         """
         Checks if a field or method exists in the specified class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             input_name (str): The name of the field or method to check.
             is_field (bool): True if checking for a field, False if checking for a method.
@@ -952,18 +1214,20 @@ class UMLModel:
         is_class_exist = self.__validate_class_existence(class_name, should_exist=True)
         if not is_class_exist:
             return
-        # Get class object
-        class_object = self.__class_list[class_name]
         # Select the correct list based on whether it's a field or method
         if is_field:
-            general_list = class_object._get_class_field_list()
+            field_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
+            for field in field_list:
+                if field._get_name() == input_name:
+                    return True
         else:
-            general_list = class_object._get_class_method_list()
+            method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+            for each_element in method_and_parameter_list:
+                for method in each_element:
+                    if method._get_name() == input_name:
+                        return True
         # Loop through the list to find the field or method
-        for element in general_list:
-            current_name = element._get_name()
-            if current_name == input_name:
-                return True
+        
         return False
     
     # Validate field existence based on whether it should exist or not #
@@ -971,7 +1235,7 @@ class UMLModel:
         """
         Validates the existence of a field in a class based on whether it should or should not exist.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the field.
             field_name (str): The name of the field to validate.
             should_exist (bool): True if the field should exist, False if it should not.
@@ -993,7 +1257,7 @@ class UMLModel:
         """
         Validates the existence of a method in a class based on whether it should or should not exist.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
             method_name (str): The name of the method to validate.
             should_exist (bool): True if the method should exist, False if it should not.
@@ -1004,10 +1268,10 @@ class UMLModel:
         is_method_name_exist = self.__field_or_method_exist(class_name, method_name, is_field=False)
         if should_exist and not is_method_name_exist:
             self.__console.print(f"\n[bold red]Method [bold white]'{method_name}'[/bold white] does not exist in class [bold white]'{class_name}'[/bold white]![/bold red]")
-            return False
-        elif not should_exist and is_method_name_exist:
-            self.__console.print(f"\n[bold red]Method [bold white]'{method_name}'[/bold white] has already existed in class [bold white]'{class_name}'[/bold white]![/bold red]")
-            return False
+            return False  
+        # elif not should_exist and is_method_name_exist:
+        #     self.__console.print(f"\n[bold red]Method [bold white]'{method_name}'[/bold white] has already existed in class [bold white]'{class_name}'[/bold white]![/bold red]")
+        #     return False   
         return True
     
     # Check if we are able to rename field/method #
@@ -1015,7 +1279,7 @@ class UMLModel:
         """
         Checks if a field or method can be renamed by validating the existence of the current and new names.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the field or method.
             current_name (str): The current name of the field or method.
             new_name (str): The proposed new name for the field or method.
@@ -1046,11 +1310,11 @@ class UMLModel:
         return True
     
     # Get the chosen field or method #
-    def __get_chosen_field_or_method(self, class_name: str, input_name: str, is_field: bool) -> Field | Method | None:
+    def _get_chosen_field_or_method(self, class_name: str, input_name: str, is_field: bool) -> Field | Method | None:
         """
         Retrieves the specified field or method from a class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the field or method.
             input_name (str): The name of the field or method to retrieve.
             is_field (bool): True if retrieving a field, False if retrieving a method.
@@ -1058,11 +1322,11 @@ class UMLModel:
         Returns:
             Field | Method | None: The field or method object, or None if not found.
         """
-        class_object = self.__class_list[class_name]
+        # Select the correct list based on whether it's a field or method
         if is_field:
-            general_list = class_object._get_class_field_list()
+            general_list = self._get_data_from_chosen_class(class_name, is_field_list=True)
         else:
-            general_list = class_object._get_class_method_list()
+            general_list = self._get_data_from_chosen_class(class_name, is_method_list=True)
         for element in general_list:
             if element._get_name() == input_name:
                 return element
@@ -1071,11 +1335,11 @@ class UMLModel:
     ## PARAMETER RELATED ##
     
     # Check if parameter exists #
-    def __parameter_exist(self, class_name: str, method_name: str, parameter_name: str) -> bool:
+    def __parameter_exist(self, class_name: str, method_and_param_list: Dict, parameter_name: str) -> bool:
         """
         Checks if a parameter exists for a specified method in a class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to check.
@@ -1083,22 +1347,18 @@ class UMLModel:
         Returns:
             bool: True if the parameter exists, False otherwise.
         """
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        if method_name not in method_and_parameter_list:
-            self.__console.print(f"\n[bold red]Method [bold white]'{method_name}'[/bold white] does not exist![/bold red]")
-            return False
-        parameter_list = method_and_parameter_list[method_name]
-        for parameter in parameter_list:
-            if parameter_name == parameter._get_parameter_name():
+        method, param_list = next(iter(method_and_param_list.items()))
+        for param in param_list:
+            if param._get_parameter_name() == parameter_name:
                 return True
         return False
     
     # Validate parameter existence #
-    def __validate_parameter_existence(self, class_name: str, method_name: str, parameter_name: str, should_exist: bool) -> bool:
+    def __validate_parameter_existence(self, class_name: str, method_and_param_list: Dict, parameter_name: str, should_exist: bool) -> bool:
         """
         Validates the existence of a parameter in a method based on whether it should or should not exist.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
             method_name (str): The name of the method containing the parameter.
             parameter_name (str): The name of the parameter to validate.
@@ -1107,7 +1367,7 @@ class UMLModel:
         Returns:
             bool: True if validation passes, False otherwise.
         """
-        is_parameter_exist = self.__parameter_exist(class_name, method_name, parameter_name)
+        is_parameter_exist = self.__parameter_exist(class_name, method_and_param_list, parameter_name)
         if should_exist and not is_parameter_exist:
             self.__console.print(f"\n[bold red]Parameter [bold white]'{parameter_name}'[/bold white] does not exist![/bold red]")
             return False
@@ -1117,21 +1377,24 @@ class UMLModel:
         return True
     
     # Get the chosen parameter #
-    def __get_chosen_parameter(self, class_name: str, method_name: str, parameter_name: str) -> Parameter:
+    def __get_chosen_parameter(self, class_name: str, method_index: int, parameter_name: str) -> Parameter:
         """
         Retrieves a specified parameter from a method in a class.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class containing the method.
-            method_name (str): The name of the method containing the parameter.
+            method_index (int): The number of the method containing the parameter.
             parameter_name (str): The name of the parameter to retrieve.
 
         Returns:
             Parameter: The parameter object, or None if not found.
         """
-        method_and_parameter_list = self._get_method_and_parameter_list(class_name)
-        parameter_list = method_and_parameter_list[method_name]
-        for each_parameter in parameter_list:
+        method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+        chosen_pair = method_and_parameter_list[method_index]
+        # Extract the selected method and its parameter list #
+        method, param_list = next(iter(chosen_pair.items()))
+
+        for each_parameter in param_list:
             if each_parameter._get_parameter_name() == parameter_name:
                 return each_parameter
         return None
@@ -1143,7 +1406,7 @@ class UMLModel:
         """
         Checks if a relationship type exists in the available relationship types.
 
-        Args:
+        Parameters:
             type_name (str): The name of the relationship type to check.
 
         Returns:
@@ -1158,7 +1421,7 @@ class UMLModel:
         """
         Validates the existence of a relationship type based on whether it should or should not exist.
 
-        Args:
+        Parameters:
             type_name (str): The name of the relationship type to validate.
             should_exist (bool): True if the type should exist, False if it should not.
 
@@ -1176,7 +1439,7 @@ class UMLModel:
         """
         Checks if a relationship exists between the source and destination classes.
 
-        Args:
+        Parameters:
             source_class_name (str): The source class name.
             destination_class_name (str): The destination class name.
 
@@ -1194,7 +1457,7 @@ class UMLModel:
         """
         Retrieves the relationship between the specified source and destination classes.
 
-        Args:
+        Parameters:
             source_class_name (str): The source class name.
             destination_class_name (str): The destination class name.
 
@@ -1212,7 +1475,7 @@ class UMLModel:
         """
         Retrieves the type of the relationship between two classes.
 
-        Args:
+        Parameters:
             source_class_name (str): The source class name.
             destination_class_name (str): The destination class name.
 
@@ -1233,7 +1496,7 @@ class UMLModel:
         """
         Retrieves a list of fields from the given class object, converting each field to a JSON-compatible format.
         
-        Args:
+        Parameters:
             class_object (Class): The UMLClass object from which fields are extracted.
         
         Returns:
@@ -1254,34 +1517,48 @@ class UMLModel:
         Retrieves a list of methods from the given class object, converting each method and its associated parameters 
         to a JSON-compatible format.
         
-        Args:
+        Parameters:
             class_object (Class): The UMLClass object from which methods and parameters are extracted.
         
         Returns:
             List[Dict]: A list of method dictionaries formatted for JSON storage, including their parameters.
         """
-        # Get method list
-        method_list = class_object._get_class_method_list()
         # Method format list to store methods in JSON format
         method_list_format: List[Dict] = []
         # Get method and parameter list for the specified class
-        method_and_parameter_list = self._get_method_and_parameter_list(class_object._get_class_name())
+        method_and_parameter_list = class_object._get_method_and_parameters_list()
         
-        for each_method in method_list:
-            # Convert method to JSON format
-            method_json_format = each_method._convert_to_json_method()
-            # Get the parameters of the current method
-            parameter_list = method_and_parameter_list[each_method._get_name()]
-            # Convert each parameter to JSON format
-            parameter_format_list: List[Dict] = []
-            for each_parameter in parameter_list:
-                parameter_format_list.append(each_parameter._convert_to_json_parameter())
-            # Add method format to the method list format
-            method_list_format.append(method_json_format)
-            # Add the parameters to the method format
-            for each_method_format in method_list_format:
-                if each_method_format["name"] == each_method._get_name():
-                    each_method_format["params"].extend(parameter_format_list)
+        for each_element in method_and_parameter_list:
+            for each_method in each_element:
+                # Convert method to JSON format
+                method_json_format = each_method._convert_to_json_method()
+                # Get the parameters of the current method
+                parameter_list = each_element[each_method]
+                parameter_json_list = []
+                for parameter in parameter_list:
+                    parameter_json_list.append(parameter._convert_to_json_parameter())
+                method_json_format["params"] = parameter_json_list
+                # Convert each parameter to JSON format
+                parameter_format_list: List[Dict] = []
+                for each_parameter in parameter_list:
+                    parameter_format_list.append(each_parameter._convert_to_json_parameter())
+                # Add method format to the method list format
+                method_list_format.append(method_json_format)
+                
+                # # Add the parameters to the method format
+                # for each_method_format in method_list_format:
+                #     self.__console.print("method_list_format" , method_list_format)
+
+                #     current_method_param_type_list: List[str] = []
+                #     for parameter in each_method_format["params"]:
+                #         current_method_param_type_list.append(parameter["type"])
+                #     self.__console.print("parameter_type_list" , parameter_type_list)
+                #     self.__console.print("current_method_param_type_list" , current_method_param_type_list)
+                #     if each_method_format["name"] == each_method._get_name() and each_method_format["return_type"] == each_method._get_type() and current_method_param_type_list == parameter_type_list:
+                #         self.__console.print("each_method_format PARAMS" , each_method_format["params"])
+                #         self.__console.print("parameter_type_list" , parameter_type_list)
+                #         each_method_format["params"].extend(parameter_format_list)
+                        
         return method_list_format
     
     # Get relationship format list #
@@ -1306,7 +1583,7 @@ class UMLModel:
         """
         Generates a JSON-compatible dictionary representing the specified class, including its fields and methods.
         
-        Args:
+        Parameters:
             class_name (str): The name of the class to format.
         
         Returns:
@@ -1367,14 +1644,19 @@ class UMLModel:
         self.__console.print(f"\n[bold green]Successfully saved data to [bold white]'{user_input}.json'![/bold white][/bold green]")
 
     # Save for GUI #
-    def _save_gui(self, file_name, full_path):
+    def _save_gui(self, file_name, full_path, class_name_list_from_gui):
         """
         Saves UML data through the GUI, saving to the specified file name and path.
         
-        Args:
+        Parameters:
             file_name (str): The name of the file to save.
             file_path (str): The file path for saving the data.
         """
+        # Update position
+        for class_name_gui, class_box in class_name_list_from_gui.items():
+            if class_name_gui in self.__class_list:
+                self.__class_list[class_name_gui]._set_position(class_box.box_position["x"], class_box.box_position["y"])
+                
         # Class and relationship data lists for storing in main data
         class_data_list = []
         relationship_data_list = []
@@ -1391,6 +1673,7 @@ class UMLModel:
         saved_list_gui = self.__storage_manager._get_saved_list_gui()
         self.__storage_manager._update_saved_list_gui(saved_list_gui)
         # Save data to JSON via the GUI
+        self.__storage_manager._save_data_to_json(file_name, main_data)
         self.__storage_manager._save_data_to_json_gui(full_path, main_data)
 
     # Load data #
@@ -1438,6 +1721,7 @@ class UMLModel:
         is_file_exist = self._check_saved_file_exist(file_name)
         if not is_file_exist:
             self.__storage_manager._add_name_to_saved_file(file_name)
+        self.__storage_manager._save_data_to_json(file_name, main_data)
         self.__update_data_members_gui(main_data, graphical_view)
         self.__check_file_and_set_status(file_name)
         self._check_file_and_set_status_gui(file_path)
@@ -1447,7 +1731,7 @@ class UMLModel:
         """
         Updates the main data to be saved into a JSON file by compiling class data and relationship data.
 
-        Args:
+        Parameters:
             user_input (str): The name of the file to save or load.
             class_data_list (List): A list to store formatted class data.
             relationship_data_list (List): A list to store formatted relationship data.
@@ -1476,7 +1760,7 @@ class UMLModel:
         """
         Updates the internal data members (class and relationship) after loading from a JSON file.
 
-        Args:
+        Parameters:
             main_data (Dict): The data dictionary loaded from a JSON file.
         """
         class_data = main_data["classes"]
@@ -1489,16 +1773,35 @@ class UMLModel:
         extracted_class_data = self._extract_class_data(class_data)
         for each_pair in extracted_class_data:
             for class_name, data in each_pair.items():
-                field_list = data['fields']
-                method_param_list = data['methods_params']
+                field_list = data["fields"]
+                method_list = data["method_list"]
+
+                # Check for position data in the loaded class information
+                position = data.get("position")
+
                 # Add classes, fields, methods, and parameters to the program state
                 self._add_class(class_name, is_loading=True)
+
+                if position:
+                    self.__class_list[class_name]._set_position(position["x"], position["y"])
+
                 for each_field in field_list:
-                    self._add_field(class_name, each_field, is_loading=True)
-                for method_name, param_list in method_param_list.items():
-                    self._add_method(class_name, method_name, is_loading=True)
-                    for param_name in param_list:
-                        self._add_parameter(class_name, method_name, param_name, is_loading=True)
+                    field_name = each_field["name"]
+                    field_type = each_field["type"]
+                    self._add_field(class_name, field_type, field_name, is_loading=True)
+                method_num = "0"
+                i = 0
+                for each_element in method_list:
+                    i = i + 1
+                    method_num = f"{i}"
+                    method_name = each_element["name"]
+                    return_type = each_element["return_type"]
+                    parameter_list = each_element["params"]
+                    self._add_method(class_name, return_type, method_name, is_loading=True)
+                    for param in parameter_list:
+                        param_type = param["type"]
+                        param_name = param["name"]
+                        self._add_parameter(class_name, method_num, param_type, param_name, is_loading=True)
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:
             self._add_relationship(each_dictionary["source"], each_dictionary["destination"], each_dictionary["type"], is_loading=True, is_gui=False)
@@ -1507,11 +1810,12 @@ class UMLModel:
         """
         Updates the internal data members (class and relationship) after loading from a JSON file.
 
-        Args:
+        Parameters:
             main_data (Dict): The data dictionary loaded from a JSON file.
         """
         class_data = main_data["classes"]
         relationship_data = main_data["relationships"]
+        method_num = 0
         # Reset the current storage before loading new data
         self._reset_storage()
         # Set the new main data
@@ -1520,20 +1824,28 @@ class UMLModel:
         extracted_class_data = self._extract_class_data(class_data)
         for each_pair in extracted_class_data:
             for class_name, data in each_pair.items():
-                field_list = data['fields']
-                method_param_list = data['methods_params']
+                field_list = data["fields"]
+                method_list = data["method_list"]
+                position = data["position"]
                 # Add classes, fields, methods, and parameters to the program state
-                graphical_view.add_class(class_name, is_loading=True)
+                graphical_view.add_class(class_name, x=position["x"], y=position["y"], is_loading=True)
                 for each_field in field_list:
-                    graphical_view.add_field(class_name, each_field, is_loading=True)
-                for method_name, param_list in method_param_list.items():
-                    graphical_view.add_method(class_name, method_name, is_loading=True)
-                    for param_name in param_list:
-                        graphical_view.add_param(class_name, method_name, param_name, is_loading=True)
+                    field_name = each_field["name"]
+                    field_type = each_field["type"]
+                    graphical_view.add_field(class_name, field_type, field_name, is_loading=True)
+                for each_element in method_list:
+                    method_name = each_element["name"]
+                    return_type = each_element["return_type"]
+                    parameter_list = each_element["params"]
+                    graphical_view.add_method(class_name, return_type, method_name, is_loading=True)
+                    method_num += 1
+                    for param in parameter_list:
+                        param_type = param["type"]
+                        param_name = param["name"]
+                        graphical_view.add_param(class_name, method_num, param_type, param_name, is_loading=True)
         # Recreate relationships from the loaded data
         for each_dictionary in relationship_data:
             graphical_view.add_relationship(
-                loaded_class_name=each_dictionary["source"],
                 loaded_source_class=each_dictionary["source"],
                 loaded_dest_class=each_dictionary["destination"],
                 loaded_type=each_dictionary["type"],
@@ -1543,28 +1855,50 @@ class UMLModel:
     # Extract class, field, method, and parameters from json file #
     def _extract_class_data(self, class_data: List[Dict]) -> List[Dict[str, Dict[str, List | Dict]]]:
         """
-        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing.
+        Extracts class, field, method, and parameter information from the loaded JSON data and prepares it for further processing,
+        including position data if available.
 
-        Args:
+        Parameters:
             class_data (List[Dict]): A list of dictionaries representing class data loaded from JSON.
 
         Returns:
-            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, and parameters.
+            List[Dict[str, Dict[str, List | Dict]]]: A list of dictionaries containing class names, fields, methods, parameters, and position.
         """
         class_info_list: List[Dict[str, Dict[str, List | Dict]]] = []
-        # Loop through the class data to extract fields and methods
+        
+        # Loop through the class data to extract fields, methods, and position
         for class_element in class_data:
-            method_and_param_list = {}
             class_name = class_element["name"]
-            fields = [field["name"] for field in class_element["fields"]]
+            fields = [{"name": field["name"], "type": field["type"]} for field in class_element["fields"]]
+            
             # Extract methods and their parameters
+            method_list = []
             for method_element in class_element["methods"]:
-                temp_param_list: List[str] = []
-                for param_element in method_element["params"]:
-                    temp_param_list.append(param_element["name"])
-                method_and_param_list[method_element["name"]] = temp_param_list
-            class_info_list.append({class_name: {'fields': fields, 'methods_params': method_and_param_list}})
+                temp_param_list = [{"type": param["type"], "name": param["name"]} for param in method_element["params"]]
+                method_list.append({
+                    "name": method_element["name"],
+                    "return_type": method_element["return_type"],
+                    "params": temp_param_list
+                })
+            
+            # Directly assign position if it exists, else it will be None
+            position = class_element.get("position")
+            
+            # Prepare class data dictionary
+            class_data_dict = {
+                "fields": fields,
+                "method_list": method_list
+            }
+            
+            # Only include position if it exists
+            if position:
+                class_data_dict["position"] = position
+            
+            # Append the class data to the list
+            class_info_list.append({class_name: class_data_dict})
+        
         return class_info_list
+
     
     # Delete saved file #
     def _delete_saved_file(self):
@@ -1614,7 +1948,7 @@ class UMLModel:
         """
         Checks if a saved file exists by looking for the file name in the saved list.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to check.
 
         Returns:
@@ -1632,7 +1966,7 @@ class UMLModel:
         """
         Checks if a saved file exists by looking for the file name in the saved list.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to check.
 
         Returns:
@@ -1646,14 +1980,14 @@ class UMLModel:
         return False
     
     # End session and return to blank state #
-    def _end_session(self):
+    def _new_file(self):
         """
         Ends the current session and resets the program to its default blank state by resetting all data and turning off active files.
         """
         self.__set_all_file_off()
         self._set_all_file_off_gui()
         self._reset_storage()
-        self.__console.print("\n[bold green]Successfully back to default program![/bold green]")
+        self.__console.print("\n[bold green]Successfully create new file![/bold green]")
     
     # Get active file #
     def _get_active_file(self) -> str:
@@ -1728,7 +2062,7 @@ class UMLModel:
         """
         Sets the status of a specific file in the saved list.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file.
             status (str): The new status to assign to the file ('on' or 'off').
         """
@@ -1743,7 +2077,7 @@ class UMLModel:
         """
         Ensures only the selected file is marked as 'on', setting all others to 'off'.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to activate.
         """
         saved_list = self.__storage_manager._get_saved_list()
@@ -1767,7 +2101,7 @@ class UMLModel:
         """
         Sets the status of a specific file in the saved list.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file.
             status (str): The new status to assign to the file ('on' or 'off').
         """
@@ -1783,7 +2117,7 @@ class UMLModel:
         """
         Ensures only the selected file is marked as 'on', setting all others to 'off'.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to activate.
         """
         saved_list = self.__storage_manager._get_saved_list_gui()
@@ -1801,7 +2135,7 @@ class UMLModel:
         """
         self.__class_list: Dict[str, Class] = {}
         self.__relationship_list: List = []
-        self.__main_data: Dict = {}
+        self.__main_data: Dict = {"classes": [], "relationships" : []}
     
     #################################################################
     ### UTILITY FUNCTIONS ###
@@ -1811,7 +2145,7 @@ class UMLModel:
         """
         Checks if a saved file name exists in the saved list.
 
-        Args:
+        Parameters:
             save_file_name (str): The name of the file to check.
 
         Returns:
@@ -1825,7 +2159,7 @@ class UMLModel:
         return False
     
     # Update main data for every action #
-    def _update_main_data_for_every_action(self):
+    def _update_main_data_for_every_action(self, is_undo_or_redo: bool=None):
         """
         Updates the main data by fetching and formatting all classes and relationships, ensuring the state is kept up to date after every change.
         """
@@ -1836,7 +2170,7 @@ class UMLModel:
         for class_name in self.__class_list:
             class_data_format = self._class_json_format(class_name)
             class_data_list.append(class_data_format)
-        main_data["classes"] = class_data_list
+            main_data["classes"] = class_data_list
         main_data["relationships"] = relationship_data_list
     
     # Validate entities (Class, Field, Method, Parameter) #
@@ -1846,6 +2180,7 @@ class UMLModel:
         field_name: str = None, 
         method_name: str = None, 
         parameter_name: str = None, 
+        method_and_param_list: Dict = None,
         class_should_exist: bool = None, 
         field_should_exist: bool = None,
         method_should_exist: bool = None, 
@@ -1854,7 +2189,7 @@ class UMLModel:
         """
         General validation function for class, field, method, and parameter existence.
 
-        Args:
+        Parameters:
             class_name (str, optional): Name of the class to check.
             field_name (str, optional): Name of the field to check.
             method_name (str, optional): Name of the method to check.
@@ -1884,43 +2219,109 @@ class UMLModel:
                 return False
         # Validate parameter existence
         if parameter_name is not None and parameter_should_exist is not None:
-            is_parameter_exist = self.__validate_parameter_existence(class_name, method_name, parameter_name, parameter_should_exist)
+            is_parameter_exist = self.__validate_parameter_existence(class_name, method_and_param_list, parameter_name, parameter_should_exist)
             if not is_parameter_exist:
                 return False
         return True
     
     # Sort class list alphabetically #
-    def _sort_class_list(self):
-        """
-        Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
-        """
-        class_list = self.__class_list
-        if len(class_list) == 0:
-            self.__console.print("\n[bold red]No class to sort![/bold red]")
-            return
-        # Sort classes alphabetically by their names
-        self.__class_list = dict(sorted(self.__class_list.items()))
-        self._update_main_data_for_every_action()
-        # Display updated UML data
-        self.__user_view._display_uml_data(self.__main_data)
+    # def _sort_class_list(self):
+    #     """
+    #     Sorts the list of UML classes in alphabetical order and updates the main data to reflect this change.
+    #     """
+    #     class_list = self.__class_list
+    #     if len(class_list) == 0:
+    #         self.__console.print("\n[bold red]No class to sort![/bold red]")
+    #         return
+    #     # Sort classes alphabetically by their names
+    #     self.__class_list = dict(sorted(self.__class_list.items()))
+    #     self._update_main_data_for_every_action()
+    #     # Display updated UML data
+    #     self.__user_view._display_uml_data(self.__main_data)
         
-    def _is_valid_input(self, user_input):
+    def _is_valid_input(self, class_name=None, field_name=None, method_name=None, parameter_name=None, source_class=None, destination_class=None, field_type=None, method_type=None, rel_type=None, new_type=None, new_name=None, parameter_type=None, return_type=None):
         """
-        Check if the user input contains only letters, numbers, and underscores.
-
-        Args:
-        user_input (str): The input string to validate.
-
-        Returns:
-        bool: True if input is valid (contains only a-z, A-Z, 0-9, and _), False otherwise.
+        Validates the user input to ensure it contains only allowed characters.
         """
         # Regular expression pattern to allow only a-z, A-Z, 0-9, and _
         pattern = r'^[a-zA-Z0-9_]+$'
+        
+        inputs = {
+            "class_name": class_name,
+            "field_name": field_name,
+            "field_type" : field_type, 
+            "method_name": method_name, 
+            "method_type" : method_type,
+            "parameter_name": parameter_name,
+            "parameter_type": parameter_type, 
+            "source_class": source_class,
+            "destination_class": destination_class,
+            "rel_type": rel_type,
+            "new_type": new_type,
+            "new_name": new_name,
+            "return_type": return_type
+        }
 
-        # Match the input string against the pattern
-        if re.match(pattern, user_input):
+        for input_type, user_input in inputs.items():
+            if user_input is not None and not re.match(pattern, user_input):
+                self.__console.print(f"\n[bold red]Input for {input_type} [bold white]'{user_input}'[/bold white] is invalid! Only letters, numbers, and underscores are allowed![/bold red]")
+                return False
+        return True
+    
+    # Change data type #
+    def _change_data_type(self, 
+                          class_name: str=None, input_name: str=None,
+                          source_class: str=None, dest_class: str=None, 
+                          new_type=None, is_field: bool=None, 
+                          is_method: bool=None, is_param: bool=None, 
+                          method_num:str = None, is_rel: bool=None, is_undo_or_redo: bool = False):
+        if is_field:
+            # Check valid input #
+            if not self._is_valid_input(class_name=class_name, field_name=input_name, new_type=None):
+                return False
+            is_class_and_field_exist = self._validate_entities(class_name=class_name, field_name=input_name, class_should_exist=True, field_should_exist=True)
+            if not is_class_and_field_exist:
+                return False
+            chosen_field = self._get_chosen_field_or_method(class_name, input_name, is_field=True)
+            chosen_field._set_type(new_type)
+            self._notify_observers(event_type=InterfaceOptions.EDIT_FIELD_TYPE.value, data={"class_name": class_name, "field_name": input_name, "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
+            self._update_main_data_for_every_action()
             return True
-        else:
-            return False
+        elif is_method:
+            # Check if the class name is valid #
+            if not self._is_valid_input(class_name=class_name, new_type= new_type):
+                return False
+
+            # Ensure the class exists #
+            is_class_exist = self._validate_entities(class_name=class_name, class_should_exist=True)
+            if not is_class_exist:
+                return False
+
+            # Ensure the input is a valid number (numeric input check) #
+            is_method_num_a_number = self._check_method_num(method_num)
+            if not is_method_num_a_number:
+                return False
+            
+            method_and_parameter_list = self._get_data_from_chosen_class(class_name, is_method_and_param_list=True)
+            
+            # Convert the input to an index and validate the selection #
+            selected_index = int(method_num) - 1
+            if 0 <= selected_index < len(method_and_parameter_list):
+                chosen_pair = method_and_parameter_list[selected_index]
+                method, param_list = next(iter(chosen_pair.items()))
+
+                method._set_type(new_type)
+                
+                self._update_main_data_for_every_action()
+                self._notify_observers(event_type=InterfaceOptions.EDIT_METHOD_TYPE.value,
+                                    data={"class_name": class_name, "method_name": method._get_name(), "new_type": new_type}, is_undo_or_redo=is_undo_or_redo)
+                return True
+            else:
+                self.__console.print("\n[bold red]Number out of range! Please enter a valid number.[/bold red]")
+                return False
+        elif is_param:
+            return self._edit_parameter_type(class_name, method_num, input_name, new_type)
+        elif is_rel:
+            return self._change_type(source_class_name=source_class, destination_class_name=dest_class, new_type=new_type, is_undo_or_redo=is_undo_or_redo)
                            
 ###################################################################################################

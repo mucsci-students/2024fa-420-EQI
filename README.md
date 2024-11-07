@@ -18,8 +18,8 @@ A project developed by team EQI for the 2024 Fall semester course.
   - [Step 1: Clone the Repository](#step-1-clone-the-repository)
   - [Step 2: Set Up a Virtual Environment](#step-2-set-up-a-virtual-environment)
   - [Step 3: Run the Build Script](#step-3-run-the-build-script)
-- [Unit Tests](#unit-tests)
-- [Note](#note)
+- [Running Tests](#running-tests)
+- [Design Pattern Implementation](#design-patterns)
 
 ## Introduction
 
@@ -81,9 +81,59 @@ Clone the project repository from GitHub to your local machine using the appropr
   ```bash
   python3 build.py --cli
 
-## Note:
-- **If you want to run the program using Visual Studio Code:**
-    - 1 - Open the program folder
-    - 2 - Follow step 2 in the instruction on VSCode terminal
-    - 3 - Follow step 3 in the instruction on VSCode terminal or 
-open **build.py** file, then hit the run button
+## Running Tests
+
+To run all tests and generate a coverage report in XML format, use the following command:
+
+  #### Note: If you haven't run build.py, ensure that dependencies like pytest and coverage are installed by running:
+
+    pip install -r requirements.txt
+
+Then, to execute tests and create a coverage report:
+
+1. Run tests and create a coverage report:
+  
+        python run_tests.py
+
+## Design Patterns
+
+This project utilizes several design patterns to promote efficient, maintainable, and scalable code. Below is an outline of the main patterns implemented:
+
+### 1. Model-View-Controller (MVC) Pattern
+- **Purpose**: Separates the application into three interconnected components, allowing for modularity and separation of concerns.
+
+- **Components**:
+  - Model: Handles core data structures and business logic, including class and relationship management.
+  - View: Manages user interface elements and displays data to the user. Both GUI and CLI views are provided.
+  - Controller: Acts as an intermediary between Model and View, processing input and updating the Model and View accordingly.
+
+### 2. Observer Pattern
+- **Purpose**: Implements a publish-subscribe model where observers are notified of changes in the subject they are observing. This allows for automatic updates across components.
+
+- **Components**:
+  - Observable (Subject): UMLModel — Notifies observers when changes are made to the model.
+  - Observers: Defined in uml_observer.py located at **2024fa-420-EQI/UML_MVC/uml_observer.py** .Various classes subscribe to UMLModel to respond to updates, ensuring synchronized changes.
+
+### 3. Command Pattern
+- **Purpose**: Provides a way to encapsulate actions (commands) as objects, allowing for operations such as undo and redo. This design pattern is especially useful for maintaining an action history.
+
+- **Components**:
+
+    - **Invoker**: Manages executing commands and handling the history stack for undo/redo.
+    - **Command Interface**: Each action (like adding, deleting, or modifying elements) implements this interface, making these operations reversible.
+    - **Concrete Commands**: Specific command objects for each action, holding the necessary data for undoing and redoing operations.
+
+  - Location in Code: The Command Pattern for undo and redo is implemented within **2024fa-420-EQI/UML_MVC/uml_command_pattern.py**
+
+### 4. Singleton
+- **Purpose**: Ensures a class has only one instance and provides a global point of access to that instance
+
+- **Components**:
+
+    - **MainWindow**: The MainWindow class uses the Singleton pattern to limit the application to a single main window instance. This centralizes all GUI interactions, preventing multiple conflicting windows and ensuring unified control over the interface.
+
+- **Implementation**:
+
+    - **Private Instance Variable**: _instance holds the single instance of MainWindow.
+    - **Custom __new__ Method**: Overrides the default constructor to check if _instance is None before creating a new instance, raising an error if a second instance is attempted.
+    - path: 2024FA-420-EQI/UML_MVC/UML_VIEW/uml_gui_view.py

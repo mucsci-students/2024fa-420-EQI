@@ -12,6 +12,8 @@ from rich.console import Console
 from typing import List, Dict
 from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 from UML_MVC.UML_CONTROLLER.uml_controller import UMLController as Controller, InterfaceOptions
+from UML_MVC.UML_CONTROLLER.cli_completer import create_prompt_session
+from prompt_toolkit import HTML
 
 ###################################################################################################
 
@@ -29,7 +31,7 @@ class UMLInterface:
         Initializes the UMLInterface with the specified view. Each UMLInterface instance maintains its 
         own program components, including the model, controller, and console, which makes testing easier.
 
-        Args:
+        Parameters:
             view: The view object responsible for presenting information to the user.
         """
         self.Console = Console()  # Rich console instance for formatted output
@@ -37,6 +39,9 @@ class UMLInterface:
         self.Model = Model(self.View, self.Console)  # UML model instance
         self.Controller = Controller(self.Model, view, self.Console)  # UML controller instance
     
+        # Initialize prompt_toolkit session for autocompletion
+        self.session = create_prompt_session()
+        
     #################################################################
     ### INTERFACE FUNCTIONS THAT CONNECT WITH THE MANAGER ###
     
@@ -47,7 +52,7 @@ class UMLInterface:
         """
         Creates a new UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be created.
 
         Returns:
@@ -60,7 +65,7 @@ class UMLInterface:
         """
         Creates a new field for a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             field_name (str): The name of the field to be created.
 
         Returns:
@@ -73,7 +78,7 @@ class UMLInterface:
         """
         Creates a new method for a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             method_name (str): The name of the method to be created.
 
         Returns:
@@ -86,7 +91,7 @@ class UMLInterface:
         """
         Creates a new parameter for a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             parameter_name (str): The name of the parameter to be created.
 
         Returns:
@@ -99,7 +104,7 @@ class UMLInterface:
         """
         Creates a new relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class (str): The name of the source class.
             destination_class (str): The name of the destination class.
             rel_type (str): The type of relationship (e.g., aggregation, composition).
@@ -118,6 +123,9 @@ class UMLInterface:
     # Get the relationship type between two classes #
     def get_chosen_relationship_type(self, source_class_name: str, destination_class_name: str):
         return self.Model._get_chosen_relationship_type(source_class_name, destination_class_name)
+    
+    def get_param_list(self, class_name: str, method_num: str):
+        return self.Model._get_param_list(class_name, method_num)
     
     # Check if relationship exist or not #
     def relationship_exist(self, source_class_name: str, destination_class_name: str):
@@ -163,6 +171,10 @@ class UMLInterface:
         """
         return self.Model._get_main_data()
     
+    # Set main data interface #
+    def set_main_data(self, new_data):
+        self.Model._set_main_data(new_data)
+    
     # Get view #
     def get_user_view(self):
         """
@@ -178,7 +190,7 @@ class UMLInterface:
         """
         Extracts class data from the provided class data dictionary.
 
-        Args:
+        Parameters:
             class_data (List[Dict]): The class data to be extracted.
 
         Returns:
@@ -202,7 +214,7 @@ class UMLInterface:
         Validates the existence of UML entities like class, field, method, or parameter.
         This can be used for testing and verifying the existence of various UML components.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to check.
             field_name (str): The name of the field to check.
             method_name (str): The name of the method to check.
@@ -220,6 +232,15 @@ class UMLInterface:
             class_should_exist, field_should_exist, 
             method_should_exist, parameter_should_exist
         )
+        
+    def get_method_based_on_index(self,class_name: str, method_num: str):
+        return self.Model._get_method_based_on_index(class_name, method_num)
+    
+    def get_param_based_on_index(self, class_name: str, method_num: str, parameter_name: str):
+        return self.Model._get_param_based_on_index(class_name, method_num, parameter_name)
+    
+    def get_rel_type(self, source_class_name: str, destination_class_name: str):
+        return self.Model._get_rel_type(source_class_name, destination_class_name)
     
     ## CLASS RELATED ##
     
@@ -228,17 +249,17 @@ class UMLInterface:
         """
         Adds a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be added.
         """
-        return self.Model._add_class(class_name, is_loading=False)
+        return self.Model._add_class(class_name)
         
     # Delete class interface #
     def delete_class(self, class_name: str):
         """
         Deletes a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class to be deleted.
         """
         return self.Model._delete_class(class_name)
@@ -248,7 +269,7 @@ class UMLInterface:
         """
         Renames a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             current_name (str): The current name of the class.
             new_name (str): The new name for the class.
         """
@@ -257,131 +278,137 @@ class UMLInterface:
     ## FIELD RELATED ##
     
     # Add field interface #
-    def add_field(self, class_name: str, field_name: str):
+    def add_field(self, class_name: str, type: str, field_name: str):
         """
         Adds a field to a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be added.
         """
-        return self.Model._add_field(class_name, field_name, is_loading=False)
+        return self.Model._add_field(class_name, type, field_name)
         
     # Delete field interface #
     def delete_field(self, class_name: str, field_name: str):
         """
         Deletes a field from a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             field_name (str): The name of the field to be deleted.
         """
         return self.Model._delete_field(class_name, field_name)
     
     # Rename field interface #
-    def rename_field(self, class_name: str, current_field_name: str, new_field_name: str):
+    def rename_field(self, class_name: str, current_field_name: str, new_field_name: str, current_type=None, new_type=None):
         """
         Renames a field in a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             current_field_name (str): The current name of the field.
             new_field_name (str): The new name for the field.
         """
+        if current_type and new_type:
+            return self.Model._rename_field(class_name, current_field_name, new_field_name, current_type, new_type)
         return self.Model._rename_field(class_name, current_field_name, new_field_name)
         
+    # Get chosen field #
+    def get_chosen_field_or_method(self, class_name: str, field_name: str, is_field: bool):
+        return self.Model._get_chosen_field_or_method(class_name, field_name, is_field)
+    
     ## METHOD RELATED ##
     
     # Add method interface #
-    def add_method(self, class_name: str, method_name: str):
+    def add_method(self, class_name: str, type: str, method_name: str):
         """
         Adds a method to a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be added.
         """
-        return self.Model._add_method(class_name, method_name, is_loading=False)
+        return self.Model._add_method(class_name, type, method_name)
     
     # Delete method interface #
-    def delete_method(self, class_name: str, method_name: str):
+    def delete_method(self, class_name: str, method_num: int):
         """
         Deletes a method from a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method to be deleted.
         """
-        return self.Model._delete_method(class_name, method_name)
+        return self.Model._delete_method(class_name, method_num)
         
     # Rename method interface #
-    def rename_method(self, class_name: str, current_method_name: str, new_method_name: str):
+    def rename_method(self, class_name: str, method_num: int, new_name: str):
         """
         Renames a method in a UML class by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             current_method_name (str): The current name of the method.
             new_method_name (str): The new name for the method.
         """
-        return self.Model._rename_method(class_name, current_method_name, new_method_name)
+        return self.Model._rename_method(class_name, method_num, new_name)
         
     ## PARAMETER RELATED ##
     
     # Add parameter interface #
-    def add_parameter(self, class_name: str, method_name: str, parameter_name: str):
+    def add_parameter(self, class_name: str = None, method_num: str = None, param_type: str = None, param_name: str = None):
         """
         Adds a parameter to a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be added.
         """
-        return self.Model._add_parameter(class_name, method_name, parameter_name, is_loading=False)
+        return self.Model._add_parameter(class_name, method_num, param_type, param_name)
         
     # Delete parameter interface #
-    def delete_parameter(self, class_name: str, method_name: str, parameter_name: str):
+    def delete_parameter(self, class_name: str,  method_num: str, param_name: str):
         """
         Deletes a parameter from a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             parameter_name (str): The name of the parameter to be deleted.
         """
-        return self.Model._delete_parameter(class_name, method_name, parameter_name)
+        return self.Model._delete_parameter(class_name, method_num, param_name)
         
     # Rename parameter interface #
-    def rename_parameter(self, class_name: str, method_name: str, current_parameter_name: str, new_parameter_name: str):
+    def rename_parameter(self, class_name: str,  method_num: str, current_param_name: str, new_param_name: str):
         """
         Renames a parameter in a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
             current_parameter_name (str): The current name of the parameter.
             new_parameter_name (str): The new name for the parameter.
         """
-        return self.Model._rename_parameter(class_name, method_name, current_parameter_name, new_parameter_name)
+        return self.Model._rename_parameter(class_name, method_num, current_param_name, new_param_name)
         
     # Replace parameter list interface #
-    def replace_param_list(self, class_name: str, method_name: str):
+    def replace_param_list(self, class_name: str, method_num: str, new_param_list: list):
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
-        return self.Model._replace_param_list(class_name, method_name)
+        return self.Model._replace_param_list(class_name, method_num, new_param_list)
     
     # Replace parameter list interface for GUI #
     def replace_param_list_gui(self, class_name: str, method_name: str, new_param_list: List):
         """
         Replaces the parameter list of a UML method by delegating the operation to the model.
 
-        Args:
+        Parameters:
             class_name (str): The name of the class.
             method_name (str): The name of the method.
         """
@@ -389,24 +416,36 @@ class UMLInterface:
         
     ## RELATIONSHIP RELATED ##
     
-    # Add relationship interface #
-    def add_relationship_gui(self, source_class_name: str, destination_class_name: str, type: str):
+    # Add relationship interface for CLI#
+    def add_relationship_cli(self, source_class_name: str, destination_class_name: str, rel_type: str):
         """
         Adds a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             type (str): The type of relationship.
         """
-        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=type, is_loading=False, is_gui=True)
+        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=rel_type, is_gui=False)
+    
+    # Add relationship interface for GUI#
+    def add_relationship_gui(self, source_class_name: str, destination_class_name: str, type: str):
+        """
+        Adds a relationship between two UML classes by delegating the operation to the model.
+
+        Parameters:
+            source_class_name (str): The name of the source class.
+            destination_class_name (str): The name of the destination class.
+            type (str): The type of relationship.
+        """
+        return self.Model._add_relationship(source_class_name=source_class_name, destination_class_name=destination_class_name, rel_type=type, is_gui=True)
     
     # Delete relationship interface #
     def delete_relationship(self, source_class_name: str, destination_class_name: str):
         """
         Deletes a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
         """
@@ -417,12 +456,23 @@ class UMLInterface:
         """
         Changes the type of a relationship between two UML classes by delegating the operation to the model.
 
-        Args:
+        Parameters:
             source_class_name (str): The name of the source class.
             destination_class_name (str): The name of the destination class.
             new_type (str): The new type of relationship.
         """
         return self.Model._change_type(source_class_name, destination_class_name, new_type)
+    
+    def change_data_type(self, 
+                    class_name: str=None, method_num:int = None, 
+                    input_name: str=None, source_class: str=None,
+                    dest_class: str=None, new_type: str=None, 
+                    is_field: bool=None,is_method: bool=None, 
+                    is_param: bool=None, is_rel: bool=None):
+        return self.Model._change_data_type(class_name=class_name, input_name=input_name, 
+                                            source_class=source_class, dest_class=dest_class, 
+                                            new_type=new_type, is_field=is_field, is_method=is_method, 
+                                            is_param=is_param, is_rel=is_rel, method_num=method_num)
     
     ## SAVE/LOAD RELATED ##
     
@@ -434,15 +484,15 @@ class UMLInterface:
         self.Model._save()
         
     # Save data GUI #
-    def save_gui(self, file_name, file_path):
+    def save_gui(self, file_name, file_path, class_name_list_from_gui):
         """
         Saves the UML diagram data to a specified file and path for GUI-based saving.
 
-        Args:
+        Parameters:
             file_name: The name of the file to save.
             file_path: The path where the file will be saved.
         """
-        self.Model._save_gui(file_name, file_path)
+        self.Model._save_gui(file_name, file_path, class_name_list_from_gui)
         
     # Load data #
     def load(self):
@@ -487,7 +537,7 @@ class UMLInterface:
         """
         Checks if the provided file name already exists in the saved files.
 
-        Args:
+        Parameters:
             file_name (str): The name of the file to check.
 
         Returns:
@@ -503,11 +553,11 @@ class UMLInterface:
         self.Model._clear_current_active_data()
     
     # Go back to blank program #
-    def end_session(self):
+    def new_file(self):
         """
         Ends the current session and resets the program to a blank state by delegating the operation to the model.
         """
-        self.Model._end_session()
+        self.Model._new_file()
         
     # Sort class list #
     def sort_class_list(self):
@@ -537,7 +587,7 @@ class UMLInterface:
         """
         Attaches an observer to the model for the observer pattern implementation.
 
-        Args:
+        Parameters:
             observer: The observer to attach.
         """
         self.Model._attach_observer(observer)
@@ -547,7 +597,7 @@ class UMLInterface:
         """
         Detaches an observer from the model for the observer pattern implementation.
 
-        Args:
+        Parameters:
             observer: The observer to detach.
         """
         self.Model._detach_observer(observer)
@@ -558,7 +608,36 @@ class UMLInterface:
         Notifies all observers of changes in the model for the observer pattern implementation.
         """
         self.Model._notify_observer()
+    
+    # Check for valid input
+    def is_valid_input(self, class_name=None, field_name=None, method_name=None, 
+                       parameter_name=None, source_class=None, 
+                       destination_class=None, field_type=None, method_type=None, 
+                       rel_type=None, new_type=None, new_name=None, 
+                       parameter_type=None, return_type=None):
+        """
+        Check if the user input contains only letters, numbers, and underscores for all provided parameters.
 
+        Parameters:
+            class_name (str, optional): The name of the class to validate.
+            field_name (str, optional): The name of the field to validate.
+            method_name (str, optional): The name of the method to validate.
+            parameter_name (str, optional): The name of the parameter to validate.
+            source_class (str, optional): The source class name to validate.
+            destination_class (str, optional): The destination class name to validate.
+            type (str, optional): The type of relationship.
+            new_name (str, optional): The new name to validate (e.g., for renaming a class).
+
+        Returns:
+            bool: True if all provided inputs are valid (contain only a-z, A-Z, 0-9, and _), False otherwise.
+        """
+        return self.Model._is_valid_input(class_name=class_name, field_name=field_name,
+                                          method_name=method_name, parameter_name=parameter_name,
+                                          source_class=source_class, destination_class=destination_class,
+                                          field_type=field_type, method_type=method_type,
+                                          rel_type=rel_type, new_type=new_type,
+                                          parameter_type=parameter_type, return_type=return_type, new_name=new_name)
+        
     #################################################################
     
     ## USER INTERFACE ##
@@ -578,10 +657,10 @@ class UMLInterface:
             if current_active_file != "No active file!":
                 current_active_file = current_active_file + ".json"
             self.Console.print(f"\n[bold yellow](Current active file: [bold white]{current_active_file}[/bold white])[/bold yellow]")
-            self.Console. print("\n[bold yellow]==>[/bold yellow] ", end="")
+            # self.Console.print("\n[bold yellow]==>[/bold yellow] ", end="")
             
             # Collect input from the user
-            user_input: str = input()  # User provides the input
+            user_input: str = self.session.prompt(HTML("<b><style color='#fdca5b'>==></style></b> ")).strip()
             user_input_component = user_input.split()  # Split the input by space
 
             # Parse command and parameters
@@ -592,7 +671,9 @@ class UMLInterface:
             
             # Handle the 'help' command to show the menu again
             if command == InterfaceOptions.HELP.value:
+                print("\n")
                 self.View._prompt_menu()
+                continue
             # Handle the 'exit' command to break out of the loop
             elif command == InterfaceOptions.EXIT.value:
                 break

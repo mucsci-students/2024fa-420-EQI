@@ -1,0 +1,111 @@
+{
+    "classes": [
+        {
+            "name": "Engine",
+            "fields": [
+                {
+                    "name": "horsepower",
+                    "type": "int"
+                },
+                {
+                    "name": "cylinders",
+                    "type": "int"
+                },
+                {
+                    "name": "type",
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "start",
+                    "return_type": "void",
+                    "params": []
+                },
+                {
+                    "name": "stop",
+                    "return_type": "void",
+                    "params": []
+                }
+            ],
+            "position": {
+                "x": 50,
+                "y": 100
+            }
+        },
+        {
+            "name": "Transmission",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "string"
+                },
+                {
+                    "name": "gears",
+                    "type": "int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "shiftUp",
+                    "return_type": "void",
+                    "params": []
+                },
+                {
+                    "name": "shiftDown",
+                    "return_type": "void",
+                    "params": []
+                }
+            ],
+            "position": {
+                "x": 150,
+                "y": 200
+            }
+        },
+        {
+            "name": "Wheel",
+            "fields": [
+                {
+                    "name": "diameter",
+                    "type": "float"
+                },
+                {
+                    "name": "material",
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "rotate",
+                    "return_type": "void",
+                    "params": []
+                }
+            ],
+            "position": {
+                "x": 250,
+                "y": 300
+            }
+        },
+        {
+            "name": "test1",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 6,
+                "y": 6
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "source": "Wheel",
+            "destination": "Transmission",
+            "type": "Composition"
+        },
+        {
+            "source": "Wheel",
+            "destination": "Wheel",
+            "type": "Aggregation"
+        }
+    ]
+}

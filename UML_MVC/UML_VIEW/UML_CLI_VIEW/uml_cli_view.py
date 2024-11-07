@@ -34,7 +34,7 @@ class UMLView(Observer):
         """
         self.console = Console()
     
-    def _update(self, event_type: str, data: Dict, is_loading: bool):
+    def _update(self, event_type: str, data: Dict, is_loading: bool, is_undo_or_redo: bool):
         """
         Handles updates to the UML data based on the event type and displays a message to the user.
         
@@ -46,110 +46,151 @@ class UMLView(Observer):
         # Add class
         if event_type == InterfaceOptions.ADD_CLASS.value:
             class_name = data["class_name"]
-            if not is_loading:
+            if not is_loading and not is_undo_or_redo:
                 self.console.print(f"\n[bold green]Class [bold white]'{class_name}'[/bold white] has been added.[/bold green]")
         
         # Delete class
         elif event_type == InterfaceOptions.DELETE_CLASS.value:
             class_name = data.get('class_name', 'Unknown')
-            self.console.print(f"\n[bold green]Class [bold white]'{class_name}'[/bold white] has been deleted.[/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Class [bold white]'{class_name}'[/bold white] has been deleted.[/bold green]")
         
         # Rename class
         elif event_type == InterfaceOptions.RENAME_CLASS.value:
             old_name = data["old_name"]
             new_name = data["new_name"]
-            self.console.print(f"\n[bold green]Class [bold white]'{old_name}'[/bold white] has been renamed to [bold white]'{new_name}'[/bold white].[/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Class [bold white]'{old_name}'[/bold white] has been renamed to [bold white]'{new_name}'[/bold white].[/bold green]")
         
         # Add field
         elif event_type == InterfaceOptions.ADD_FIELD.value:
             class_name = data["class_name"]
+            type = data["type"] + " "
             field_name = data["field_name"]
-            if not is_loading:
-                self.console.print(f"\n[bold green]Field [bold white]'{field_name}'[/bold white] has been added to class [bold white]'{class_name}'[/bold white].[/bold green]")
+            if not is_loading and not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Field [bold white]'[bold italic cyan]{type}[/bold italic cyan]{field_name}'[/bold white] has been added to class [bold white]'{class_name}'[/bold white].[/bold green]")
         
         # Delete field
         elif event_type == InterfaceOptions.DELETE_FIELD.value:
             class_name = data["class_name"]
             field_name = data["field_name"]
-            self.console.print(f"\n[bold green]Field [bold white]'{field_name}'[/bold white] has been deleted from class [bold white]'{class_name}'[/bold white].[/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Field [bold white]'{field_name}'[/bold white] has been deleted from class [bold white]'{class_name}'[/bold white].[/bold green]")
         
         # Rename field
         elif event_type == InterfaceOptions.RENAME_FIELD.value:
             class_name = data["class_name"]
             old_field_name = data["old_field_name"]
             new_field_name = data["new_field_name"]
-            self.console.print(f"\n[bold green]Field [bold white]'{old_field_name}'[/bold white] in class [bold white]'{class_name}'[/bold white] has been renamed to [bold white]'{new_field_name}'[/bold white].[/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Field [bold white]'{old_field_name}'[/bold white] in class [bold white]'{class_name}'[/bold white] has been renamed to [bold white]'{new_field_name}'[/bold white].[/bold green]")
+        
+        # Change field type
+        elif event_type == InterfaceOptions.EDIT_FIELD_TYPE.value:
+            class_name = data["class_name"]
+            field_name = data["field_name"]
+            new_type = data["new_type"] + " "
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Field [bold white]'{field_name}'[/bold white] from class [bold white]'{class_name}'[/bold white] has changed to type [bold white]'{new_type}'[/bold white][/bold green]")
         
         # Add method
         elif event_type == InterfaceOptions.ADD_METHOD.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
-            if not is_loading:
-                self.console.print(f"\n[bold green]Successfully added method [bold white]'{method_name}'[/bold white] to class [bold white]'{class_name}'[/bold white]![/bold green]")
+            type = data["type"] + " "
+            if not is_loading and not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully added method [bold white]'[bold italic cyan]{type}[/bold italic cyan]{method_name}'[/bold white] to class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Delete method
         elif event_type == InterfaceOptions.DELETE_METHOD.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
-            self.console.print(f"\n[bold green]Successfully removed method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully removed method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Rename method
         elif event_type == InterfaceOptions.RENAME_METHOD.value:
             class_name = data["class_name"]
             old_method_name = data["old_method_name"]
             new_method_name = data["new_method_name"]
-            self.console.print(f"\n[bold green]Successfully renamed method [bold white]'{old_method_name}'[/bold white] to method [bold white]'{new_method_name}' from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully renamed method [bold white]'{old_method_name}'[/bold white] to method [bold white]'{new_method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+        
+        # Change method type
+        elif event_type == InterfaceOptions.EDIT_METHOD_TYPE.value:
+            class_name = data["class_name"]
+            method_name = data["method_name"]
+            new_type = data["new_type"]
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white] has changed return type to [bold italic cyan]'{new_type}'[/bold italic cyan][/bold green]")
         
         # Add parameter
         elif event_type == InterfaceOptions.ADD_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
             param_name = data["param_name"]
-            if not is_loading:
-                self.console.print(f"\n[bold green]Successfully added parameter [bold white]'{param_name}'[/bold white] to method [bold white]'{method_name}' from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            type = data["type"] + " "
+            if not is_loading and not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully added parameter [bold white]'[bold italic cyan]{type}[/bold italic cyan]{param_name}'[/bold white] to method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Delete parameter
         elif event_type == InterfaceOptions.DELETE_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
+            param_type = data["param_type"] + " "
             param_name = data["param_name"]
-            self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully removed parameter [bold white]'[bold italic cyan]{param_type}[/bold italic cyan]{param_name}'[/bold white] from method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
+        # Edit Parameter Type
+        elif event_type == InterfaceOptions.EDIT_PARAM_TYPE.value:
+            class_name = data["class_name"]
+            method_name = data["method_name"]
+            old_param_type = data["old_param_type"] + " "
+            param_name = data["param_name"]
+            new_param_type = data["new_param_type"]
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully changed parameter type of [bold white]'[bold italic cyan]{old_param_type}[/bold italic cyan]{param_name}'[/bold white] to '[bold italic cyan]{new_param_type}[/bold italic cyan]' in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
+    
         # Rename parameter
         elif event_type == InterfaceOptions.RENAME_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
             old_param_name = data["old_param_name"]
             new_param_name = data["new_param_name"]
-            self.console.print(f"\n[bold green]Successfully renamed parameter [bold white]'{old_param_name}'[/bold white] to [bold white]'{new_param_name}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully renamed parameter [bold white]'{old_param_name}'[/bold white] to [bold white]'{new_param_name}'[/bold white] in method [bold white]'{method_name}'[/bold white] from class [bold white]'{class_name}'[/bold white]![/bold green]")
         
         # Replace parameter list
         elif event_type == InterfaceOptions.REPLACE_PARAM.value:
             class_name = data["class_name"]
             method_name = data["method_name"]
             new_list = data["new_list"]
-            self.console.print(f"\n[bold green]Successfully replaced parameter list for method [bold white]'{method_name}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully replaced parameter list for method [bold white]'{method_name}'[/bold white]![/bold green]")
         
         # Add relationship
         elif event_type == InterfaceOptions.ADD_REL.value:
             source_class = data["source"]
             destination_class = data["dest"]
             rel_type = data["type"]
-            if not is_loading:
+            if not is_loading and not is_undo_or_redo:
                 self.console.print(f"\n[bold green]Successfully added relationship from class [bold white]'{source_class}'[/bold white] to class [bold white]'{destination_class}' of type '{rel_type}'![/bold green]")
         
         # Delete relationship
         elif event_type == InterfaceOptions.DELETE_REL.value:
             source_class = data["source"]
             destination_class = data["dest"]
-            self.console.print(f"\n[bold green]Successfully removed relationship between class [bold white]'{source_class}'[/bold white] and class [bold white]'{destination_class}'[/bold green]!") 
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully removed relationship between class [bold white]'{source_class}'[/bold white] and class [bold white]'{destination_class}'[/bold green]!") 
         
         # Modify relationship type
-        elif event_type == InterfaceOptions.TYPE_MOD.value:
+        elif event_type == InterfaceOptions.EDIT_REL_TYPE.value:
             source_class = data["source"]
             destination_class = data["dest"]
             new_type = data["new_type"]
-            self.console.print(f"\n[bold green]Successfully changed the relationship type between class [bold white]'{source_class}'[/bold white] and class [bold white]'{destination_class}' to [bold white]'{new_type}'[/bold white]![/bold green]")
+            if not is_undo_or_redo:
+                self.console.print(f"\n[bold green]Successfully changed the relationship type between class [bold white]'{source_class}'[/bold white] and class [bold white]'{destination_class}' to [bold white]'{new_type}'[/bold white]![/bold green]")
     
     def _prompt_menu(self):
         """
@@ -170,25 +211,30 @@ class UMLView(Observer):
             ["rename_class [bright_white]<class_name> <new_name>[bright_white]", "Rename a class"],
 
             ["[bold yellow]Field Commands[/bold yellow]", ""],
-            ["add_field [bright_white]<class_name> <attr_name>[bright_white]", "Add a field to a class"],
+            ["add_field [bright_white]<class_name> <type/Empty> <attr_name>[bright_white]", "Add a field to a class"],
             ["delete_field [bright_white]<class_name> <field_name>[bright_white]", "Delete a field from a class"],
-            ["rename_field [bright_white]<class_name> <current_field_name> <new_name>[bright_white]", "Rename a field"],
-
+            ["rename_field [bright_white]<class_name> <old_field_name> <new_name>[bright_white]", "Rename a field"],
+            ["edit_field_type [bright_white]<class_name> <field_name> <new_data_type>[bright_white]", "Change field data type"],
+                
             ["[bold yellow]Method Commands[/bold yellow]", ""],
-            ["add_method [bright_white]<class_name> <method_name>[bright_white]", "Add a method to a class"],
-            ["delete_method [bright_white]<class_name> <method_name>[bright_white]", "Delete a method from a class"],
-            ["rename_method [bright_white]<class_name> <current_method_name> <new_name>[bright_white]", "Rename a method"],
+            ["add_method [bright_white]<class_name> <return_type> <method_name>[bright_white]", "Add a method to a class"],
+            ["delete_method [bright_white]<class_name> <method_num>[bright_white]", "Delete a method from a class"],
+            ["rename_method [bright_white]<class_name> <method_num> <new_method_name>[bright_white]", "Rename a method"],
+            ["edit_method_type [bright_white]<class_name> <method_num> <new_return_type>[bright_white]", "Change method data type"],
 
             ["[bold yellow]Parameter Commands[/bold yellow]", ""],
-            ["add_param [bright_white]<class_name> <method_name> <param_name>[bright_white]", "Add a parameter to a method"],
-            ["delete_param [bright_white]<class_name> <method_name> <param_name>[bright_white]", "Delete a parameter from a method"],
-            ["rename_param [bright_white]<class_name> <method_name> <current_param_name> <new_name>[bright_white]", "Rename a parameter"],
-            ["replace_param [bright_white]<class_name> <method_name>[bright_white]", "Replace a method's parameter list"],
+            ["add_param [bright_white]<class_name> <method_num> <param_type> <param_name>[bright_white]", "Add a parameter to a method"],
+            ["delete_param [bright_white]<class_name> <method_num> <param_name>[bright_white]", "Delete a parameter from a method"],
+            ["edit_param_type [bright_white]<class_name> <method_num> <param_name> <new_param_type>[bright_white]","Edit the type of a parameter from a method"],
+            ["rename_param [bright_white]<class_name> <method_num> <current_param_name> <new_param_name>[bright_white]", "Rename a parameter"],
+            ["replace_param [bright_white]<class_name> <method_num>[bright_white]", "Replace a method's parameter list"],
 
             ["[bold yellow]Relationship Commands[/bold yellow]", ""],
             ["add_rel [bright_white]<source_class> <destination_class> <relationship_type>[bright_white]", "Add a relationship between two classes"],
             ["delete_rel [bright_white]<source_class> <destination_class>[bright_white]", "Delete a relationship between two classes"],
-            ["type_mod [bright_white]<source_class> <destination_class> <type>[bright_white]", "Modify the type of a relationship"],
+            ["edit_rel_type [bright_white]<source_class> <destination_class> <new_type>[bright_white]", "Modify the type of a relationship"],
+            ["undo", "Undo an action"],
+            ["redo", "Redo an action"],
 
             ["[bold yellow]Class-Related Commands[/bold yellow]", ""],
             ["list_class", "List all created classes"],
@@ -201,10 +247,10 @@ class UMLView(Observer):
             ["load", "Load data from a saved file"],
             ["delete_saved", "Delete a saved file"],
             ["clear_data", "Clear all data from current storage"],
-            ["default", "Reset to a blank program"],
+            ["new", "Open new file"],
 
             ["[bold yellow]Other Commands[/bold yellow]", ""],
-            ["sort", "Sort the class list alphabetically"],
+            # ["sort", "Sort the class list alphabetically"],
             ["help", "View instructions"],
             ["exit", "Exit the program"]
         ]
@@ -274,12 +320,14 @@ class UMLView(Observer):
         """
         fields_branch = class_branch.add("[bold yellow]Fields[/bold yellow]")
         for field in cls["fields"]:
-            fields_branch.add(f'[bold dark_slate_gray2]{field["name"]}[/bold dark_slate_gray2]')
+            fields_branch.add(f'[bold italic cyan]{field["type"]}[/bold italic cyan] : [bold dark_slate_gray2]{field["name"]}[/bold dark_slate_gray2]')
 
         methods_branch = class_branch.add("[bold yellow]Methods[/bold yellow]")
+        i : int = 1
         for method in cls["methods"]:
-            params = ', '.join(param["name"] for param in method["params"])
-            methods_branch.add(f'[bold dark_orange]{method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
+            params = ', '.join(f'[bold italic cyan]{param["type"]}[/bold italic cyan] {param["name"]}' for param in method["params"])
+            methods_branch.add(f'[bold white]{i} -- [/bold white][bold dark_orange][bold italic cyan]{method["return_type"]}[/bold italic cyan] : {method["name"]}([bold slate_blue1]{params}[/bold slate_blue1])[/bold dark_orange]')
+            i = i + 1
     
     def _display_class_names(self, main_data: Dict):
         """
@@ -380,7 +428,48 @@ class UMLView(Observer):
         # Print the saved files table
         self.console.print(table)
         return True
-    
+        
+    def _display_method_and_parameter_list(self, method_and_param_list: List):
+        """
+        Displays the list of methods and their parameters in a UML diagram using a table format.
+        
+        Args:
+            method_and_param_list (List): A list of methods and their parameter lists.
+        """
+        if len(method_and_param_list) == 0:
+            self.console.print("\n[bold red]No method exists![/bold red]")
+            return False
+        
+        # Create the table with headers
+        table = Table(title="\n[bold white]Method and Parameter List[bold white]", show_header=True, header_style="bold yellow", border_style="bold dodger_blue2")
+        table.add_column("No.", style="bold green", justify="center")  # Right align for numbers
+        table.add_column("Method List", style="bold white", justify="left")  # Left align for method names
+
+        # Counter to dynamically number the methods
+        method_counter = 1
+
+        for each_element in method_and_param_list:
+            for method, param_list in each_element.items():
+                # Extract method name and return type
+                method_name = method._get_name()
+                return_type = method._get_type() + " "  # Assuming method has a return type
+                
+                # Extract and format parameters as "type param"
+                formatted_params = ', '.join([f"[bold italic cyan]{param._get_type()}[/bold italic cyan] {param._get_parameter_name()}" for param in param_list])
+                
+                # Format the method as "method_name(type param1, type param2)"
+                method_signature = f"[bold italic cyan]{return_type}[/bold italic cyan][bold dark_orange]{method_name}([bold white]{formatted_params}[/bold white])[/bold dark_orange]"
+                
+                # Add the numbered method and the formatted parameters to the table
+                table.add_row(f"{method_counter}", f"[bold cyan]{method_signature}[/bold cyan]")
+                
+                # Increment the counter for the next method
+                method_counter += 1
+
+        # Use the console to print the table
+        self.console.print(table)
+        return True
+
     def _ask_user_choices(self, action: str) -> bool:
         """
         Asks the user a yes/no question and returns their response.
