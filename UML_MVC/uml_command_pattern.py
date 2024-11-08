@@ -522,8 +522,7 @@ class AddMethodCommand(Command):
         method_and_parameter_list = self.uml_model._get_data_from_chosen_class(self.class_name, is_method_and_param_list=True)
         current_method_index_cli = len(method_and_parameter_list)
         is_method_deleted_cli = self.uml_model._delete_method(self.class_name, str(current_method_index_cli), is_undo_or_redo=True)
-        if self.is_gui:
-            is_method_deleted_gui = self.uml_model._delete_method(self.class_name, str(self.method_num), is_undo_or_redo=True)
+        if self.is_gui and is_method_deleted_cli:
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
             # Check if the item is still in the scene before removing
@@ -531,7 +530,6 @@ class AddMethodCommand(Command):
                 self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
             self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
             self.class_box.update_box()  # Refresh the UML box
-            return is_method_deleted_gui
         return is_method_deleted_cli
     
 class DeleteMethodCommand(Command):
