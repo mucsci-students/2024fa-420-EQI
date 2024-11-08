@@ -1069,8 +1069,9 @@ class ChangeTypeCommand(Command):
                         if field_key[1] == self.input_name:
                             self.position = index
                             self.class_box.field_key_list.remove(field_key)  # Remove from the name list
-                            if self.class_box.field_list.pop(field_key).scene() == self.view.scene():
-                                self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+                            popped_item = self.class_box.field_list.pop(field_key)
+                            if popped_item.scene() == self.view.scene():
+                                self.class_box.scene().removeItem(popped_item)  # Remove the text item from the scene
                     field_text = self.class_box.create_text_item(self.original_field_type + " " + self.input_name, is_field=True, selectable=False, color=self.class_box.text_color)
                     field_key = (self.original_field_type, self.input_name)
                     self.class_box.field_list[field_key] = field_text  # Add the field to the internal list
