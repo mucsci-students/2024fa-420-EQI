@@ -716,12 +716,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                             
                     print(new_param_list_obj)
                     
-                    rename_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
+                    replace_param_command = Command.ReplaceParameterListCommand(self.model, class_name=selected_class_name, 
                                                                                method_num=str(selected_method_index + 1), view=self, 
                                                                                class_box=self.selected_class,
                                                                                new_param_list_obj=new_param_list_obj,
                                                                                new_param_list_str=new_param_list_str, is_gui=True)
-                    is_param_list_replaced = self.input_handler.execute_command(rename_param_command)
+                    is_param_list_replaced = self.input_handler.execute_command(replace_param_command)
                     
                     if not is_param_list_replaced:
                         method_key = method_entry["method_key"]
