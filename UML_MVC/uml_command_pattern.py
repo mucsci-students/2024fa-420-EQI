@@ -522,8 +522,7 @@ class AddMethodCommand(Command):
         method_and_parameter_list = self.uml_model._get_data_from_chosen_class(self.class_name, is_method_and_param_list=True)
         current_method_index_cli = len(method_and_parameter_list)
         is_method_deleted_cli = self.uml_model._delete_method(self.class_name, str(current_method_index_cli), is_undo_or_redo=True)
-        if self.is_gui:
-            is_method_deleted_gui = self.uml_model._delete_method(self.class_name, str(self.method_num), is_undo_or_redo=True)
+        if self.is_gui and is_method_deleted_cli:
             # Access and remove the method entry directly from method_list
             method_entry = self.class_box.method_list[int(self.method_num) - 1]
             # Check if the item is still in the scene before removing
@@ -531,7 +530,6 @@ class AddMethodCommand(Command):
                 self.view.scene().removeItem(method_entry["method_text"])  # Remove the method's text item
             self.class_box.method_list.pop(int(self.method_num) - 1)  # Remove the method from method_list
             self.class_box.update_box()  # Refresh the UML box
-            return is_method_deleted_gui
         return is_method_deleted_cli
     
 class DeleteMethodCommand(Command):
@@ -1069,8 +1067,9 @@ class ChangeTypeCommand(Command):
                         if field_key[1] == self.input_name:
                             self.position = index
                             self.class_box.field_key_list.remove(field_key)  # Remove from the name list
-                            if self.class_box.field_list.pop(field_key).scene() == self.view.scene():
-                                self.class_box.scene().removeItem(self.class_box.field_list.pop(field_key))  # Remove the text item from the scene
+                            popped_item = self.class_box.field_list.pop(field_key)
+                            if popped_item.scene() == self.view.scene():
+                                self.class_box.scene().removeItem(popped_item)  # Remove the text item from the scene
                     field_text = self.class_box.create_text_item(self.original_field_type + " " + self.input_name, is_field=True, selectable=False, color=self.class_box.text_color)
                     field_key = (self.original_field_type, self.input_name)
                     self.class_box.field_list[field_key] = field_text  # Add the field to the internal list
