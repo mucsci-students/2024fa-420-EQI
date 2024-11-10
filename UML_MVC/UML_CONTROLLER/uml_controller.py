@@ -9,12 +9,15 @@ methods, parameters, and relationships.
 ###################################################################################################
 
 # Import necessary libraries and modules for console interaction, typing, and model/view handling.
+
+import os
 from rich.console import Console
 from typing import List
 from UML_MVC.UML_CONTROLLER.uml_storage_manager import UMLStorageManager as Storage
 from UML_MVC.UML_MODEL.uml_model import UMLModel as Model
 from UML_ENUM_CLASS.uml_enum import InterfaceOptions
 from UML_MVC import uml_command_pattern as Command
+from UML_MVC.UML_CONTROLLER.adapter import UMLToImageAdapter
 
 ###################################################################################################
    
@@ -288,7 +291,18 @@ class UMLController:
             self.__input_handler.redo()
         
         #######################################################
-        
+        # Handle adapter json to image
+
+        elif command == InterfaceOptions.SAVE_IMAGE.value and first_param:
+            if not first_param.lower().endswith(".png"):
+                first_param += ".png"
+                
+            adapter = UMLToImageAdapter(self.__model)
+            output_path = os.path.join(os.getcwd(), first_param)
+            adapter.generate_image(output_path)
+            self.__console.print(f"\n[bold green]Image generated and saved to {output_path}[/bold green]")
+
+        #######################################################
         # Handle display and data management commands
 
         # List all created class names or details

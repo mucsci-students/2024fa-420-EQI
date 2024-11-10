@@ -1,5 +1,8 @@
 [
     {
-        "test_file": "off"
+        "test_file": "on"
+    },
+    {
+        "showcase": "off"
     }
 ]
