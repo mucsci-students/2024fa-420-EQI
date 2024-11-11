@@ -68,9 +68,6 @@ class CommandFactory:
 
         Returns:
             Command: An instance of a command class corresponding to the command name.
-
-        Raises:
-            ValueError: If an unknown command name is provided.
         """
         # Check the command name and create the appropriate command object
         if command_name == CommandType.MOVE_UNIT.value:
