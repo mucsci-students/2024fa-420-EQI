@@ -81,17 +81,17 @@
         {
             "source": "testing",
             "destination": "Car",
-            "type": "Aggregation"
+            "type": "Inheritance"
         },
         {
             "source": "testing",
             "destination": "Engine",
-            "type": "Inheritance"
+            "type": "Realization"
         },
         {
             "source": "Car",
             "destination": "Car",
-            "type": "Composition"
+            "type": "Aggregation"
         }
     ]
 }

@@ -136,35 +136,37 @@ class UMLToImageAdapter:
         item["connection_points"] = connection_points  # Store connection points in the item data
 
     def draw_self_relationship(self, draw, position, relationship_type, offset_x, offset_y):
-        """Draw a self-referential (loop) relationship."""
+        """Draw a self-referential (loop) relationship using the top connection point."""
         x = int(position["x"]) + offset_x
         y = int(position["y"]) + offset_y
-        loop_start = (x + 20, y)
-        loop_control1 = (x + 60, y - 40)
-        loop_control2 = (x - 20, y - 40)
-        loop_end = (x, y - 20)
+        loop_start = (x + 120, y)  # Start from the top center of the box
+        loop_control1 = (x + 120, y - 60)  # Control point above the top center
+        loop_control2 = (x + 50, y - 60)  # Control point for the arc
+        loop_end = (x + 50, y)  # End at the top center
 
+        # Draw the curve based on the relationship type
         if relationship_type == "Realization":
             self.draw_dashed_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
         else:
             self.draw_solid_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
 
-        # Add relationship-specific symbols (diamond or arrowhead) based on type
+        # Add relationship-specific symbols
         symbol_position = (loop_start[0] - 5, loop_start[1])
         if relationship_type == "Composition":
             self.draw_filled_diamond(draw, symbol_position)
         elif relationship_type == "Aggregation":
             self.draw_open_diamond(draw, symbol_position)
         elif relationship_type in ["Inheritance", "Realization"]:
-            self.draw_arrowhead(draw, symbol_position, loop_start, loop_end)
-
+            self.draw_arrowhead(draw, loop_end, loop_control2, loop_end) 
+            
     def draw_relationship(self, draw, visualization_data, item, offset_x, offset_y):
-        """Draw normal relationships between UML classes with correct symbol placement at the source or destination end."""
-        
+        """Draw relationships between UML classes with aligned symbols at endpoints."""
+
+        # Get source and destination classes
         source_class = next(cls for cls in visualization_data if cls["name"] == item["source"])
         dest_class = next(cls for cls in visualization_data if cls["name"] == item["destination"])
 
-        # Calculate box dimensions and positions with offsets
+        # Calculate positions and dimensions with offsets
         src_x = int(source_class["position"]["x"]) + offset_x
         src_y = int(source_class["position"]["y"]) + offset_y
         src_box_width, src_box_height = self.calculate_box_dimensions(source_class)
@@ -172,7 +174,7 @@ class UMLToImageAdapter:
         dest_y = int(dest_class["position"]["y"]) + offset_y
         dest_box_width, dest_box_height = self.calculate_box_dimensions(dest_class)
 
-        # Define connection points
+        # Define connection points for both classes
         src_connection_points = {
             'top': (src_x + src_box_width // 2, src_y),
             'bottom': (src_x + src_box_width // 2, src_y + src_box_height),
@@ -189,26 +191,21 @@ class UMLToImageAdapter:
         # Calculate the closest connection points
         start_point, end_point = self.calculate_closest_points(src_connection_points, dest_connection_points)
 
-        # Draw the relationship line
+        # Draw the line between classes, with exact positioning for the symbol
         if item["type"] == "Realization":
             self.draw_dashed_line(draw, start_point, end_point, fill="black", width=2)
         else:
             draw.line([start_point, end_point], fill="black", width=2)
 
-        # Determine symbol position along the line
-        symbol_offset = 10  # Offset for the symbol to avoid overlap with the box edges
-
-        if item["type"] in ["Composition", "Aggregation"]:
-            # Position the symbol closer to the start point for Composition and Aggregation
-            symbol_position = self.offset_along_line(start_point, end_point, symbol_offset)
-            if item["type"] == "Composition":
-                self.draw_filled_diamond(draw, symbol_position)
-            else:
-                self.draw_open_diamond(draw, symbol_position)
+        # Draw the symbol at the exact end of the line
+        if item["type"] == "Composition":
+            self.draw_filled_diamond(draw, end_point)
+        elif item["type"] == "Aggregation":
+            self.draw_open_diamond(draw, end_point)
         elif item["type"] in ["Inheritance", "Realization"]:
-            # Position the arrowhead closer to the end point for Inheritance and Realization
-            symbol_position = self.offset_along_line(end_point, start_point, symbol_offset)
-            self.draw_arrowhead(draw, symbol_position, start_point, end_point)
+            # Draw open triangle arrowhead for both Inheritance and Realization
+            self.draw_arrowhead(draw, end_point, start_point, end_point, filled=False)
+
 
     def offset_along_line(self, point1, point2, offset):
         """Calculate a point along the line from point1 to point2 at a given offset distance."""
@@ -267,7 +264,7 @@ class UMLToImageAdapter:
 
     def draw_filled_diamond(self, draw, position):
         """Draw a filled diamond for Composition."""
-        diamond_size = 6
+        diamond_size = 10
         x, y = position
         draw.polygon([
             (x - diamond_size, y),
@@ -287,9 +284,9 @@ class UMLToImageAdapter:
             (x, y + diamond_size)
         ], outline="black", fill=None)
 
-    def draw_arrowhead(self, draw, position, start, end):
-        """Draw a closed arrowhead for Inheritance or Realization."""
-        arrow_size = 6
+    def draw_arrowhead(self, draw, position, start, end, filled=False):
+        """Draw an open arrowhead (triangle) for Inheritance or Realization."""
+        arrow_size = 10  # Increased arrow size to 10
         angle = math.atan2(end[1] - start[1], end[0] - start[0])  # Calculate angle of arrow
         x, y = position
 
@@ -298,8 +295,13 @@ class UMLToImageAdapter:
                     y - arrow_size * math.sin(angle - math.pi / 6))
         right_point = (x - arrow_size * math.cos(angle + math.pi / 6),
                     y - arrow_size * math.sin(angle + math.pi / 6))
-        draw.polygon([position, left_point, right_point], fill="black")
 
+        if filled:
+            draw.polygon([position, left_point, right_point], fill="black")  # Filled triangle
+        else:
+            draw.polygon([position, left_point, right_point], outline="black", fill=None)  # Open triangle
+
+            
     def draw_dashed_line(self, draw, start, end, fill="black", width=2, dash_length=10):
         """Draw a dashed line for Realization."""
         total_length = math.hypot(end[0] - start[0], end[1] - start[1])
