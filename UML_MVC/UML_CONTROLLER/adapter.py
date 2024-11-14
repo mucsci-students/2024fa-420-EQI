@@ -372,3 +372,5 @@ class UMLToImageAdapter:
             })
         
         return visualization_data
+
+#
