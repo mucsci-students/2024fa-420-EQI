@@ -1064,9 +1064,11 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             )
 
             is_rel_added = self.input_handler.execute_command(add_rel_command)
-
+            
             if not is_rel_added:
                 QtWidgets.QMessageBox.warning(None, "Warning", "Relationship has already existed!")
+                
+            self.selected_class.is_source_class = True
 
     def delete_relationship(self):
         """
@@ -1100,6 +1102,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         )
 
         self.input_handler.execute_command(delete_rel_command)
+        self.selected_class.is_source_class = False
 
     def change_relationship_type(self):
         """
@@ -1152,6 +1155,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
             is_rel_type_changed = self.input_handler.execute_command(change_rel_type_command)
             if not is_rel_type_changed:
                 return
+            self.selected_class.is_source_class = True
 
     #################################################################
     ### FILE OPERATIONS ###
