@@ -1,7 +1,7 @@
 import math
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-class UMLArrow(QtWidgets.QGraphicsLineItem):
+class UMLArrow(QtWidgets.QGraphicsPathItem):
     """
     Represents an arrow connecting two movable boxes with connection points.
     """
@@ -34,10 +34,6 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         # Ensure arrow is drawn on top
         self.setZValue(1)
 
-        # Initialize path for self-referential arrow
-        if self.is_self_relation:
-            self.path = QtGui.QPainterPath()
-        
         self.update_position()  # Initial position update
 
     def update_position(self):
@@ -49,57 +45,96 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
             # Handle self-referential arrow
             self.calculate_self_arrow()
         else:
-            # Existing code for normal arrows
-            startPoint, endPoint = self.calculate_closest_points()
+            # Calculate the best connection points and path
+            startPoint, endPoint, startSide, endSide = self.calculate_closest_points()
             if startPoint is None or endPoint is None:
                 return  # Prevent errors if points are not found
-            line = QtCore.QLineF(startPoint, endPoint)
 
-            # Calculate the angle of the line
-            angle = math.atan2(-line.dy(), line.dx())
-
-            # Adjust the line based on the relationship type
-            if self.relationship_type in ["Inheritance", "Realization"]:
-                # Shorten the line at the end by arrow_size
-                offset = QtCore.QPointF(
-                    math.cos(angle) * self.arrow_size,
-                    -math.sin(angle) * self.arrow_size
-                )
-                line.setP2(line.p2() - offset)
-            elif self.relationship_type in ["Aggregation", "Composition"]:
-                # Shorten the line at the start by arrow_size
-                offset = QtCore.QPointF(
-                    math.cos(angle) * self.arrow_size,
-                    -math.sin(angle) * self.arrow_size
-                )
-                line.setP1(line.p1() + offset)
-
-            self.setLine(line)
+            # Now compute the path with horizontal and vertical segments
+            self.calculate_arrow_path(startPoint, endPoint, startSide, endSide)
 
     def calculate_closest_points(self):
         """
         Calculate the closest connection points between the two boxes.
 
         Returns:
-        - (QPointF, QPointF): Closest points on start and end boxes.
+        - (QPointF, QPointF, str, str): Closest points on start and end boxes and their sides.
         """
         startPoints = self.source_class.connection_points_list
         endPoints = self.dest_class.connection_points_list
 
         minDistance = float('inf')
         closestStart = closestEnd = None
+        startSide = endSide = None
 
         # Loop over each connection point in the source and destination classes
-        for sp_name, sp in startPoints.items():
-            start_scene_pos = sp.mapToScene(sp.rect().center())
-            for ep_name, ep in endPoints.items():
-                end_scene_pos = ep.mapToScene(ep.rect().center())
-                distance = QtCore.QLineF(start_scene_pos, end_scene_pos).length()
+        for sp_name, sp_item in startPoints.items():
+            # Get the scene position of the start point
+            if isinstance(sp_item, QtWidgets.QGraphicsItem):
+                sp = sp_item.scenePos()
+            else:
+                sp = self.source_class.scenePos() + sp_item
+
+            for ep_name, ep_item in endPoints.items():
+                # Get the scene position of the end point
+                if isinstance(ep_item, QtWidgets.QGraphicsItem):
+                    ep = ep_item.scenePos()
+                else:
+                    ep = self.dest_class.scenePos() + ep_item
+
+                distance = QtCore.QLineF(sp, ep).length()
                 if distance < minDistance:
                     minDistance = distance
-                    closestStart, closestEnd = start_scene_pos, end_scene_pos
+                    closestStart, closestEnd = sp, ep
+                    startSide, endSide = sp_name, ep_name
 
-        return closestStart, closestEnd
+        return closestStart, closestEnd, startSide, endSide
+
+    def calculate_arrow_path(self, startPoint, endPoint, startSide, endSide):
+        path = QtGui.QPainterPath()
+        path.moveTo(startPoint)
+
+        # Decide directions based on sides
+        side_directions = {
+            'left': QtCore.QPointF(-1, 0),
+            'right': QtCore.QPointF(1, 0),
+            'top': QtCore.QPointF(0, -1),
+            'bottom': QtCore.QPointF(0, 1),
+        }
+
+        # Get direction vectors
+        startDir = side_directions.get(startSide, QtCore.QPointF(0, 0))
+        endDir = side_directions.get(endSide, QtCore.QPointF(0, 0))
+
+        # Move away from the boxes
+        offset = 5
+        if self.relationship_type in ["Aggregation", "Composition"]:
+            start_offset = offset + self.arrow_size  # Increase offset
+        else:
+            start_offset = offset
+
+        startOffsetPoint = startPoint + startDir * start_offset
+        endOffsetPoint = endPoint + endDir * offset
+
+        # Create an L-shaped path
+        if startSide in ['left', 'right']:
+            # Horizontal then vertical
+            intermediatePoint = QtCore.QPointF(startOffsetPoint.x(), endOffsetPoint.y())
+        else:
+            # Vertical then horizontal
+            intermediatePoint = QtCore.QPointF(endOffsetPoint.x(), startOffsetPoint.y())
+
+        path.lineTo(startOffsetPoint)
+        path.lineTo(intermediatePoint)
+        path.lineTo(endOffsetPoint)
+        path.lineTo(endPoint)
+
+        self.setPath(path)
+
+        # Store lines for angle calculations
+        self.arrow_line = QtCore.QLineF(endOffsetPoint, endPoint)
+        self.arrow_start_line = QtCore.QLineF(startOffsetPoint, startPoint)
+
 
     def calculate_self_arrow(self):
         """
@@ -108,14 +143,14 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         """
         # Get the bounding rectangle of the class in scene coordinates
         rect = self.source_class.mapToScene(self.source_class.rect()).boundingRect()
+        
+        # Define an additional offset to prevent arrowhead from overlapping
+        arrow_offset_x = 10
+        arrow_offset_y = 10
 
         # Start and end points on the class box (top side)
         start_point = rect.topLeft() + QtCore.QPointF(rect.width() / 3, 0)
         end_point = rect.topRight() - QtCore.QPointF(rect.width() / 3, 0)
-
-        # Define an additional offset to prevent arrowhead from overlapping
-        arrow_offset_x = 10  # Adjust this value as needed
-        arrow_offset_y = 10
         
         if self.relationship_type in ["Inheritance", "Realization"]:
             # Subtract the arrow_offset from the y-coordinate to move the end_point upwards
@@ -125,16 +160,19 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
 
         # Offset for control points to shape the loop (above the class box)
         control_offset = 40  # Adjust this value to change loop height
-
+        
         # Control points to create a loop above the class
         control_point1 = start_point - QtCore.QPointF(0, control_offset)
         control_point2 = end_point - QtCore.QPointF(0, control_offset)
 
         # Create the path for the loop
-        self.path = QtGui.QPainterPath()
-        self.path.moveTo(start_point)
-        self.path.cubicTo(control_point1, control_point2, end_point)
+        path = QtGui.QPainterPath()
+        path.moveTo(start_point)
+        path.cubicTo(control_point1, control_point2, end_point)
+        self.setPath(path)
 
+        # Store line for angle calculation
+        self.arrow_line = QtCore.QLineF(control_point2, end_point)
 
     def paint(self, painter, option, widget=None):
         """
@@ -145,14 +183,11 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
 
         if self.is_self_relation:
             # Draw the self-referential arrow
-            painter.drawPath(self.path)
+            painter.drawPath(self.path())
 
             # Calculate angle for the arrowhead at the end of the path
-            last_tangent = self.path.angleAtPercent(1.0)
-            angle = math.radians(-last_tangent)
-
-            # Draw arrowhead at the end of the loop
-            end_point = self.path.pointAtPercent(1.0)
+            end_point = self.path().pointAtPercent(1.0)
+            angle = math.radians(self.path().angleAtPercent(1.0))
 
             # Draw the correct arrowhead based on relationship type
             if self.relationship_type in ["Inheritance", "Realization"]:
@@ -160,26 +195,33 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
                 self.draw_triangle_head_at_point(painter, end_point, angle, dashed=dashed)
             elif self.relationship_type in ["Aggregation", "Composition"]:
                 filled = (self.relationship_type == "Composition")
-                self.draw_diamond_head_at_point(painter, start_point=self.path.pointAtPercent(0.0), angle=angle, filled=filled)
+                # For diamond, we need the angle at the start
+                start_point = self.path().pointAtPercent(0.0)
+                start_angle = -math.radians(self.path().angleAtPercent(0.0))
+                self.draw_diamond_head_at_point(painter, start_point, start_angle, filled=filled)
             else:
                 # For other types, draw a simple arrowhead at the end
                 self.draw_arrow_head(painter, end_point, angle)
         else:
-            # Existing code for normal arrows
-            line = self.line()
-            painter.drawLine(line)
+            # Draw the path
+            painter.drawPath(self.path())
 
-            # Calculate angle of the line for arrowhead orientation
+            # Calculate angle for the arrowhead at the end
+            line = self.arrow_line
             angle = math.atan2(-line.dy(), line.dx())
 
             # Adjust based on the relationship type
             if self.relationship_type in ["Aggregation", "Composition"]:
                 # Draw the diamond at the start (source)
-                self.draw_diamond_head(painter, line, angle, filled=(self.relationship_type == "Composition"))
+                line_start = self.arrow_start_line
+                angle_start = math.atan2(-line_start.dy(), line_start.dx())
+                filled = (self.relationship_type == "Composition")
+                self.draw_diamond_head_at_point(painter, line_start.p1(), angle_start, filled=filled)
             elif self.relationship_type in ["Inheritance", "Realization"]:
                 # Draw the triangle at the end (destination)
                 dashed = (self.relationship_type == "Realization")
-                self.draw_triangle_head(painter, line, angle, dashed=dashed)
+                end_point = line.p2()
+                self.draw_triangle_head_at_point(painter, end_point, angle, dashed=dashed)
             else:
                 # For other types, draw a simple arrowhead at the end
                 end_point = line.p2()
@@ -194,11 +236,11 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         # Calculate points for the arrowhead triangle
         p1 = point + QtCore.QPointF(
             math.cos(angle + math.pi / 6) * arrow_size,
-            math.sin(angle + math.pi / 6) * arrow_size
+            -math.sin(angle + math.pi / 6) * arrow_size
         )
         p2 = point + QtCore.QPointF(
             math.cos(angle - math.pi / 6) * arrow_size,
-            math.sin(angle - math.pi / 6) * arrow_size
+            -math.sin(angle - math.pi / 6) * arrow_size
         )
 
         # Create the arrowhead polygon
@@ -207,36 +249,36 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         painter.setBrush(QtCore.Qt.black)
         painter.drawPolygon(arrow_head)
 
-    def draw_diamond_head_at_point(self, painter, start_point, angle, filled):
+    def draw_diamond_head_at_point(self, painter, point, angle, filled):
         """
         Draws a diamond-shaped arrowhead at a given point and angle.
         """
         arrow_size = self.arrow_size
 
-        # Base point (start_point)
-        base = start_point
+        # Base point (point)
+        base = point
 
         # Calculate points for the diamond
         # Tip point (forward along the angle)
         tip = base + QtCore.QPointF(
             math.cos(angle) * arrow_size,
-            math.sin(angle) * arrow_size
+            -math.sin(angle) * arrow_size
         )
 
         # Left and right points (perpendicular to the angle)
         left = base + QtCore.QPointF(
             math.cos(angle + math.pi / 2) * arrow_size / 2,
-            math.sin(angle + math.pi / 2) * arrow_size / 2
+            -math.sin(angle + math.pi / 2) * arrow_size / 2
         )
         right = base + QtCore.QPointF(
             math.cos(angle - math.pi / 2) * arrow_size / 2,
-            math.sin(angle - math.pi / 2) * arrow_size / 2
+            -math.sin(angle - math.pi / 2) * arrow_size / 2
         )
 
         # Back point (behind the base)
         back = base - QtCore.QPointF(
             math.cos(angle) * arrow_size / 2,
-            math.sin(angle) * arrow_size / 2
+            -math.sin(angle) * arrow_size / 2
         )
 
         # Create the diamond polygon
@@ -251,107 +293,29 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
         painter.drawPolygon(diamond)
 
-    def draw_triangle_head_at_point(self, painter, end_point, angle, dashed):
+    def draw_triangle_head_at_point(self, painter, point, angle, dashed):
         """
         Draws a triangle-shaped arrowhead at a given point and angle.
         """
         arrow_size = self.arrow_size
 
-        # Tip point (end_point)
-        tip = end_point
+        # Tip point (point)
+        tip = point
 
         # Base center point (back along the angle)
         base_center = tip - QtCore.QPointF(
             math.cos(angle) * arrow_size,
-            math.sin(angle) * arrow_size
+            -math.sin(angle) * arrow_size
         )
 
         # Left and right points (perpendicular to the angle)
         left = base_center + QtCore.QPointF(
             math.cos(angle + math.pi / 2) * arrow_size / 2,
-            math.sin(angle + math.pi / 2) * arrow_size / 2
+            -math.sin(angle + math.pi / 2) * arrow_size / 2
         )
         right = base_center + QtCore.QPointF(
             math.cos(angle - math.pi / 2) * arrow_size / 2,
-            math.sin(angle - math.pi / 2) * arrow_size / 2
-        )
-
-        # Create the triangle polygon
-        triangle = QtGui.QPolygonF([tip, left, right])
-
-        # Set brush and pen
-        painter.setBrush(QtCore.Qt.white)
-
-        if dashed:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashLine))
-        else:
-            painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
-
-        painter.drawPolygon(triangle)
-
-    def draw_diamond_head(self, painter, line, angle, filled):
-        """
-        Draws a diamond-shaped arrowhead at the start of the line.
-        """
-        # Base point (line start)
-        base = line.p1()
-
-        # Calculate points for the diamond
-        # Tip point (forward along the line)
-        tip = base + QtCore.QPointF(
-            math.cos(angle) * self.arrow_size,
-            -math.sin(angle) * self.arrow_size
-        )
-
-        # Left and right points (perpendicular to the line)
-        left = base + QtCore.QPointF(
-            math.cos(angle + math.pi / 2) * self.arrow_size / 2,
-            -math.sin(angle + math.pi / 2) * self.arrow_size / 2
-        )
-        right = base + QtCore.QPointF(
-            math.cos(angle - math.pi / 2) * self.arrow_size / 2,
-            -math.sin(angle - math.pi / 2) * self.arrow_size / 2
-        )
-
-        # Back point (behind the base)
-        back = base - QtCore.QPointF(
-            math.cos(angle) * self.arrow_size / 2,
-            -math.sin(angle) * self.arrow_size / 2
-        )
-
-        # Create the diamond polygon
-        diamond = QtGui.QPolygonF([back, left, tip, right])
-
-        # Set brush
-        if filled:
-            painter.setBrush(QtCore.Qt.black)
-        else:
-            painter.setBrush(QtCore.Qt.white)
-
-        painter.setPen(QtGui.QPen(QtCore.Qt.black, 2))
-        painter.drawPolygon(diamond)
-
-    def draw_triangle_head(self, painter, line, angle, dashed):
-        """
-        Draws a triangle-shaped arrowhead at the end of the line.
-        """
-        # Tip point (line end)
-        tip = line.p2()
-
-        # Base center point (back along the line)
-        base_center = tip - QtCore.QPointF(
-            math.cos(angle) * self.arrow_size,
-            -math.sin(angle) * self.arrow_size
-        )
-
-        # Left and right points (perpendicular to the line)
-        left = base_center + QtCore.QPointF(
-            math.cos(angle + math.pi / 2) * self.arrow_size / 2,
-            -math.sin(angle + math.pi / 2) * self.arrow_size / 2
-        )
-        right = base_center + QtCore.QPointF(
-            math.cos(angle - math.pi / 2) * self.arrow_size / 2,
-            -math.sin(angle - math.pi / 2) * self.arrow_size / 2
+            -math.sin(angle - math.pi / 2) * arrow_size / 2
         )
 
         # Create the triangle polygon
@@ -371,22 +335,13 @@ class UMLArrow(QtWidgets.QGraphicsLineItem):
         """
         Returns the bounding rectangle of the item.
         """
-        if self.is_self_relation:
-            return self.path.boundingRect().adjusted(-self.arrow_size, -self.arrow_size, self.arrow_size, self.arrow_size)
-        else:
-            extra = (self.pen().width() + self.arrow_size) / 2.0
-            return QtCore.QRectF(self.line().p1(), self.line().p2()).normalized().adjusted(-extra, -extra, extra, extra)
+        extra = (self.pen().width() + self.arrow_size) / 2.0
+        return self.path().boundingRect().adjusted(-extra, -extra, extra, extra)
 
     def shape(self):
         """
         Returns the shape of the item as a QPainterPath.
         """
-        if self.is_self_relation:
-            path_stroker = QtGui.QPainterPathStroker()
-            path_stroker.setWidth(self.pen().width() + self.arrow_size)
-            return path_stroker.createStroke(self.path)
-        else:
-            path = QtGui.QPainterPath()
-            path.moveTo(self.line().p1())
-            path.lineTo(self.line().p2())
-            return path
+        path_stroker = QtGui.QPainterPathStroker()
+        path_stroker.setWidth(self.pen().width() + self.arrow_size)
+        return path_stroker.createStroke(self.path())
