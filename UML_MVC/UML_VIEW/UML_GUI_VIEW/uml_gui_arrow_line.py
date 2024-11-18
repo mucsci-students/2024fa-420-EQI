@@ -1,5 +1,6 @@
 import math
 from PyQt5 import QtWidgets, QtGui, QtCore
+from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox as ClassBox
 
 class UMLArrow(QtWidgets.QGraphicsPathItem):
     """
@@ -16,6 +17,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         self.relationship_type = relationship_type
         self.arrow_size = 10  # Size of the arrowhead
         self.arrow_type = relationship_type
+        self.arrow_line = None
+        self.arrow_start_line = None
 
         # Detect self-referential relationship
         self.is_self_relation = (self.source_class == self.dest_class)
@@ -34,7 +37,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         # Ensure arrow is drawn on top
         self.setZValue(1)
 
-        self.update_position()  # Initial position update
+        # self.update_position()  # Initial position update
 
     def update_position(self):
         """
@@ -46,22 +49,25 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
             self.calculate_self_arrow()
         else:
             # Calculate the best connection points and path
-            startPoint, endPoint, startSide, endSide = self.calculate_closest_points()
+            startPoint, endPoint, startSide, endSide = self.calculate_closest_points(self.source_class, self.dest_class)
             if startPoint is None or endPoint is None:
                 return  # Prevent errors if points are not found
 
             # Now compute the path with horizontal and vertical segments
             self.calculate_arrow_path(startPoint, endPoint, startSide, endSide)
+            
+            # Adjust the path if it collides with any obstacles
+            self.reroute_path_if_collide(self.path())
 
-    def calculate_closest_points(self):
+    def calculate_closest_points(self, source_class, dest_class):
         """
         Calculate the closest connection points between the two boxes.
 
         Returns:
         - (QPointF, QPointF, str, str): Closest points on start and end boxes and their sides.
         """
-        startPoints = self.source_class.connection_points_list
-        endPoints = self.dest_class.connection_points_list
+        startPoints = source_class.connection_points_list
+        endPoints = dest_class.connection_points_list
 
         minDistance = float('inf')
         closestStart = closestEnd = None
@@ -107,13 +113,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         endDir = side_directions.get(endSide, QtCore.QPointF(0, 0))
 
         # Move away from the boxes
-        offset = 5
-        if self.relationship_type in ["Aggregation", "Composition"]:
-            start_offset = offset + self.arrow_size  # Increase offset
-        else:
-            start_offset = offset
-
-        startOffsetPoint = startPoint + startDir * start_offset
+        offset = 10
+        startOffsetPoint = startPoint + startDir * offset
         endOffsetPoint = endPoint + endDir * offset
 
         # Create an L-shaped path
@@ -128,12 +129,87 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         path.lineTo(intermediatePoint)
         path.lineTo(endOffsetPoint)
         path.lineTo(endPoint)
-
+        
         self.setPath(path)
 
         # Store lines for angle calculations
         self.arrow_line = QtCore.QLineF(endOffsetPoint, endPoint)
         self.arrow_start_line = QtCore.QLineF(startOffsetPoint, startPoint)
+        
+    def reroute_path_if_collide(self, path):
+        if self.scene() is None:
+            return
+
+        collision_detected = False
+
+        for item in self.scene().items():
+            if not isinstance(item, ClassBox) or item in [self.source_class, self.dest_class]:
+                continue
+            if path.intersects(item.sceneBoundingRect()):
+                collision_detected = True
+                obstacle_rect = item.sceneBoundingRect()
+
+                # Get the current path elements
+                elements = [path.elementAt(i) for i in range(path.elementCount())]
+
+                # Use arrow_line set in calculate_arrow_path()
+                line_start = self.arrow_line.p1()
+                line_end = self.arrow_line.p2()
+
+                arrow_line = QtCore.QLineF(line_start, line_end)
+
+                # Get the corners of the obstacle rectangle in scene coordinates
+                topLeft = obstacle_rect.topLeft()
+                topRight = obstacle_rect.topRight()
+                bottomRight = obstacle_rect.bottomRight()
+                bottomLeft = obstacle_rect.bottomLeft()
+
+                rect_lines = [
+                    QtCore.QLineF(topLeft, topRight),
+                    QtCore.QLineF(topRight, bottomRight),
+                    QtCore.QLineF(bottomRight, bottomLeft),
+                    QtCore.QLineF(bottomLeft, topLeft)
+                ]
+
+                intersection_point = QtCore.QPointF()
+                for rect_line in rect_lines:
+                    intersection_type = arrow_line.intersect(rect_line, intersection_point)
+                    if intersection_type == QtCore.QLineF.BoundedIntersection:
+                        break
+
+                if intersection_point:
+                    print(f"Intersection Point: {intersection_point.x()}, {intersection_point.y()}")
+
+        if not collision_detected:
+            pass
+                    
+                #     buffer = 20  # Adjust as needed
+                #     new_path = QtGui.QPainterPath()
+                #     new_path.moveTo(line_start)
+
+                    
+
+                #     # Continue to the end point
+                #     new_path.lineTo(line_end)
+
+                #     # Update the path
+                #     self.setPath(new_path)
+
+                #     # Update arrow lines for angle calculations
+                #     self.arrow_line = QtCore.QLineF(new_path.elementAt(new_path.elementCount() - 2).x,
+                #                                     new_path.elementAt(new_path.elementCount() - 2).y,
+                #                                     new_path.elementAt(new_path.elementCount() - 1).x,
+                #                                     new_path.elementAt(new_path.elementCount() - 1).y)
+
+                #     self.arrow_start_line = QtCore.QLineF(new_path.elementAt(0).x,
+                #                                         new_path.elementAt(0).y,
+                #                                         new_path.elementAt(1).x,
+                #                                         new_path.elementAt(1).y)
+                # break  # Stop after handling the collision
+
+        if not collision_detected:
+            # No collision detected, path remains the same
+            pass
 
 
     def calculate_self_arrow(self):
