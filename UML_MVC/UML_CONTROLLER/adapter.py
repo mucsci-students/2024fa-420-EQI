@@ -1,8 +1,10 @@
 import math
 from PIL import Image, ImageDraw, ImageFont
+from typing import List, Dict, Tuple
+
 
 class UMLToImageAdapter:
-    def __init__(self, model):
+    def __init__(self, model: object) -> None:
         self.model = model
         self.default_margin = 10  # Margin for padding
         self.line_color = "#0090ff"
@@ -10,7 +12,7 @@ class UMLToImageAdapter:
         self.title_color = "#00ffff"
         self.canvas_margin = 50  # Additional margin for the canvas
 
-    def generate_image(self, output_file):
+    def generate_image(self, output_file: str) -> None:
         main_data = self.model._get_main_data()
         visualization_data = self._extract_visualization_data(main_data)
 
@@ -60,7 +62,7 @@ class UMLToImageAdapter:
         # Save the final image
         self.save_image(image, output_file)
 
-    def calculate_box_dimensions(self, item):
+    def calculate_box_dimensions(self, item: Dict[str, object]) -> tuple[int, int]:
         """Calculate the dimensions for the class box based on content, minimizing extra space at the bottom."""
         class_name = item["name"]
         fields = item["fields"]
@@ -96,7 +98,7 @@ class UMLToImageAdapter:
 
         return max(box_width, 170), box_height  # Ensure minimum width if needed
 
-    def draw_class_box(self, draw, item, x, y):
+    def draw_class_box(self, draw: ImageDraw.Draw, item: Dict[str, object], x: int, y: int) -> None:
         """Draw the UML class box including title, fields, and methods, and add connection points."""
         box_width, box_height = self.calculate_box_dimensions(item)
 
@@ -135,7 +137,7 @@ class UMLToImageAdapter:
         connection_points = self.create_connection_points(draw, x, y, box_width, box_height)
         item["connection_points"] = connection_points  # Store connection points in the item data
 
-    def draw_self_relationship(self, draw, position, relationship_type, offset_x, offset_y):
+    def draw_self_relationship(self, draw: ImageDraw.Draw, position: Dict[str, int], relationship_type: str, offset_x: int, offset_y: int) -> None:
         """Draw a self-referential (loop) relationship using the top connection point."""
         x = int(position["x"]) + offset_x
         y = int(position["y"]) + offset_y
@@ -144,22 +146,22 @@ class UMLToImageAdapter:
         loop_control2 = (x + 50, y - 60)  # Control point for the arc
         loop_end = (x + 50, y)  # End at the top center
 
-        # Draw the curve based on the relationship type
+        # Draw the curve
         if relationship_type == "Realization":
             self.draw_dashed_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
         else:
             self.draw_solid_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
 
         # Add relationship-specific symbols
-        symbol_position = (loop_start[0] - 5, loop_start[1])
         if relationship_type == "Composition":
-            self.draw_filled_diamond(draw, symbol_position)
+            self.draw_filled_diamond(draw, loop_start)
         elif relationship_type == "Aggregation":
-            self.draw_open_diamond(draw, symbol_position)
+            self.draw_open_diamond(draw, loop_start)
         elif relationship_type in ["Inheritance", "Realization"]:
-            self.draw_arrowhead(draw, loop_end, loop_control2, loop_end) 
+            self.draw_arrowhead(draw, loop_end, loop_control2, loop_end)
+
             
-    def draw_relationship(self, draw, visualization_data, item, offset_x, offset_y):
+    def draw_relationship(self, draw: ImageDraw.Draw, visualization_data: List[Dict[str, Dict[str, int]]], item: Dict[str, str], offset_x: int, offset_y: int) -> None:
         """Draw relationships between UML classes with aligned symbols at endpoints."""
 
         # Get source and destination classes
@@ -191,20 +193,82 @@ class UMLToImageAdapter:
         # Calculate the closest connection points
         start_point, end_point = self.calculate_closest_points(src_connection_points, dest_connection_points)
 
-        # Draw the line between classes, with exact positioning for the symbol
+        # Adjust the start_point and end_point based on relationship type
+        margin = 10  # Margin to prevent overlap
+        if item["type"] in ["Aggregation", "Composition"]:
+            # For Aggregation and Composition, adjust the start_point to prevent overlap
+            start_point = self.adjust_endpoint_towards_box(start_point, end_point, margin)
+    
+        else:
+            # For Inheritance and Realization, adjust only the end_point
+            end_point = self.adjust_endpoint_towards_box(end_point, start_point, margin)
+
+        # Draw the line between classes
         if item["type"] == "Realization":
             self.draw_dashed_line(draw, start_point, end_point, fill="black", width=2)
         else:
             draw.line([start_point, end_point], fill="black", width=2)
 
-        # Draw the symbol at the exact end of the line
+        # Draw the symbol at the appropriate end (ensure the arrowhead is drawn at the exact end_point)
         if item["type"] == "Composition":
-            self.draw_filled_diamond(draw, end_point)
+            self.draw_filled_diamond(draw, start_point)  # Symbol at source
         elif item["type"] == "Aggregation":
-            self.draw_open_diamond(draw, end_point)
+            self.draw_open_diamond(draw, start_point)  # Symbol at source
         elif item["type"] in ["Inheritance", "Realization"]:
-            # Draw open triangle arrowhead for both Inheritance and Realization
-            self.draw_arrowhead(draw, end_point, start_point, end_point, filled=False)
+            # Ensure the arrowhead is placed at the end_point (no offset or adjustment)
+            self.draw_arrowhead(draw, end_point, start_point, end_point, filled=False)  # Arrowhead at destination
+
+    def adjust_endpoint(self, endpoint: Tuple[int, int], reference_point: Tuple[int, int], margin: int, towards_box: bool = True) -> Tuple[int, int]:
+        """
+        Adjusts the endpoint either towards or away from a reference point by a specified margin.
+
+        Parameters:
+            endpoint (tuple): The endpoint to adjust (x, y).
+            reference_point (tuple): The reference point to adjust relative to (x, y).
+            margin (int): The distance to adjust.
+            towards_box (bool): If True, adjust towards the reference point; otherwise, adjust away.
+
+        Returns:
+            tuple: The adjusted endpoint.
+        """
+        ex, ey = endpoint
+        rx, ry = reference_point
+
+        # Calculate the direction vector
+        vector_x = rx - ex if towards_box else ex - rx
+        vector_y = ry - ey if towards_box else ey - ry
+        vector_length = math.sqrt(vector_x**2 + vector_y**2)
+
+        if vector_length == 0:
+            return endpoint  # Avoid division by zero if points are the same
+
+        # Normalize and scale the vector
+        unit_x = vector_x / vector_length
+        unit_y = vector_y / vector_length
+        adjusted_x = ex + unit_x * margin
+        adjusted_y = ey + unit_y * margin
+
+        return int(adjusted_x), int(adjusted_y)
+
+    def adjust_endpoint_towards_box(self, point, target, margin):
+        """ Adjust the endpoint to move slightly outward from the box. """
+        px, py = point
+        tx, ty = target
+        dx, dy = tx - px, ty - py
+        distance = math.sqrt(dx**2 + dy**2)
+
+        if distance == 0:  # Prevent division by zero
+            return point
+
+        # Calculate the adjustment
+        adjustment_x = margin * dx / distance  # Keep as float
+        adjustment_y = margin * dy / distance  # Keep as float
+
+        # Apply the adjustment
+        adjusted_point = (px + adjustment_x, py + adjustment_y)
+
+        # Optionally, round the final result
+        return (round(adjusted_point[0]), round(adjusted_point[1]))
 
 
     def offset_along_line(self, point1, point2, offset):
@@ -284,23 +348,28 @@ class UMLToImageAdapter:
             (x, y + diamond_size)
         ], outline="black", fill=None)
 
-    def draw_arrowhead(self, draw, position, start, end, filled=False):
-        """Draw an open arrowhead (triangle) for Inheritance or Realization."""
-        arrow_size = 10  # Increased arrow size to 10
-        angle = math.atan2(end[1] - start[1], end[0] - start[0])  # Calculate angle of arrow
-        x, y = position
+    def draw_arrowhead(self, draw: ImageDraw.Draw, position: Tuple[int, int], start: Tuple[int, int], end: Tuple[int, int], filled: bool = False) -> None:
+        """Draw an open or filled arrowhead (triangle) at the end of the line."""
+        arrow_size = 10  # Size of the arrowhead
+        # Calculate angle between the line defined by start and end points
+        angle = math.atan2(end[1] - start[1], end[0] - start[0])  # Direction of the line
 
-        # Calculate the two points for the arrowhead
+        # Position is where the arrowhead base will be drawn (at the end of the line)
+        x, y = end  # The base of the arrowhead should be at the line's end
+
+        # Calculate the left and right points of the arrowhead based on angle
         left_point = (x - arrow_size * math.cos(angle - math.pi / 6),
                     y - arrow_size * math.sin(angle - math.pi / 6))
         right_point = (x - arrow_size * math.cos(angle + math.pi / 6),
                     y - arrow_size * math.sin(angle + math.pi / 6))
 
+        # Adjust the tip of the arrowhead
         if filled:
-            draw.polygon([position, left_point, right_point], fill="black")  # Filled triangle
+            # Draw the filled arrowhead
+            draw.polygon([position, left_point, right_point], fill="black")
         else:
-            draw.polygon([position, left_point, right_point], outline="black", fill=None)  # Open triangle
-
+            # Draw the open arrowhead
+            draw.polygon([position, left_point, right_point], outline="black", fill=None)
             
     def draw_dashed_line(self, draw, start, end, fill="black", width=2, dash_length=10):
         """Draw a dashed line for Realization."""
@@ -328,7 +397,7 @@ class UMLToImageAdapter:
         - box_width, box_height: Dimensions of the UML box.
         
         Returns:
-        - A dictionary with connection points coordinates.
+        - A Dictionary with connection points coordinates.
         """
         connection_points = {
             'top': (x + box_width // 2, y),
@@ -358,13 +427,13 @@ class UMLToImageAdapter:
         visualization_data = []
         
         for each_class in main_data.get("classes", []):
-            class_dict = {
+            class_Dict = {
                 "name": each_class["name"],
                 "fields": each_class.get("fields", []),
                 "methods": each_class.get("methods", []),
                 "position": each_class.get("position", {"x": 0, "y": 0})
             }
-            visualization_data.append(class_dict)
+            visualization_data.append(class_Dict)
         
         for relationship in main_data.get("relationships", []):
             visualization_data.append({
@@ -374,5 +443,3 @@ class UMLToImageAdapter:
             })
         
         return visualization_data
-
-#

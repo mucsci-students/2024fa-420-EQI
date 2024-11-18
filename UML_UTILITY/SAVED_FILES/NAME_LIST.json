@@ -4,5 +4,8 @@
     },
     {
         "showcase": "off"
+    },
+    {
+        "rel_test": "off"
     }
 ]
