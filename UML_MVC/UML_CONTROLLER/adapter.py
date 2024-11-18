@@ -63,7 +63,9 @@ class UMLToImageAdapter:
         self.save_image(image, output_file)
 
     def calculate_box_dimensions(self, item: Dict[str, object]) -> tuple[int, int]:
-        """Calculate the dimensions for the class box based on content, minimizing extra space at the bottom."""
+        """
+        Calculate the dimensions for the class box based on content, including method parameters.
+        """
         class_name = item["name"]
         fields = item["fields"]
         methods = item["methods"]
@@ -75,7 +77,14 @@ class UMLToImageAdapter:
             default=0
         )
         max_method_width = max(
-            (self.body_font.getbbox(f"{method.get('return_type', '')} {method.get('name', '')}()")[2] for method in methods),
+            (
+                self.body_font.getbbox(
+                    f"{method.get('return_type', '')} {method.get('name', '')}("
+                    + ", ".join(f"{param['type']} {param['name']}" for param in method.get('params', []))
+                    + ")"
+                )[2]
+                for method in methods
+            ),
             default=0
         )
 
@@ -99,7 +108,9 @@ class UMLToImageAdapter:
         return max(box_width, 170), box_height  # Ensure minimum width if needed
 
     def draw_class_box(self, draw: ImageDraw.Draw, item: Dict[str, object], x: int, y: int) -> None:
-        """Draw the UML class box including title, fields, and methods, and add connection points."""
+        """
+        Draw the UML class box, including fields and methods with parameters.
+        """
         box_width, box_height = self.calculate_box_dimensions(item)
 
         # Draw main box with updated colors
@@ -129,7 +140,8 @@ class UMLToImageAdapter:
         # Draw methods section
         method_y = field_y
         for method in item["methods"]:
-            method_text = f"{method.get('return_type', '')} {method.get('name', '')}()"
+            params = ", ".join(f"{param['type']} {param['name']}" for param in method.get("params", []))
+            method_text = f"{method.get('return_type', '')} {method.get('name', '')}({params})"
             draw.text((x + self.default_margin, method_y), method_text, fill="black", font=self.body_font)
             method_y += 20  # line height
 
@@ -138,29 +150,34 @@ class UMLToImageAdapter:
         item["connection_points"] = connection_points  # Store connection points in the item data
 
     def draw_self_relationship(self, draw: ImageDraw.Draw, position: Dict[str, int], relationship_type: str, offset_x: int, offset_y: int) -> None:
-        """Draw a self-referential (loop) relationship using the top connection point."""
+        """
+        Draw a self-referential (loop) relationship using the top connection point.
+        """
         x = int(position["x"]) + offset_x
         y = int(position["y"]) + offset_y
+        
+        # Define the loop using start, control points, and end
         loop_start = (x + 120, y)  # Start from the top center of the box
         loop_control1 = (x + 120, y - 60)  # Control point above the top center
         loop_control2 = (x + 50, y - 60)  # Control point for the arc
         loop_end = (x + 50, y)  # End at the top center
 
-        # Draw the curve
+        # Draw the loop curve
         if relationship_type == "Realization":
             self.draw_dashed_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
         else:
             self.draw_solid_curve(draw, loop_start, loop_control1, loop_control2, loop_end, fill="black", width=2)
 
-        # Add relationship-specific symbols
-        if relationship_type == "Composition":
-            self.draw_filled_diamond(draw, loop_start)
-        elif relationship_type == "Aggregation":
-            self.draw_open_diamond(draw, loop_start)
+        # Draw relationship-specific symbols
+        if relationship_type in ["Composition", "Aggregation"]:
+            # Determine if the diamond is filled or open
+            filled = relationship_type == "Composition"
+            self.draw_diamond(draw, position=loop_start, filled=filled)  # Use a unified diamond-drawing function
         elif relationship_type in ["Inheritance", "Realization"]:
-            self.draw_arrowhead(draw, loop_end, loop_control2, loop_end)
+            # Draw the arrowhead at the end of the loop
+            filled = relationship_type == "Inheritance"  # Filled for Inheritance, open for Realization
+            self.draw_arrowhead(draw, base=loop_end, start=loop_control2, end=loop_end, filled=filled)
 
-            
     def draw_relationship(self, draw: ImageDraw.Draw, visualization_data: List[Dict[str, Dict[str, int]]], item: Dict[str, str], offset_x: int, offset_y: int) -> None:
         """Draw relationships between UML classes with aligned symbols at endpoints."""
 
@@ -203,20 +220,18 @@ class UMLToImageAdapter:
             # For Inheritance and Realization, adjust only the end_point
             end_point = self.adjust_endpoint_towards_box(end_point, start_point, margin)
 
-        # Draw the line between classes
         if item["type"] == "Realization":
             self.draw_dashed_line(draw, start_point, end_point, fill="black", width=2)
         else:
             draw.line([start_point, end_point], fill="black", width=2)
 
-        # Draw the symbol at the appropriate end (ensure the arrowhead is drawn at the exact end_point)
+        # Draw the appropriate arrowhead or diamond
         if item["type"] == "Composition":
-            self.draw_filled_diamond(draw, start_point)  # Symbol at source
+            self.draw_arrowhead(draw, end_point, start_point, arrow_type="diamond", size=10, filled=True)
         elif item["type"] == "Aggregation":
-            self.draw_open_diamond(draw, start_point)  # Symbol at source
+            self.draw_arrowhead(draw, start_point, end_point, arrow_type="diamond", size=10, filled=False)
         elif item["type"] in ["Inheritance", "Realization"]:
-            # Ensure the arrowhead is placed at the end_point (no offset or adjustment)
-            self.draw_arrowhead(draw, end_point, start_point, end_point, filled=False)  # Arrowhead at destination
+            self.draw_arrowhead(draw, end_point, start_point, arrow_type="triangle", size=10, filled=False)
 
     def adjust_endpoint(self, endpoint: Tuple[int, int], reference_point: Tuple[int, int], margin: int, towards_box: bool = True) -> Tuple[int, int]:
         """
@@ -326,51 +341,87 @@ class UMLToImageAdapter:
             points.append((x, y))
         return points
 
-    def draw_filled_diamond(self, draw, position):
-        """Draw a filled diamond for Composition."""
-        diamond_size = 10
+    def draw_arrowhead(self, draw, end_point, start_point, arrow_type="triangle", size=10, filled=False):
+        """
+        Draws an arrowhead or diamond (open/filled) at the end of a line.
+        
+        Args:
+            draw: The ImageDraw instance for drawing.
+            end_point: Tuple (x, y) where the arrowhead is to be drawn.
+            start_point: Tuple (x, y) to determine the angle of the arrowhead.
+            arrow_type: "triangle" or "diamond" for the shape.
+            size: The size of the shape.
+            filled: Whether to fill the shape (True for Composition).
+        """
+        dx, dy = end_point[0] - start_point[0], end_point[1] - start_point[1]
+        angle = math.atan2(dy, dx)
+
+        # Base of the shape for line connection
+        base_x = end_point[0] - size * math.cos(angle)
+        base_y = end_point[1] - size * math.sin(angle)
+        
+        # Draw the line connecting to the base
+        draw.line([start_point, (base_x, base_y)], fill="black", width=2)
+
+        if arrow_type == "triangle":
+            # Points of the triangle
+            point1 = (
+                end_point[0] - size * math.cos(angle + math.pi / 6),
+                end_point[1] - size * math.sin(angle + math.pi / 6),
+            )
+            point2 = (
+                end_point[0] - size * math.cos(angle - math.pi / 6),
+                end_point[1] - size * math.sin(angle - math.pi / 6),
+            )
+            # Draw triangle
+            draw.polygon([end_point, point1, point2], fill="black" if filled else None, outline="black")
+
+        elif arrow_type == "diamond":
+            # Diamond points
+            tip = (
+                end_point[0] + size * math.cos(angle),
+                end_point[1] + size * math.sin(angle),
+            )
+            left = (
+                end_point[0] - size * math.cos(angle + math.pi / 2) / 2,
+                end_point[1] - size * math.sin(angle + math.pi / 2) / 2,
+            )
+            right = (
+                end_point[0] - size * math.cos(angle - math.pi / 2) / 2,
+                end_point[1] - size * math.sin(angle - math.pi / 2) / 2,
+            )
+            back = (
+                end_point[0] - size * math.cos(angle),
+                end_point[1] - size * math.sin(angle),
+            )
+            # Draw diamond
+            points = [back, left, tip, right]
+            draw.polygon(points, fill="black" if filled else None, outline="black")
+
+    def draw_diamond(self, draw: ImageDraw.Draw, position: Tuple[int, int], filled: bool = False) -> None:
+        """
+        Draw a diamond shape at the specified position.
+        
+        :param draw: The ImageDraw object to draw on.
+        :param position: The center of the diamond.
+        :param filled: Whether the diamond is filled or open.
+        """
+        diamond_size = 10  # Adjust diamond size as needed
         x, y = position
-        draw.polygon([
-            (x - diamond_size, y),
-            (x, y - diamond_size),
-            (x + diamond_size, y),
-            (x, y + diamond_size)
-        ], fill="black")                    
-
-    def draw_open_diamond(self, draw, position):
-        """Draw an open diamond for Aggregation."""
-        diamond_size = 6
-        x, y = position
-        draw.polygon([
-            (x - diamond_size, y),
-            (x, y - diamond_size),
-            (x + diamond_size, y),
-            (x, y + diamond_size)
-        ], outline="black", fill=None)
-
-    def draw_arrowhead(self, draw: ImageDraw.Draw, position: Tuple[int, int], start: Tuple[int, int], end: Tuple[int, int], filled: bool = False) -> None:
-        """Draw an open or filled arrowhead (triangle) at the end of the line."""
-        arrow_size = 10  # Size of the arrowhead
-        # Calculate angle between the line defined by start and end points
-        angle = math.atan2(end[1] - start[1], end[0] - start[0])  # Direction of the line
-
-        # Position is where the arrowhead base will be drawn (at the end of the line)
-        x, y = end  # The base of the arrowhead should be at the line's end
-
-        # Calculate the left and right points of the arrowhead based on angle
-        left_point = (x - arrow_size * math.cos(angle - math.pi / 6),
-                    y - arrow_size * math.sin(angle - math.pi / 6))
-        right_point = (x - arrow_size * math.cos(angle + math.pi / 6),
-                    y - arrow_size * math.sin(angle + math.pi / 6))
-
-        # Adjust the tip of the arrowhead
+        
+        # Define the diamond vertices
+        points = [
+            (x - diamond_size, y),  # Left
+            (x, y - diamond_size),  # Top
+            (x + diamond_size, y),  # Right
+            (x, y + diamond_size)   # Bottom
+        ]
+        
         if filled:
-            # Draw the filled arrowhead
-            draw.polygon([position, left_point, right_point], fill="black")
+            draw.polygon(points, fill="black")
         else:
-            # Draw the open arrowhead
-            draw.polygon([position, left_point, right_point], outline="black", fill=None)
-            
+            draw.polygon(points, outline="black", fill=None)
+    
     def draw_dashed_line(self, draw, start, end, fill="black", width=2, dash_length=10):
         """Draw a dashed line for Realization."""
         total_length = math.hypot(end[0] - start[0], end[1] - start[1])

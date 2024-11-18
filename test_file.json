@@ -20,7 +20,16 @@
                 {
                     "name": "drive",
                     "return_type": "void",
-                    "params": []
+                    "params": [
+                        {
+                            "name": "test",
+                            "type": "int"
+                        },
+                        {
+                            "name": "test1",
+                            "type": "double"
+                        }
+                    ]
                 },
                 {
                     "name": "stop",
@@ -29,7 +38,7 @@
                 }
             ],
             "position": {
-                "x": -328.0,
+                "x": -329.0,
                 "y": -178.0
             }
         },
@@ -87,11 +96,6 @@
             "source": "testing",
             "destination": "Engine",
             "type": "Realization"
-        },
-        {
-            "source": "Car",
-            "destination": "Car",
-            "type": "Aggregation"
         }
     ]
 }
