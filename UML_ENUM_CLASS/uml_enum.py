@@ -7,6 +7,7 @@ from enum import Enum
 ### ENUM VALUES FOR THE INTERFACE ###
 
 class InterfaceOptions(Enum):
+    MOVE_UNIT = "move_unit" # This is created  for factory command
     ADD_CLASS = "add_class"
     DELETE_CLASS = "delete_class"
     RENAME_CLASS = "rename_class"

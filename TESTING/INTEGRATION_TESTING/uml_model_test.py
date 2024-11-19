@@ -1745,7 +1745,7 @@ def test_change_data_type_parameter(uml_model):
         
         # Verify that `_edit_parameter_type` was called with the correct arguments
         assert result is True
-        mock_edit_param.assert_called_once_with("TestClass", "1", "param1", "string")
+        mock_edit_param.assert_called_once_with("TestClass", "1", "param1", "string", is_undo_or_redo=False)
 
 def test_change_data_type_invalid_method_index(uml_model):
     # Mock to simulate an out-of-range method index
