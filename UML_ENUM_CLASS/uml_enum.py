@@ -41,7 +41,7 @@ class InterfaceOptions(Enum):
     SORT = "sort"
     HELP = "help"
     EXIT = "exit"
-    SAVE_IMAGE = "save_image"    
+    EXPORT = "export"    
     
 class RelationshipType(Enum):
     """

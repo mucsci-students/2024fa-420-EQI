@@ -293,7 +293,7 @@ class UMLController:
         #######################################################
         # Handle adapter json to image
 
-        elif command == InterfaceOptions.SAVE_IMAGE.value and first_param:
+        elif command == InterfaceOptions.EXPORT.value and first_param:
             if not first_param.lower().endswith(".png"):
                 first_param += ".png"
                 
