@@ -146,7 +146,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
             For example, ('above', 'right') means the destination is above and to the right of the source.
         """
         vertical_direction = 'below' if source_center.y() > dest_center.y() else 'above'
-        horizontal_direction = 'right' if dest_center.x() > source_center.x() else 'left'
+        horizontal_direction = 'right' if source_center.x() > dest_center.x() else 'left'
         return (vertical_direction, horizontal_direction)
    
     
@@ -205,37 +205,47 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
 
             # Output the intersection points for debugging
             if vertical_intersections or horizontal_intersections:
-                # for point in vertical_intersections:
-                #     if point[1] >= item.connection_points_list["left"].scenePos().y():
-                #         first_horizontal_offset = QtCore.QPointF(point[0] - offset , point[1])
-                #         second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, top_left.y() - (offset + item.boundingRect().height()))
-                #         third_horizontal_offset = QtCore.QPointF(bottom_right.x() + offset, bottom_right.y() + offset)
-                #         fourth_horizontal_offset = QtCore.QPointF(point[0], point[1] + offset)
-                #     else:
-                #         first_horizontal_offset = QtCore.QPointF(point[0], point[1] - (offset + item.boundingRect().height()))
-                #         second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, top_left.y() - offset)
-                #         third_horizontal_offset = QtCore.QPointF(bottom_left.x() - offset, bottom_left.y() + offset)
-                #         fourth_horizontal_offset = QtCore.QPointF(point[0], point[1] + offset)
-                        
-                #     new_path = QtGui.QPainterPath()
-                #     # Adjust the path to route around the obstacle
-                #     new_path.moveTo(elements[0].x, elements[0].y)  # Start point
-
-                #     # Add waypoints to reroute around the obstacle
-                #     new_path.lineTo(first_horizontal_offset)
-                #     new_path.lineTo(second_horizontal_offset)
-                #     new_path.lineTo(third_horizontal_offset)
-                #     new_path.lineTo(fourth_horizontal_offset)
-                #     new_path.lineTo(elements[-1].x, elements[-1].y)  # End point
-                    
-                #     # Update the path
-                #     self.setPath(new_path)
-                    
                 # Calculate center points of source and destination for direction determination
                 source_center = self.source_class.scenePos() + self.source_class.boundingRect().center()
                 dest_center = self.dest_class.scenePos() + self.dest_class.boundingRect().center()
                 vertical_dir, horizontal_dir = self.get_relative_direction(source_center, dest_center)
                 
+                for point in vertical_intersections:
+                    new_path = QtGui.QPainterPath()
+                    if point[1] >= item.connection_points_list["left"].scenePos().y():
+                        first_horizontal_offset = QtCore.QPointF(point[0] - offset, point[1])
+                        second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, bottom_left.y() + offset)
+                        third_horizontal_offset = QtCore.QPointF(top_right.x() + offset, bottom_right.y() + offset)
+                        fourth_horizontal_offset = QtCore.QPointF(point[0] + (offset + item.boundingRect().width()), point[1])
+                    else:
+                        first_horizontal_offset = QtCore.QPointF(point[0] - offset, point[1])
+                        second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, top_left.y() - offset)
+                        third_horizontal_offset = QtCore.QPointF(top_right.x() + offset, top_right.y() - offset)
+                        fourth_horizontal_offset = QtCore.QPointF(point[0] + (offset + item.boundingRect().width()), point[1])
+                        
+                    if horizontal_dir == "left":
+                        # Adjust the path to route around the obstacle
+                        new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        # Add waypoints to reroute around the obstacle
+                        new_path.lineTo(first_horizontal_offset)
+                        new_path.lineTo(second_horizontal_offset)
+                        new_path.lineTo(third_horizontal_offset)
+                        new_path.lineTo(fourth_horizontal_offset)
+                        new_path.lineTo(elements[-1].x, elements[-1].y)  # End point
+                    else:
+                        # Adjust the path to route around the obstacle
+                        new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        # Add waypoints to reroute around the obstacle
+                        new_path.lineTo(fourth_horizontal_offset)
+                        new_path.lineTo(third_horizontal_offset)
+                        new_path.lineTo(second_horizontal_offset)
+                        new_path.lineTo(first_horizontal_offset)
+                        new_path.lineTo(elements[-1].x, elements[-1].y)  # End point
+                    
+                    # Update the path
+                    self.setPath(new_path)
+                    print(f"({point[0]}, {point[1]})")
+                    
                 for point in horizontal_intersections:
                     new_path = QtGui.QPainterPath()
                     if point[0] >= item.connection_points_list["top"].scenePos().x():
