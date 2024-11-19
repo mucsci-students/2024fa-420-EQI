@@ -96,6 +96,11 @@
             "source": "testing",
             "destination": "Engine",
             "type": "Realization"
+        },
+        {
+            "source": "Car",
+            "destination": "Car",
+            "type": "Composition"
         }
     ]
 }

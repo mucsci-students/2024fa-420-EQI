@@ -171,12 +171,13 @@ class UMLToImageAdapter:
         # Draw relationship-specific symbols
         if relationship_type in ["Composition", "Aggregation"]:
             # Determine if the diamond is filled or open
+            loop_start = (x + 120, y - 10)
             filled = relationship_type == "Composition"
             self.draw_diamond(draw, position=loop_start, filled=filled)  # Use a unified diamond-drawing function
         elif relationship_type in ["Inheritance", "Realization"]:
             # Draw the arrowhead at the end of the loop
             filled = relationship_type == "Inheritance"  # Filled for Inheritance, open for Realization
-            self.draw_arrowhead(draw, base=loop_end, start=loop_control2, end=loop_end, filled=filled)
+            self.draw_arrowhead(draw, start_point=loop_control2, end_point=loop_end, arrow_type="triangle", filled=filled)
 
     def draw_relationship(self, draw: ImageDraw.Draw, visualization_data: List[Dict[str, Dict[str, int]]], item: Dict[str, str], offset_x: int, offset_y: int) -> None:
         """Draw relationships between UML classes with aligned symbols at endpoints."""
@@ -355,13 +356,6 @@ class UMLToImageAdapter:
         """
         dx, dy = end_point[0] - start_point[0], end_point[1] - start_point[1]
         angle = math.atan2(dy, dx)
-
-        # Base of the shape for line connection
-        base_x = end_point[0] - size * math.cos(angle)
-        base_y = end_point[1] - size * math.sin(angle)
-        
-        # Draw the line connecting to the base
-        draw.line([start_point, (base_x, base_y)], fill="black", width=2)
 
         if arrow_type == "triangle":
             # Points of the triangle
