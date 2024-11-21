@@ -110,9 +110,9 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         endDir = side_directions.get(endSide, QtCore.QPointF(0, 0))
 
         # Move away from the boxes
-        offset = 10
-        startOffsetPoint = startPoint + startDir * offset
-        endOffsetPoint = endPoint + endDir * offset
+        line_offset = 10
+        startOffsetPoint = startPoint + startDir * line_offset
+        endOffsetPoint = endPoint + endDir * line_offset
 
         # Create an L-shaped path
         if startSide in ['left', 'right']:
