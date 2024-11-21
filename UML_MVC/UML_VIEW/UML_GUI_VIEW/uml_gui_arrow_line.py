@@ -129,7 +129,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         
         self.setPath(path)
         
-        self.reroute_path_if_collide(path, startOffsetPoint, endOffsetPoint, endPoint)
+        self.reroute_path_if_collide(path, startOffsetPoint, endPoint)
 
         # Store lines for angle calculations
         self.arrow_line = QtCore.QLineF(endOffsetPoint, endPoint)
@@ -149,7 +149,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         return (vertical_direction, horizontal_direction)
    
     
-    def reroute_path_if_collide(self, path, startOffsetPoint, endOffsetPoint, endPoint):
+    def reroute_path_if_collide(self, path, startOffsetPoint, endPoint):
         """
         Adjusts the given path to wrap around obstacles if it collides with any ClassBox items in the scene (excluding source and destination).
         """
@@ -163,11 +163,15 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
         new_path.lineTo(startOffsetPoint)
         
+        is_collision = False
+        
         for item in self.scene().items():
             if not isinstance(item, ClassBox) or item in [self.source_class, self.dest_class]:
                 continue
             if not path.intersects(item.sceneBoundingRect()):
                 continue
+            
+            is_collision = True
             
             obstacle_rect = item.sceneBoundingRect()
 
@@ -266,10 +270,11 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         new_path.lineTo(first_vertical_offset)
                         break
                         
+        if is_collision:
             # Update the path
             new_path.lineTo(endPoint)
             self.setPath(new_path)
-
+            
     def calculate_self_arrow(self):
         """
         Calculate the path for a self-referential arrow (loop) on top of the class box.
