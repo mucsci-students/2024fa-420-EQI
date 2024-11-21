@@ -56,9 +56,6 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
             # Now compute the path with horizontal and vertical segments
             self.calculate_arrow_path(startPoint, endPoint, startSide, endSide)
             
-            # Adjust the path if it collides with any obstacles
-            self.reroute_path_if_collide(self.path())
-
     def calculate_closest_points(self, source_class, dest_class):
         """
         Calculate the closest connection points between the two boxes.
@@ -131,6 +128,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         path.lineTo(endPoint)
         
         self.setPath(path)
+        
+        self.reroute_path_if_collide(path, intermediatePoint, startOffsetPoint)
 
         # Store lines for angle calculations
         self.arrow_line = QtCore.QLineF(endOffsetPoint, endPoint)
@@ -150,7 +149,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         return (vertical_direction, horizontal_direction)
    
     
-    def reroute_path_if_collide(self, path):
+    def reroute_path_if_collide(self, path, intermediatePoint, startOffsetPoint):
         """
         Adjusts the given path to wrap around obstacles if it collides with any ClassBox items in the scene (excluding source and destination).
         """
@@ -226,20 +225,26 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                     if horizontal_dir == "left":
                         # Adjust the path to route around the obstacle
                         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        new_path.lineTo(startOffsetPoint)
                         # Add waypoints to reroute around the obstacle
+                        new_path.lineTo(intermediatePoint)
                         new_path.lineTo(first_horizontal_offset)
                         new_path.lineTo(second_horizontal_offset)
                         new_path.lineTo(third_horizontal_offset)
                         new_path.lineTo(fourth_horizontal_offset)
+                        new_path.lineTo(intermediatePoint)
                         new_path.lineTo(elements[-1].x, elements[-1].y)  # End point
                     else:
                         # Adjust the path to route around the obstacle
                         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        new_path.lineTo(startOffsetPoint)
                         # Add waypoints to reroute around the obstacle
+                        new_path.lineTo(intermediatePoint)
                         new_path.lineTo(fourth_horizontal_offset)
                         new_path.lineTo(third_horizontal_offset)
                         new_path.lineTo(second_horizontal_offset)
                         new_path.lineTo(first_horizontal_offset)
+                        new_path.lineTo(intermediatePoint)
                         new_path.lineTo(elements[-1].x, elements[-1].y)  # End point
                     
                     # Update the path
@@ -262,6 +267,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                     if vertical_dir == "above":
                         # Adjust the path to route around the obstacle
                         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        new_path.lineTo(startOffsetPoint)
+                        new_path.lineTo(intermediatePoint)
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(first_vertical_offset)
                         new_path.lineTo(second_vertical_offset)
@@ -271,6 +278,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                     else:
                         # Adjust the path to route around the obstacle
                         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
+                        new_path.lineTo(startOffsetPoint)
+                        new_path.lineTo(intermediatePoint)
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(fourth_vertical_offset)
                         new_path.lineTo(third_vertical_offset)
