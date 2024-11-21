@@ -1212,7 +1212,7 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
         if full_path:
             file_base_name = os.path.basename(full_path)
             file_name_only = os.path.splitext(file_base_name)[0]
-            self.interface.save_gui(file_name_only, full_path)
+            self.interface.save_gui(file_name_only, full_path, self.class_name_list)
 
     def save_gui(self):
         """
