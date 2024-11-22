@@ -1457,6 +1457,12 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
         # Call the parent class's mouseMoveEvent to ensure default behavior
         super().mouseMoveEvent(event)
+        
+    def update_all_arrow_line(self):
+        for item in self.scene().items():
+            if isinstance(item, UMLClassBox):
+                item.update_arrow_lines()
+
 
     def mouseReleaseEvent(self, event):
         """
@@ -1491,6 +1497,8 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
                     command_name="move_unit", old_x=old_x, old_y=old_y, new_x=new_x, new_y=new_y
                 )
                 self.input_handler.execute_command(move_unit_command)
+                
+        self.update_all_arrow_line()
 
         # Call the parent class's mouseReleaseEvent to ensure default behavior
         super().mouseReleaseEvent(event)

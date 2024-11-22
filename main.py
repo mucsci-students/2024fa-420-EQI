@@ -31,7 +31,7 @@ def main():
         # Show GUI
         gui_view.show()
 
-        # Start GUI event loop
+        # Start GUI event loop  
         sys.exit(app.exec_())
         
         
