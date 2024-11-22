@@ -41,7 +41,8 @@ class InterfaceOptions(Enum):
     NEW = "new"
     SORT = "sort"
     HELP = "help"
-    EXIT = "exit"    
+    EXIT = "exit"
+    EXPORT = "export"    
     
 class RelationshipType(Enum):
     """
