@@ -5,8 +5,8 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -541.0,
-                "y": -552.0
+                "x": -619.0,
+                "y": -525.0
             }
         },
         {
@@ -14,8 +14,8 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -551.0,
-                "y": 361.0
+                "x": -621.0,
+                "y": 323.0
             }
         },
         {
@@ -23,8 +23,8 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -519.0,
-                "y": 187.0
+                "x": 0.0,
+                "y": 0.0
             }
         },
         {
@@ -32,8 +32,8 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -563.0,
-                "y": 12.0
+                "x": 0.0,
+                "y": 0.0
             }
         },
         {
@@ -41,8 +41,8 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -529.0,
-                "y": -170.0
+                "x": 0.0,
+                "y": 0.0
             }
         },
         {
@@ -50,8 +50,53 @@
             "fields": [],
             "methods": [],
             "position": {
-                "x": -549.0,
-                "y": -334.0
+                "x": 0.0,
+                "y": 0.0
+            }
+        },
+        {
+            "name": "z",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -386.0,
+                "y": -214.0
+            }
+        },
+        {
+            "name": "x",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 0.0,
+                "y": 0.0
+            }
+        },
+        {
+            "name": "v",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 540.0,
+                "y": -210.0
+            }
+        },
+        {
+            "name": "n",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 0.0,
+                "y": 0.0
+            }
+        },
+        {
+            "name": "m",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": 0.0,
+                "y": 0.0
             }
         }
     ],
@@ -59,6 +104,11 @@
         {
             "source": "a",
             "destination": "b",
+            "type": "Aggregation"
+        },
+        {
+            "source": "z",
+            "destination": "v",
             "type": "Aggregation"
         }
     ]

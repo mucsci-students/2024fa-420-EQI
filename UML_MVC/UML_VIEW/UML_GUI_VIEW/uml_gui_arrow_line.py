@@ -229,13 +229,13 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                 vertical_dir, horizontal_dir = self.get_relative_direction(source_center, dest_center)
                 
                 for point in vertical_intersections:
-                    if point[1] >= item.connection_points_list["left"].scenePos().y():
-                        first_horizontal_offset = QtCore.QPointF(point[0] - (offset + item.boundingRect().width()), point[1])
+                    if point[1] >= box.connection_points_list["left"].scenePos().y():
+                        first_horizontal_offset = QtCore.QPointF(point[0] - (offset + box.boundingRect().width()), point[1])
                         second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, bottom_left.y() + offset)
                         third_horizontal_offset = QtCore.QPointF(top_right.x() + offset, bottom_right.y() + offset)
                         fourth_horizontal_offset = QtCore.QPointF(point[0] + offset, point[1])
                     else:
-                        first_horizontal_offset = QtCore.QPointF(point[0] - (offset + item.boundingRect().width()), point[1])
+                        first_horizontal_offset = QtCore.QPointF(point[0] - (offset + box.boundingRect().width()), point[1])
                         second_horizontal_offset = QtCore.QPointF(top_left.x() - offset, top_left.y() - offset)
                         third_horizontal_offset = QtCore.QPointF(top_right.x() + offset, top_right.y() - offset)
                         fourth_horizontal_offset = QtCore.QPointF(point[0] + offset, point[1])
@@ -256,16 +256,16 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         break
 
                 for point in horizontal_intersections:
-                    if point[0] >= item.connection_points_list["top"].scenePos().x():
+                    if point[0] >= box.connection_points_list["top"].scenePos().x():
                         first_vertical_offset = QtCore.QPointF(point[0], point[1] - offset)
                         second_vertical_offset = QtCore.QPointF(top_right.x() + offset, top_right.y() - offset)
                         third_vertical_offset = QtCore.QPointF(bottom_right.x() + offset, bottom_right.y() + offset)
-                        fourth_vertical_offset = QtCore.QPointF(point[0], point[1] + (offset + item.boundingRect().height()))      
+                        fourth_vertical_offset = QtCore.QPointF(point[0], point[1] + (offset + box.boundingRect().height()))      
                     else:
                         first_vertical_offset = QtCore.QPointF(point[0], point[1] - offset)
                         second_vertical_offset = QtCore.QPointF(top_left.x() - offset, top_left.y() - offset)
                         third_vertical_offset = QtCore.QPointF(bottom_left.x() - offset, bottom_left.y() + offset)
-                        fourth_vertical_offset = QtCore.QPointF(point[0], point[1] + (offset + item.boundingRect().height()))   
+                        fourth_vertical_offset = QtCore.QPointF(point[0], point[1] + (offset + box.boundingRect().height()))   
 
                     if vertical_dir == "above":
                         # Add waypoints to reroute around the obstacle
