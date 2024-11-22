@@ -248,6 +248,7 @@ class UMLView(Observer):
             ["delete_saved", "Delete a saved file"],
             ["clear_data", "Clear all data from current storage"],
             ["new", "Open new file"],
+            ["export", "export <file_name> save to png"],
 
             ["[bold yellow]Other Commands[/bold yellow]", ""],
             # ["sort", "Sort the class list alphabetically"],

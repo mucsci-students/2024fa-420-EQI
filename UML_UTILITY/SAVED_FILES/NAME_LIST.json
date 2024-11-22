@@ -1,5 +1,11 @@
 [
     {
         "test_file": "off"
+    },
+    {
+        "showcase": "off"
+    },
+    {
+        "rel_test": "off"
     }
 ]
