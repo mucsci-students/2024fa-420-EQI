@@ -165,15 +165,27 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         
         is_collision = False
         
+        box_list = []
+        
         for item in self.scene().items():
             if not isinstance(item, ClassBox) or item in [self.source_class, self.dest_class]:
                 continue
             if not path.intersects(item.sceneBoundingRect()):
                 continue
             
+            box_list.append(item)
+            
+        box_list.sort(
+            key=lambda box: QtCore.QLineF(
+                QtCore.QPointF(elements[0].x, elements[0].y),
+                box.sceneBoundingRect().center()
+            ).length()
+        )
+                
+        for box in box_list:
             is_collision = True
             
-            obstacle_rect = item.sceneBoundingRect()
+            obstacle_rect = box.sceneBoundingRect()
 
             # Get the corners of the obstacle rectangle in scene coordinates
             top_left = obstacle_rect.topLeft()
