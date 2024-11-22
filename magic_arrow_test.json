@@ -1,0 +1,65 @@
+{
+    "classes": [
+        {
+            "name": "a",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -541.0,
+                "y": -552.0
+            }
+        },
+        {
+            "name": "b",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -551.0,
+                "y": 361.0
+            }
+        },
+        {
+            "name": "c",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -519.0,
+                "y": 187.0
+            }
+        },
+        {
+            "name": "d",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -563.0,
+                "y": 12.0
+            }
+        },
+        {
+            "name": "h",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -529.0,
+                "y": -170.0
+            }
+        },
+        {
+            "name": "j",
+            "fields": [],
+            "methods": [],
+            "position": {
+                "x": -549.0,
+                "y": -334.0
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "source": "a",
+            "destination": "b",
+            "type": "Aggregation"
+        }
+    ]
+}
