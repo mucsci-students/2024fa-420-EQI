@@ -3,7 +3,7 @@
         "test_file": "off"
     },
     {
-        "magic_arrow_test": "off"
+        "magic_arrow_test": "on"
     },
     {
         "new_test": "off"
