@@ -17,7 +17,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         self.relationship_type = relationship_type
         self.arrow_size = 10  # Size of the arrowhead
         self.arrow_type = relationship_type
-        self.arrow_line = None
+        self.arrow_end_line = None
         self.arrow_start_line = None
 
         # Detect self-referential relationship
@@ -132,7 +132,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         self.reroute_path_if_collide(path, startOffsetPoint, endPoint)
 
         # Store lines for angle calculations
-        self.arrow_line = QtCore.QLineF(endOffsetPoint, endPoint)
+        self.arrow_end_line = QtCore.QLineF(endOffsetPoint, endPoint)
         self.arrow_start_line = QtCore.QLineF(startOffsetPoint, startPoint)
         
 
@@ -323,7 +323,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         self.setPath(path)
 
         # Store line for angle calculation
-        self.arrow_line = QtCore.QLineF(control_point2, end_point)
+        self.arrow_end_line = QtCore.QLineF(control_point2, end_point)
 
     def paint(self, painter, option, widget=None):
         """
@@ -358,7 +358,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
             painter.drawPath(self.path())
 
             # Calculate angle for the arrowhead at the end
-            line = self.arrow_line
+            line = self.arrow_end_line
             angle = math.atan2(-line.dy(), line.dx())
 
             # Adjust based on the relationship type
