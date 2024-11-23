@@ -49,12 +49,12 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
             self.calculate_self_arrow()
         else:
             # Calculate the best connection points and path
-            startPoint, endPoint, startSide, endSide = self.calculate_closest_points(self.source_class, self.dest_class)
-            if startPoint is None or endPoint is None:
+            start_point, end_point, start_side, end_side = self.calculate_closest_points(self.source_class, self.dest_class)
+            if start_point is None or end_point is None:
                 return  # Prevent errors if points are not found
 
             # Now compute the path with horizontal and vertical segments
-            self.calculate_arrow_path(startPoint, endPoint, startSide, endSide)
+            self.calculate_arrow_path(start_point, end_point, start_side, end_side)
             
     def calculate_closest_points(self, source_class, dest_class):
         """
@@ -63,22 +63,22 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         Returns:
         - (QPointF, QPointF, str, str): Closest points on start and end boxes and their sides.
         """
-        startPoints = source_class.connection_points_list
-        endPoints = dest_class.connection_points_list
+        start_points = source_class.connection_points_list
+        end_points = dest_class.connection_points_list
 
-        minDistance = float('inf')
-        closestStart = closestEnd = None
-        startSide = endSide = None
+        min_distance = float('inf')
+        closest_start = closest_end = None
+        start_side = end_side = None
 
         # Loop over each connection point in the source and destination classes
-        for sp_name, sp_item in startPoints.items():
+        for sp_name, sp_item in start_points.items():
             # Get the scene position of the start point
             if isinstance(sp_item, QtWidgets.QGraphicsItem):
                 sp = sp_item.scenePos()
             else:
                 sp = self.source_class.scenePos() + sp_item
 
-            for ep_name, ep_item in endPoints.items():
+            for ep_name, ep_item in end_points.items():
                 # Get the scene position of the end point
                 if isinstance(ep_item, QtWidgets.QGraphicsItem):
                     ep = ep_item.scenePos()
@@ -86,16 +86,16 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                     ep = self.dest_class.scenePos() + ep_item
 
                 distance = QtCore.QLineF(sp, ep).length()
-                if distance < minDistance:
-                    minDistance = distance
-                    closestStart, closestEnd = sp, ep
-                    startSide, endSide = sp_name, ep_name
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_start, closest_end = sp, ep
+                    start_side, end_side = sp_name, ep_name
 
-        return closestStart, closestEnd, startSide, endSide
+        return closest_start, closest_end, start_side, end_side
 
-    def calculate_arrow_path(self, startPoint, endPoint, startSide, endSide):
+    def calculate_arrow_path(self, start_point, end_point, start_side, end_side):
         path = QtGui.QPainterPath()
-        path.moveTo(startPoint)
+        path.moveTo(start_point)
 
         # Decide directions based on sides
         side_directions = {
@@ -106,34 +106,34 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         }
 
         # Get direction vectors
-        startDir = side_directions.get(startSide, QtCore.QPointF(0, 0))
-        endDir = side_directions.get(endSide, QtCore.QPointF(0, 0))
+        start_direction = side_directions.get(start_side, QtCore.QPointF(0, 0))
+        end_direction = side_directions.get(end_side, QtCore.QPointF(0, 0))
 
         # Move away from the boxes
         line_offset = 10
-        startOffsetPoint = startPoint + startDir * line_offset
-        endOffsetPoint = endPoint + endDir * line_offset
+        start_offset_point = start_point + start_direction * line_offset
+        end_offset_point = end_point + end_direction * line_offset
 
         # Create an L-shaped path
-        if startSide in ['left', 'right']:
+        if start_side in ['left', 'right']:
             # Horizontal then vertical
-            intermediatePoint = QtCore.QPointF(startOffsetPoint.x(), endOffsetPoint.y())
+            intermediate_point = QtCore.QPointF(start_offset_point.x(), end_offset_point.y())
         else:
             # Vertical then horizontal
-            intermediatePoint = QtCore.QPointF(endOffsetPoint.x(), startOffsetPoint.y())
+            intermediate_point = QtCore.QPointF(end_offset_point.x(), start_offset_point.y())
 
-        path.lineTo(startOffsetPoint)
-        path.lineTo(intermediatePoint)
-        path.lineTo(endOffsetPoint)
-        path.lineTo(endPoint)
+        path.lineTo(start_offset_point)
+        path.lineTo(intermediate_point)
+        path.lineTo(end_offset_point)
+        path.lineTo(end_point)
         
         self.setPath(path)
         
-        self.reroute_path_if_collide(path, startOffsetPoint, endPoint)
+        self.reroute_path_if_collide(path, start_offset_point, end_point)
 
         # Store lines for angle calculations
-        self.arrow_end_line = QtCore.QLineF(endOffsetPoint, endPoint)
-        self.arrow_start_line = QtCore.QLineF(startOffsetPoint, startPoint)
+        self.arrow_end_line = QtCore.QLineF(end_offset_point, end_point)
+        self.arrow_start_line = QtCore.QLineF(start_offset_point, start_point)
         
 
     def get_relative_direction(self, source_center, dest_center):
@@ -149,7 +149,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         return (vertical_direction, horizontal_direction)
    
     
-    def reroute_path_if_collide(self, path, startOffsetPoint, endPoint):
+    def reroute_path_if_collide(self, path, start_offset_point, end_point):
         """
         Adjusts the given path to wrap around obstacles if it collides with any ClassBox items in the scene (excluding source and destination).
         """
@@ -161,7 +161,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         elements = [path.elementAt(i) for i in range(path.elementCount())]
         new_path = QtGui.QPainterPath()
         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
-        new_path.lineTo(startOffsetPoint)
+        new_path.lineTo(start_offset_point)
         
         is_collision = False
         
@@ -284,7 +284,7 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         
         if is_collision:
             # Update the path
-            new_path.lineTo(endPoint)
+            new_path.lineTo(end_point)
             self.setPath(new_path)
             
     def calculate_self_arrow(self):
