@@ -163,6 +163,8 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
         new_path.moveTo(elements[0].x, elements[0].y)  # Start point
         new_path.lineTo(start_offset_point)
         
+        is_intermediate_point_drawn = False
+        
         is_collision = False
         
         box_list = []
@@ -241,6 +243,10 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         fourth_horizontal_offset = QtCore.QPointF(point[0] + offset, point[1])
                         
                     if horizontal_dir == "left":
+                        if not is_intermediate_point_drawn:
+                            new_intermediate_point = QtCore.QPointF(start_offset_point.x(), first_horizontal_offset.y())
+                            new_path.lineTo(new_intermediate_point)
+                            is_intermediate_point_drawn = True
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(first_horizontal_offset)
                         new_path.lineTo(second_horizontal_offset)
@@ -248,6 +254,10 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         new_path.lineTo(fourth_horizontal_offset)
                         break
                     else:
+                        if not is_intermediate_point_drawn:
+                            new_intermediate_point = QtCore.QPointF(start_offset_point.x(), fourth_horizontal_offset.y())
+                            new_path.lineTo(new_intermediate_point)
+                            is_intermediate_point_drawn = True
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(fourth_horizontal_offset)
                         new_path.lineTo(third_horizontal_offset)
@@ -268,6 +278,10 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         fourth_vertical_offset = QtCore.QPointF(point[0], point[1] + (offset + box.boundingRect().height()))   
 
                     if vertical_dir == "above":
+                        if not is_intermediate_point_drawn:
+                            new_intermediate_point = QtCore.QPointF(first_vertical_offset.x(), start_offset_point.y())
+                            new_path.lineTo(new_intermediate_point)
+                            is_intermediate_point_drawn = True
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(first_vertical_offset)
                         new_path.lineTo(second_vertical_offset)
@@ -275,6 +289,10 @@ class UMLArrow(QtWidgets.QGraphicsPathItem):
                         new_path.lineTo(fourth_vertical_offset)
                         break
                     else:
+                        if not is_intermediate_point_drawn:
+                            new_intermediate_point = QtCore.QPointF(fourth_vertical_offset.x(), start_offset_point.y())
+                            new_path.lineTo(new_intermediate_point)
+                            is_intermediate_point_drawn = True
                         # Add waypoints to reroute around the obstacle
                         new_path.lineTo(fourth_vertical_offset)
                         new_path.lineTo(third_vertical_offset)
