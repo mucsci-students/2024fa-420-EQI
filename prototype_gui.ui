@@ -36,14 +36,14 @@
    <addaction name="Open"/>
    <addaction name="Save"/>
    <addaction name="SaveAs"/>
+   <addaction name="export_pdf"/>
+   <addaction name="export_png"/>
    <addaction name="separator"/>
    <addaction name="Undo"/>
    <addaction name="Redo"/>
    <addaction name="separator"/>
    <addaction name="toggle_mode"/>
    <addaction name="Help"/>
-   <addaction name="export_pdf"/>
-   <addaction name="export_png"/>
   </widget>
   <action name="actionSave">
    <property name="text">
