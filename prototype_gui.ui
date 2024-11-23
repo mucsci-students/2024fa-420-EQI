@@ -162,143 +162,6 @@
     <string>Help Me</string>
    </property>
   </action>
-  <action name="Copy">
-   <property name="text">
-    <string>Copy</string>
-   </property>
-   <property name="statusTip">
-    <string>Copy data</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
-   </property>
-  </action>
-  <action name="Paste">
-   <property name="text">
-    <string>Paste</string>
-   </property>
-   <property name="statusTip">
-    <string>Paste data</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V</string>
-   </property>
-  </action>
-  <action name="add_class">
-   <property name="text">
-    <string>Add Class</string>
-   </property>
-   <property name="font">
-    <font>
-     <family>MV Boli</family>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
-   <property name="shortcut">
-    <string>Shift+N</string>
-   </property>
-  </action>
-  <action name="toggle_grid">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Toggle Grid</string>
-   </property>
-   <property name="font">
-    <font>
-     <family>MV Boli</family>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
-  </action>
-  <action name="delete_class">
-   <property name="text">
-    <string>Delete Class</string>
-   </property>
-   <property name="font">
-    <font>
-     <family>MV Boli</family>
-     <pointsize>14</pointsize>
-    </font>
-   </property>
-   <property name="shortcut">
-    <string>Del</string>
-   </property>
-  </action>
-  <action name="rename_class">
-   <property name="text">
-    <string>Rename Class</string>
-   </property>
-  </action>
-  <action name="add_field">
-   <property name="text">
-    <string>Add Field</string>
-   </property>
-  </action>
-  <action name="delete_field">
-   <property name="text">
-    <string>Delete Field</string>
-   </property>
-  </action>
-  <action name="rename_field">
-   <property name="text">
-    <string>Rename Field</string>
-   </property>
-  </action>
-  <action name="add_method">
-   <property name="text">
-    <string>Add Method</string>
-   </property>
-  </action>
-  <action name="delete_method">
-   <property name="text">
-    <string>Delete Method</string>
-   </property>
-  </action>
-  <action name="rename_method">
-   <property name="text">
-    <string>Rename Method</string>
-   </property>
-  </action>
-  <action name="add_param">
-   <property name="text">
-    <string>Add Parameter</string>
-   </property>
-  </action>
-  <action name="delete_param">
-   <property name="text">
-    <string>Delete Parameter</string>
-   </property>
-  </action>
-  <action name="rename_param">
-   <property name="text">
-    <string>Rename Parameter</string>
-   </property>
-  </action>
-  <action name="replace_param">
-   <property name="text">
-    <string>Replace Parameter</string>
-   </property>
-  </action>
-  <action name="add_rel">
-   <property name="text">
-    <string>Add Relationship</string>
-   </property>
-  </action>
-  <action name="delete_rel">
-   <property name="text">
-    <string>Delete Relationship</string>
-   </property>
-  </action>
-  <action name="change_type">
-   <property name="text">
-    <string>Change Relationship Type</string>
-   </property>
-  </action>
   <action name="Help">
    <property name="icon">
     <iconset>
@@ -330,6 +193,143 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="toggle_grid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle Grid</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="add_class">
+   <property name="text">
+    <string>Add Class</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Shift+N</string>
+   </property>
+  </action>
+  <action name="Paste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+   <property name="statusTip">
+    <string>Paste data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="Copy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="change_type">
+   <property name="text">
+    <string>Change Relationship Type</string>
+   </property>
+  </action>
+  <action name="replace_param">
+   <property name="text">
+    <string>Replace Parameter</string>
+   </property>
+  </action>
+  <action name="delete_param">
+   <property name="text">
+    <string>Delete Parameter</string>
+   </property>
+  </action>
+  <action name="rename_method">
+   <property name="text">
+    <string>Rename Method</string>
+   </property>
+  </action>
+  <action name="add_method">
+   <property name="text">
+    <string>Add Method</string>
+   </property>
+  </action>
+  <action name="delete_field">
+   <property name="text">
+    <string>Delete Field</string>
+   </property>
+  </action>
+  <action name="rename_class">
+   <property name="text">
+    <string>Rename Class</string>
+   </property>
+  </action>
+  <action name="delete_class">
+   <property name="text">
+    <string>Delete Class</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Del</string>
+   </property>
+  </action>
+  <action name="add_field">
+   <property name="text">
+    <string>Add Field</string>
+   </property>
+  </action>
+  <action name="delete_method">
+   <property name="text">
+    <string>Delete Method</string>
+   </property>
+  </action>
+  <action name="rename_field">
+   <property name="text">
+    <string>Rename Field</string>
+   </property>
+  </action>
+  <action name="add_param">
+   <property name="text">
+    <string>Add Parameter</string>
+   </property>
+  </action>
+  <action name="rename_param">
+   <property name="text">
+    <string>Rename Parameter</string>
+   </property>
+  </action>
+  <action name="add_rel">
+   <property name="text">
+    <string>Add Relationship</string>
+   </property>
+  </action>
+  <action name="delete_rel">
+   <property name="text">
+    <string>Delete Relationship</string>
    </property>
   </action>
  </widget>
