@@ -1,5 +1,5 @@
 import os
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui, QtCore, QtPrintSupport
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 from UML_ENUM_CLASS.uml_enum import RelationshipType
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_custom_dialog import CustomInputDialog as Dialog
@@ -1519,6 +1519,102 @@ class UMLGraphicsView(QtWidgets.QGraphicsView):
 
     #################################################################
     ## UTILITY FUNCTIONS ##
+    
+    def export_pdf(self):
+        """
+        Export the current scene to a PDF file.
+
+        This method creates a high-resolution PDF file that contains the entire scene.
+        The user is prompted to select the save location and file name for the PDF file, 
+        and the scene is rendered onto the PDF using a QPainter object.
+
+        Steps:
+        1. The user selects a file location and name using QFileDialog.
+        2. The scene is rendered into the PDF file using a QPrinter object.
+        3. The file is saved to the selected location.
+        
+        Raises:
+            None: This method handles errors internally (e.g., user cancels the file save dialog).
+        """
+        # Create a printer object for high-resolution PDF export
+        printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
+        
+        # Set output file name for PDF
+        printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        
+        # Open a QFileDialog to let the user select the location and file name
+        output_pdf_path, _ = QtWidgets.QFileDialog.getSaveFileName(None, "Save PDF", "", "PDF Files (*.pdf)")
+    
+         # Check if the user canceled the dialog or did not select a file
+        if not output_pdf_path:
+            return  # Exit if the user cancels the dialog
+
+        # Ensure the file has a .pdf extension
+        if not output_pdf_path.endswith(".pdf"):
+            output_pdf_path += ".pdf"
+            
+        # Set the output file name for the PDF
+        printer.setOutputFileName(output_pdf_path)
+            
+        # Create a QPainter to paint the scene on the printer
+        painter = QtGui.QPainter(printer)
+        
+        # Render the scene into the PDF file
+        self.scene().render(painter)
+        
+        # Finish the painting and save the PDF
+        painter.end()
+        
+    def export_png(self):
+        """
+        Export the entire GridView scene to a high-resolution PNG image file.
+        
+        This method captures the entire scene of the GridView, and allows the user to select 
+        a location and name for saving the PNG file with improved resolution.
+        
+        Steps:
+        1. The user selects a file location and name using QFileDialog.
+        2. A QImage object is created to fit the entire scene.
+        3. The scene is rendered into the QImage using a QPainter.
+        4. The image is saved as a PNG file.
+        """
+        # Open a QFileDialog to let the user select the location and file name for the PNG
+        output_png_path, _ = QtWidgets.QFileDialog.getSaveFileName(None, "Save PNG", "", "PNG Files (*.png)")
+
+        # Check if the user canceled the dialog or did not select a file
+        if not output_png_path:
+            return  # Exit if the user cancels the dialog
+
+        # Ensure the file has a .png extension
+        if not output_png_path.endswith(".png"):
+            output_png_path += ".png"
+
+        # Get the bounding rectangle of the entire scene to capture everything
+        scene_rect = self.scene().itemsBoundingRect()
+
+        # Increase resolution by scaling the QImage size
+        scale_factor = 1  # Increase this to generate a higher-resolution PNG
+        image_width = int(scene_rect.width() * scale_factor)
+        image_height = int(scene_rect.height() * scale_factor)
+
+        # Create a high-resolution QImage
+        image = QtGui.QImage(image_width, image_height, QtGui.QImage.Format_ARGB32)
+        image.fill(QtCore.Qt.white)  # Optional: Fill background with white
+
+        # Create a QPainter to paint the scene onto the QImage
+        painter = QtGui.QPainter(image)
+
+        # Apply scaling to render at a higher resolution
+        painter.scale(scale_factor, scale_factor)
+
+        # Render the scene onto the QImage
+        self.scene().render(painter)
+
+        # End the QPainter
+        painter.end()
+
+        # Save the image to the selected PNG file location
+        image.save(output_png_path, "PNG")
 
     def select_items_in_rect(self, rect):
         """

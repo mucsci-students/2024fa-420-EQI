@@ -158,6 +158,15 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         # Connect Undo and Redo actions to their respective methods
         self.undo_action.triggered.connect(self.undo_gui)
         self.redo_action.triggered.connect(self.redo_gui)
+        
+        #################################################################
+        # Actions for exporting diagrams as images (PDF/PNG)
+        self.export_pdf_action = self.findChild(QtWidgets.QAction, "export_pdf")  # Export as PDF
+        self.export_png_action = self.findChild(QtWidgets.QAction, "export_png")  # Export as PNG
+        
+        # Connect export actions to their respective methods
+        self.export_pdf_action.triggered.connect(self.export_pdf_gui)
+        self.export_png_action.triggered.connect(self.export_png_gui)
 
     #################################################################
     ### EVENT FUNCTIONS ###
@@ -306,6 +315,20 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
         End the current session and reset to the default state.
         """
         self.grid_view.new_file()
+        
+    #################################################################
+    ## EXPORT EVENTS ##
+    def export_pdf_gui(self):
+        """
+        Export the UML diagram as a PDF.
+        """
+        self.grid_view.export_pdf()
+
+    def export_png_gui(self):
+        """
+        Export the UML diagram as a PNG image.
+        """
+        self.grid_view.export_png()
 
     #################################################################
     ## DARK/LIGHT MODE EVENTS ##
