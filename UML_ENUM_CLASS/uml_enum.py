@@ -42,7 +42,73 @@ class InterfaceOptions(Enum):
     SORT = "sort"
     HELP = "help"
     EXIT = "exit"
-    EXPORT = "export"    
+    EXPORT = "export"
+
+class RequireClassFirstInput(Enum):
+    DELETE_CLASS = "delete_class"
+    RENAME_CLASS = "rename_class"
+    ADD_FIELD = "add_field"
+    DELETE_FIELD = "delete_field"
+    RENAME_FIELD = "rename_field"
+    EDIT_FIELD_TYPE = "edit_field_type"
+    ADD_METHOD = "add_method"
+    DELETE_METHOD = "delete_method"
+    RENAME_METHOD = "rename_method"
+    EDIT_METHOD_TYPE = "edit_method_type"
+    ADD_PARAM = "add_param"
+    DELETE_PARAM = "delete_param"
+    RENAME_PARAM = "rename_param"
+    EDIT_PARAM_TYPE = "edit_param_type"
+    REPLACE_PARAM = "replace_param"
+    ADD_REL = "add_rel"
+    DELETE_REL = "delete_rel"
+    EDIT_REL_TYPE = "edit_rel_type"
+    CLASS_DETAIL = "class_detail"
+
+class RequireSecondInput(Enum):
+    DELETE_METHOD = "delete_method"
+    RENAME_METHOD = "rename_method"
+    EDIT_METHOD_TYPE = "edit_method_type"
+    ADD_PARAM = "add_param"
+    DELETE_PARAM = "delete_param"
+    RENAME_PARAM = "rename_param"
+    EDIT_PARAM_TYPE = "edit_param_type"
+    REPLACE_PARAM = "replace_param"
+    DELETE_FIELD = "delete_field"
+    RENAME_FIELD = "rename_field"
+    EDIT_FIELD_TYPE = "edit_field_type"
+    ADD_REL = "add_rel"
+    DELETE_REL = "delete_rel"
+    EDIT_REL_TYPE = "edit_rel_type"
+
+class RequireMethodNumSecondInput(Enum):
+    DELETE_METHOD = "delete_method"
+    RENAME_METHOD = "rename_method"
+    EDIT_METHOD_TYPE = "edit_method_type"
+    ADD_PARAM = "add_param"
+    DELETE_PARAM = "delete_param"
+    RENAME_PARAM = "rename_param"
+    EDIT_PARAM_TYPE = "edit_param_type"
+    REPLACE_PARAM = "replace_param"
+
+class RequireFieldSecondInput(Enum):
+    DELETE_FIELD = "delete_field"
+    RENAME_FIELD = "rename_field"
+    EDIT_FIELD_TYPE = "edit_field_type"
+
+class RequireClassSecondInput(Enum):
+    ADD_REL = "add_rel"
+    DELETE_REL = "delete_rel"
+    EDIT_REL_TYPE = "edit_rel_type"
+
+class RequireParamThirdInput(Enum):
+    DELETE_PARAM = "delete_param"
+    RENAME_PARAM = "rename_param"
+    EDIT_PARAM_TYPE = "edit_param_type"
+
+class RequireRelTypeThirdInput(Enum):
+    ADD_REL = "add_rel"
+    EDIT_REL_TYPE = "edit_rel_type"
     
 class RelationshipType(Enum):
     """

@@ -40,7 +40,7 @@ class UMLInterface:
         self.Controller = Controller(self.Model, view, self.Console)  # UML controller instance
     
         # Initialize prompt_toolkit session for autocompletion
-        self.session = create_prompt_session()
+        self.session = create_prompt_session(self.Model)
         
     #################################################################
     ### INTERFACE FUNCTIONS THAT CONNECT WITH THE MANAGER ###
