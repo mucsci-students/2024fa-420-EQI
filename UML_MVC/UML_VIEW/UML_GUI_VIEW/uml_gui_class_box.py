@@ -179,7 +179,7 @@ class UMLClassBox(QtWidgets.QGraphicsRectItem):
         """
         self.box_position["x"] = self.pos().x()
         self.box_position["y"] = self.pos().y()
-        print(f"Current location: ({self.box_position['x']} , {self.box_position['y']})")
+        # print(f"Current location: ({self.box_position['x']} , {self.box_position['y']})")
         
     def set_box_position(self):
         """

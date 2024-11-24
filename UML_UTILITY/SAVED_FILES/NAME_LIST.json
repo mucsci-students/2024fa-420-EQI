@@ -3,9 +3,12 @@
         "test_file": "off"
     },
     {
-        "showcase": "off"
+        "magic_arrow_test": "off"
     },
     {
-        "rel_test": "off"
+        "new_test": "off"
+    },
+    {
+        "position_test": "off"
     }
 ]
