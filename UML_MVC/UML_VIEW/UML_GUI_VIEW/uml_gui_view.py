@@ -435,7 +435,7 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
 
         <p><strong>Tips:</strong></p>
         <ul>
-            <li>Save your work frequently to avoid losing progress.</li>
+            <li><span style="color:red;"><strong>SAVE YOUR WORK FREQUENTLY TO AVOID LOSING PROGRESS!!!</strong></span></li>
         </ul>
         """
 
