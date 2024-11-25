@@ -387,10 +387,13 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
             </li>
             <li><strong>Right-Click:</strong>
                 <ul>
-                    <li><strong>On a UML class box:</strong> Opens a context menu with options to:
+                    <li><strong>On the screen:</strong> Opens a context menu with options to:
                         <ul>
                             <li><strong>Add Class:</strong> Creates a new UML class box.</li>
-                            <li><strong>Select All Classes:</strong> Highlights all the UML class boxes on the canvas.</li>
+                            <li><strong>Select All Classes:</strong> Select all the UML class boxes on the screen.</li>
+                        </ul>
+                    <li><strong>On a UML class box:</strong> Opens a context menu with options to:
+                        <ul>
                             <li><strong>Add Attribute:</strong> Add a new field to the selected class.</li>
                             <li><strong>Delete Attribute:</strong> Remove an existing field from the class.</li>
                             <li><strong>Add Method:</strong> Add a new method to the class.</li>
@@ -424,6 +427,7 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
 
         <p><strong>General Shortcuts:</strong></p>
         <ul>
+        <li><span style="color:blue;"><strong>Del:</strong></span> Delete a class box.</li>
             <li><span style="color:blue;"><strong>Ctrl + S:</strong></span> Quickly save your progress.</li>
             <li><span style="color:blue;"><strong>Ctrl + Z:</strong></span> Undo last action.</li>
             <li><span style="color:blue;"><strong>Ctrl + Y:</strong></span> Redo last undone action.</li>
