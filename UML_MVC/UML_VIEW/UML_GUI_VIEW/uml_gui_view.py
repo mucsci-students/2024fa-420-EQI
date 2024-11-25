@@ -2,8 +2,7 @@
 # Import necessary modules from PyQt5 and custom UML classes
 ###################################################################################################
 
-from PyQt5 import uic
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore, uic
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_canvas import UMLGraphicsView as GUICanvas
 from UML_MVC.UML_VIEW.UML_GUI_VIEW.uml_gui_class_box import UMLClassBox
 from UML_MVC.uml_observer import UMLObserver as Observer
@@ -367,21 +366,89 @@ class MainWindow(QtWidgets.QMainWindow, Observer):
             
     def show_instructions(self):
         """
-        Display a pop-up window with instructions on how to use the application.
+        Display a pop-up window with detailed instructions on how to use the application.
         """
         instruction_text = """
-        Instructions:
-        1. Use the left mouse button to select and drag class boxes.
-        2. Right-click to open the context menu with additional options.
-        3. Use the toolbar for more actions like save, load, and edit.
-        4. Press Ctrl+S to quickly save your progress.
-        """
+        <h2>Welcome to the UML Editor Program!</h2>
+
+        <p><strong>Instructions:</strong></p>
         
+        <p><u>Mouse Interactions:</u></p>
+        <ol>
+            <li><strong>Left-Click:</strong>
+                <ul>
+                    <li><strong>On a UML class box:</strong> Selects the box for moving or editing.</li>
+                </ul>
+            </li>
+            <li><strong>Middle-Click:</strong>
+                <ul>
+                    <li><strong>On the screen:</strong> Click and hold middle mouse to start panning around.</li>
+                </ul>
+            </li>
+            <li><strong>Right-Click:</strong>
+                <ul>
+                    <li><strong>On the screen:</strong> Opens a context menu with options to:
+                        <ul>
+                            <li><strong>Add Class:</strong> Creates a new UML class box.</li>
+                            <li><strong>Select All Classes:</strong> Select all the UML class boxes on the screen.</li>
+                        </ul>
+                    <li><strong>On a UML class box:</strong> Opens a context menu with options to:
+                        <ul>
+                            <li><strong>Add Attribute:</strong> Add a new field to the selected class.</li>
+                            <li><strong>Delete Attribute:</strong> Remove an existing field from the class.</li>
+                            <li><strong>Add Method:</strong> Add a new method to the class.</li>
+                            <li><strong>Change Data Type:</strong> Modify the data type of an attribute or method.</li>
+                            <li><strong><span style="color:blue;">And many more options!</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+
+        <p><u>Menu Bar:</u></p>
+        <ul>
+            <li><strong>Create New File:</strong> Creates a new UML diagram. <span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + N</strong></span></li>
+            <li><strong>Open File:</strong> Opens an existing UML diagram from a file. <span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + O</strong></span></li>
+            <li><strong>Save:</strong> Saves the current UML diagram. 
+                <ul>
+                    <li>If the diagram is being saved for the first time, the <strong>"Save As"</strong> feature will open, allowing you to choose a location and filename.</li>
+                    <li><span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + S</strong></span></li>
+                </ul>
+            </li>
+            <li><strong>Save As:</strong> Lets you save the current UML diagram under a new filename or in a different location. <span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + Shift + S</strong></span></li>
+            <li><strong>Undo/Redo:</strong> 
+                <ul>
+                    <li><strong>Undo:</strong> Reverses the last action. <span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + Z</strong></span></li>
+                    <li><strong>Redo:</strong> Re-applies the last undone action. <span style="color:blue;"><strong><em>Shortcut:</em> Ctrl + Y</strong></span></li>
+                </ul>
+            </li>
+            <li><strong>Dark/Light Mode Toggle:</strong> Switches between dark mode and light mode to suit your preferences.</li>
+        </ul>
+
+        <p><strong>General Shortcuts:</strong></p>
+        <ul>
+        <li><span style="color:blue;"><strong>Del:</strong></span> Delete a class box.</li>
+            <li><span style="color:blue;"><strong>Ctrl + S:</strong></span> Quickly save your progress.</li>
+            <li><span style="color:blue;"><strong>Ctrl + Z:</strong></span> Undo last action.</li>
+            <li><span style="color:blue;"><strong>Ctrl + Y:</strong></span> Redo last undone action.</li>
+            <li><span style="color:blue;"><strong>Ctrl + N:</strong></span> Create a new file.</li>
+            <li><span style="color:blue;"><strong>Ctrl + O:</strong></span> Open an existing file.</li>
+            <li><span style="color:blue;"><strong>Ctrl + Shift + S:</strong></span> Save the current diagram as a new file.</li>
+            <li><span style="color:blue;"><strong>Hold Ctrl + Scrolling Up/Down (middle mouse):</strong></span> Zoom in/out.</li>
+        </ul>
+
+        <p><strong>Tips:</strong></p>
+        <ul>
+            <li><span style="color:red;"><strong>SAVE YOUR WORK FREQUENTLY TO AVOID LOSING PROGRESS!!!</strong></span></li>
+        </ul>
+        """
+
         # Create the pop-up window
         msg_box = QtWidgets.QMessageBox()
         msg_box.setWindowTitle("Instructions")
+        msg_box.setTextFormat(QtCore.Qt.RichText)  # Enable rich text formatting
         msg_box.setText(instruction_text)
         msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        
+
         # Show the pop-up window
         msg_box.exec_()
