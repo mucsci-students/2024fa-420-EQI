@@ -137,3 +137,25 @@ This project utilizes several design patterns to promote efficient, maintainable
     - **Private Instance Variable**: _instance holds the single instance of MainWindow.
     - **Custom __new__ Method**: Overrides the default constructor to check if _instance is None before creating a new instance, raising an error if a second instance is attempted.
     - path: 2024FA-420-EQI/UML_MVC/UML_VIEW/uml_gui_view.py
+
+### 5. Adapter
+- **Purpose**: Convert UML diagram data provided in JSON format into a PNG image to support graphical representation, while keeping the JSON interface compatible with the system.
+
+- **Components**:
+
+    - **UMLDiagramAdapter**: Converts JSON data into a format that can be used by the CLI 
+
+- **Implementation**:
+
+    - **adapter.py**: Located at **2024fa-420-EQI/UML_MVC/UML_CONTROLLER/adapter.py
+
+    - **Summary**: This code is a UML-to-image adapter that generates a visual representation of UML diagrams from a model object. It utilizes the Python Pillow library for image generation and offers methods for processing and rendering classes, relationships, and layouts. Here's a breakdown of the implementation:
+
+### 6. Factory
+- **Purpose**: Simplify and standardize the creation of UML diagram components such as classes, relationships, and interfaces. This ensures flexibility and extensibility while maintaining consistency across the system.
+
+- **Components**:
+    - **UMLComponentFactory**: A central class responsible for dynamically instantiating UML diagram elements based on the provided configuration or input type.
+
+    - **factory.py**: Located at 2024fa-420-EQI/UML_MVC/uml_command_factory.py
+    

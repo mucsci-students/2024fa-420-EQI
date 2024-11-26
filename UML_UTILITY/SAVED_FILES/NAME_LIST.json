@@ -1,5 +1,14 @@
 [
     {
         "test_file": "off"
+    },
+    {
+        "magic_arrow_test": "off"
+    },
+    {
+        "new_test": "off"
+    },
+    {
+        "position_test": "off"
     }
 ]
